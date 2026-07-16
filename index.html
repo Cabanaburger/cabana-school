@@ -98,7 +98,7 @@
 
       <div class="field">
         <label>CPF</label>
-        <input type="text" placeholder="000.000.000-00" inputmode="numeric">
+        <input type="text" id="cpfColab" placeholder="000.000.000-00" inputmode="numeric">
       </div>
       <div class="field">
         <label>Senha</label>
@@ -111,9 +111,11 @@
         <b>Primeiro acesso?</b> Sua senha inicial são os 4 últimos dígitos do seu CPF. Você vai criar uma senha nova assim que entrar.
       </div>
 
+      <div id="loginError" style="display:none;color:#B3261E;font-size:13px;font-weight:600;margin-bottom:10px;"></div>
+
       <div class="row-between"><a onclick="openModal('modalSenha')">Esqueci minha senha</a></div>
 
-      <button class="btn-entrar" onclick="location.href='home.html'">Entrar →</button>
+      <button class="btn-entrar" id="btnEntrar" onclick="fazerLogin()">Entrar →</button>
 
       <div class="foot">Dúvidas? <a href="mailto:treinamento@cabanaburger.com.br?subject=Dúvida sobre acesso - Cabana School">Fale com o RH</a></div>
     </div>
@@ -143,6 +145,80 @@ function togglePass(id, btn){
 }
 function openModal(id){ document.getElementById(id).style.display = 'flex'; }
 function closeModal(id){ document.getElementById(id).style.display = 'none'; }
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  // firebaseConfig real do projeto Cabana School
+  const firebaseConfig = {
+    apiKey: "AIzaSyALJzDqdBpic88-0CnKXCBUpvMhfilskkg",
+    authDomain: "cabana-school-c.firebaseapp.com",
+    projectId: "cabana-school-c",
+    storageBucket: "cabana-school-c.firebasestorage.app",
+    messagingSenderId: "299980031099",
+    appId: "1:299980031099:web:afcd83482c194d35400ede"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // Se já tiver sessão ativa, pula direto pra home
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      location.href = 'home.html';
+    }
+  });
+
+  function somenteNumeros(str){
+    return (str || '').replace(/\D/g, '');
+  }
+
+  window.fazerLogin = async function(){
+    const cpfInput = document.getElementById('cpfColab');
+    const senhaInput = document.getElementById('senhaColab');
+    const btn = document.getElementById('btnEntrar');
+    const erroBox = document.getElementById('loginError');
+
+    erroBox.style.display = 'none';
+    erroBox.textContent = '';
+
+    const cpf = somenteNumeros(cpfInput.value);
+    const senha = senhaInput.value;
+
+    if (cpf.length !== 11) {
+      erroBox.textContent = 'Digite um CPF válido (11 números).';
+      erroBox.style.display = 'block';
+      return;
+    }
+    if (!senha) {
+      erroBox.textContent = 'Digite sua senha.';
+      erroBox.style.display = 'block';
+      return;
+    }
+
+    const email = cpf + '@cabana.internal';
+
+    btn.disabled = true;
+    btn.textContent = 'Entrando...';
+
+    try {
+      await signInWithEmailAndPassword(auth, email, senha);
+      location.href = 'home.html';
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Entrar →';
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        erroBox.textContent = 'CPF ou senha incorretos.';
+      } else if (err.code === 'auth/too-many-requests') {
+        erroBox.textContent = 'Muitas tentativas. Aguarde um instante e tente de novo.';
+      } else {
+        erroBox.textContent = 'Não foi possível entrar. Tente novamente.';
+      }
+      erroBox.style.display = 'block';
+    }
+  };
 </script>
 </body>
 </html>
