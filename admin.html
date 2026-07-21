@@ -1,9 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin · Cabana School</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --green: #4F9C40; --green-dark: #386F2D;
@@ -205,8 +207,8 @@
     </div>
 
     <div class="side-foot">
-      <div class="navitem" onclick="showScreen('home')"><span class="ic">🌐</span> Ver site público</div>
-      <div class="navitem" onclick="location.href='index.html'"><span class="ic">🚪</span> Sair</div>
+      <div class="navitem" onclick="location.href='home.html'"><span class="ic">🌐</span> Ver site público</div>
+      <div class="navitem" onclick="fazerLogoutAdmin()"><span class="ic">🚪</span> Sair</div>
     </div>
   </aside>
 
@@ -219,47 +221,30 @@
           <div class="crumb">Admin / Conteúdo</div>
           <h1>Cursos</h1>
         </div>
-        <button class="new-btn" onclick="openModal('modalCurso')">+ Novo curso</button>
+        <button class="new-btn" onclick="abrirNovoCurso()">+ Novo curso</button>
       </div>
 
       <div class="stat-row">
-        <div class="stat"><span>Cursos publicados</span><b>2</b><small>catálogo atual</small></div>
-        <div class="stat"><span>Colaboradores com acesso</span><b>—</b><small>sem dados ainda</small></div>
-        <div class="stat"><span>Adesão geral</span><b>—</b><small>sem dados ainda</small></div>
-        <div class="stat"><span>Conclusões esta semana</span><b>—</b><small>sem dados ainda</small></div>
+        <div class="stat"><span>Cursos publicados</span><b id="statPublicados">—</b><small>catálogo atual</small></div>
+        <div class="stat"><span>Colaboradores com acesso</span><b id="statCursosComAcesso">—</b><small id="statCursosComAcessoSub">carregando…</small></div>
+        <div class="stat"><span>Adesão geral</span><b id="statCursosAdesao">—</b><small id="statCursosAdesaoSub">carregando…</small></div>
+        <div class="stat"><span>Conclusões esta semana</span><b id="statConclusoesSemana">—</b><small>cursos marcados como concluídos nos últimos 7 dias</small></div>
       </div>
 
       <div class="panel-card">
         <div class="panel-tabs">
-          <div class="lefttabs">
-            <div class="ptab on">Todos (2)</div>
-            <div class="ptab">Publicados (1)</div>
-            <div class="ptab">Rascunho (1)</div>
+          <div class="lefttabs" id="cursoFiltroTabs">
+            <div class="ptab on" data-filtro="todos" onclick="filtrarCursos('todos', this)">Todos (0)</div>
+            <div class="ptab" data-filtro="publicado" onclick="filtrarCursos('publicado', this)">Publicados (0)</div>
+            <div class="ptab" data-filtro="rascunho" onclick="filtrarCursos('rascunho', this)">Rascunho (0)</div>
           </div>
         </div>
         <table>
           <thead>
             <tr><th>Curso</th><th>Categoria</th><th>Visibilidade</th><th>Duração</th><th>Status</th><th>Adesão</th><th></th></tr>
           </thead>
-          <tbody>
-            <tr>
-              <td><div class="course-cell"><div class="course-thumb" style="background:#4F9C40">👨‍🍳</div><div><b>De Olho no Padrão</b><small>canva.site/curso-de-olho-no-padrao</small></div></div></td>
-              <td>Operação</td>
-              <td><span class="pill pub">Todos</span></td>
-              <td>18 min</td>
-              <td><span class="pill pub">Publicado</span></td>
-              <td>—</td>
-              <td class="row-actions"><button onclick="editCurso('De Olho no Padrão')">Editar</button><button class="danger">Arquivar</button></td>
-            </tr>
-            <tr>
-              <td><div class="course-cell"><div class="course-thumb" style="background:#B9AFA0">🍟</div><div><b>Segurança Alimentar na Cozinha</b><small>rascunho · sem link ainda</small></div></div></td>
-              <td>Operação</td>
-              <td><span class="pill pub">Todos</span></td>
-              <td>N/D</td>
-              <td><span class="pill draft">Rascunho</span></td>
-              <td>N/D</td>
-              <td class="row-actions"><button onclick="editCurso('Segurança Alimentar na Cozinha')">Editar</button><button class="danger">Excluir</button></td>
-            </tr>
+          <tbody id="cursosTableBody">
+            <tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando cursos…</td></tr>
           </tbody>
         </table>
       </div>
@@ -273,47 +258,77 @@
           <h1>Biblioteca</h1>
           <p class="sub">PDFs, POPs, guias e materiais de apoio disponíveis pra consulta na plataforma.</p>
         </div>
-        <button class="new-btn" onclick="openModal('modalPdf')">+ Novo material</button>
+        <button class="new-btn" onclick="abrirNovoMaterial()">+ Novo material</button>
       </div>
 
-      <div class="stat-row">
-        <div class="stat"><span>Documentos publicados</span><b>7</b><small>catálogo atual</small></div>
-        <div class="stat"><span>POPs</span><b>2</b></div>
-        <div class="stat"><span>Políticas</span><b>2</b></div>
-        <div class="stat"><span>Guias &amp; materiais de apoio</span><b>3</b></div>
+      <div class="stat-row" id="bibStatRow">
+        <div class="stat"><span>Documentos publicados</span><b>—</b><small>carregando…</small></div>
+        <div class="stat"><span>POPs</span><b>—</b></div>
+        <div class="stat"><span>Políticas</span><b>—</b></div>
+        <div class="stat"><span>Guias &amp; materiais de apoio</span><b>—</b></div>
       </div>
 
       <div class="panel-card">
         <div class="panel-tabs">
-          <div class="lefttabs">
-            <div class="ptab on">Todos</div>
-            <div class="ptab">POPs</div>
-            <div class="ptab">Políticas</div>
-            <div class="ptab">Guias</div>
+          <div class="lefttabs" id="bibFiltroTabs">
+            <div class="ptab on" data-filtro="Todos" onclick="filtrarBiblioteca('Todos', this)">Todos</div>
+            <div class="ptab" data-filtro="POP" onclick="filtrarBiblioteca('POP', this)">POPs</div>
+            <div class="ptab" data-filtro="Política" onclick="filtrarBiblioteca('Política', this)">Políticas</div>
+            <div class="ptab" data-filtro="Guia" onclick="filtrarBiblioteca('Guia', this)">Guias</div>
           </div>
         </div>
         <table>
-          <thead><tr><th>Material</th><th>Categoria</th><th>Tamanho</th><th>Atualizado em</th><th></th></tr></thead>
-          <tbody>
-            <tr>
-              <td><div class="course-cell"><div class="course-thumb" style="background:#4F9C40">📄</div><div><b>POP Batata e Hambúrguer</b><small>PDF</small></div></div></td>
-              <td>POP</td><td>1.2 MB</td><td>28/06/2026</td>
-              <td class="row-actions"><button onclick="editPdf('POP Batata e Hambúrguer')">Substituir</button><button class="danger">Remover</button></td>
-            </tr>
-            <tr>
-              <td><div class="course-cell"><div class="course-thumb" style="background:#D89840">📋</div><div><b>Política de Faltas e Atestados</b><small>PDF</small></div></div></td>
-              <td>Política</td><td>640 KB</td><td>02/07/2026</td>
-              <td class="row-actions"><button onclick="editPdf('Política de Faltas e Atestados')">Substituir</button><button class="danger">Remover</button></td>
-            </tr>
-            <tr>
-              <td><div class="course-cell"><div class="course-thumb" style="background:#D6699E">📘</div><div><b>Checklist de Padrão · versão loja</b><small>PDF</small></div></div></td>
-              <td>Guia</td><td>820 KB</td><td>10/07/2026</td>
-              <td class="row-actions"><button onclick="editPdf('Checklist de Padrão')">Substituir</button><button class="danger">Remover</button></td>
-            </tr>
+          <thead><tr><th>Material</th><th>Categoria</th><th>Público</th><th>Atualizado em</th><th></th></tr></thead>
+          <tbody id="bibTableBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
           </tbody>
         </table>
       </div>
     </section>
+
+<div class="overlay" id="modalPdf" style="display:none;">
+  <div class="modal">
+    <div class="modal-head"><h3 id="pdfModalTitulo">Novo material</h3><button onclick="closeModal('modalPdf')">✕</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nome do material</label>
+        <input type="text" id="pdfTituloInput" placeholder="Ex: POP Batata e Hambúrguer">
+      </div>
+      <div class="field">
+        <label>Categoria</label>
+        <select id="pdfCategoriaInput"><option>POP</option><option>Política</option><option>Guia</option></select>
+      </div>
+      <div class="field">
+        <label>Link do material (PDF)</label>
+        <input type="text" id="pdfLinkInput" placeholder="Cole o link do PDF (ex: subido na pasta assets/ do GitHub)">
+        <small class="hint">Suba o PDF em assets/ no seu repositório e cole aqui o link "raw".</small>
+      </div>
+      <div class="field">
+        <label>Quem pode ver este material</label>
+        <div class="status-toggle" id="pdfVisibToggle">
+          <button class="on" onclick="setPdfVisib(this,false)">Todos os públicos</button>
+          <button onclick="setPdfVisib(this,true)">Cargos específicos</button>
+        </div>
+        <div id="pdfCargosBlock" style="display:none; margin-top:10px;">
+          <input type="text" id="pdfCargosInput" placeholder="Ex: Gerente de Loja, Líder de Loja (separe por vírgula)">
+          <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+            <select id="pdfPublicoSalvoSelect" onchange="aplicarPublicoSalvoTexto(this.value, 'pdfCargosInput')" style="flex:1;">
+              <option value="">Carregar um público salvo…</option>
+            </select>
+            <button type="button" class="ghost-btn" onclick="salvarPublicoAtualTexto('pdfCargosInput')">💾 Salvar este público</button>
+          </div>
+        </div>
+        <small class="hint">Quem não tiver um dos cargos listados nem vê que o material existe.</small>
+      </div>
+      <div id="pdfSalvarErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600; margin-top:4px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalPdf')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarMaterial()">Salvar material →</button>
+    </div>
+  </div>
+</div>
+
 
     <!-- ===================== COLABORADORES ===================== -->
     <section class="tabpage" id="tab-colaboradores">
@@ -324,8 +339,8 @@
           <p class="sub">Quem está matriculado, quem já acessou, e quem tem acesso ao painel Admin.</p>
         </div>
         <div class="btnrow">
-          <button class="ghost-btn" onclick="alert('Baixaria Modelo_Base_Colaboradores.xlsx')">⬇ Baixar modelo</button>
-          <button class="new-btn" onclick="novoColab()">+ Adicionar manualmente</button>
+          <button class="ghost-btn" onclick="baixarModeloExcel()">⬇ Baixar modelo</button>
+          <button class="new-btn" onclick="abrirNovoColab()">+ Adicionar manualmente</button>
         </div>
       </div>
 
@@ -335,54 +350,35 @@
           <span>Envie a planilha atualizada (modelo padrão) pra ativar quem entrou e desativar quem saiu. O histórico de progresso de quem sai é preservado.</span>
         </div>
         <div class="actions">
-          <button class="ghost-btn">📎 Escolher arquivo</button>
-          <button class="new-btn">Sincronizar</button>
+          <button class="ghost-btn" onclick="document.getElementById('excelFileInput').click()">📎 <span id="excelFileNome">Escolher arquivo</span></button>
+          <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="onExcelEscolhido(this)">
+          <button class="new-btn" id="btnSincronizar" onclick="sincronizarPlanilha()" disabled>Sincronizar</button>
         </div>
       </div>
+      <div id="sincronizarResultado" style="display:none; margin:-6px 0 18px; font-size:13px; font-weight:600;"></div>
 
       <div class="stat-row">
-        <div class="stat"><span>Colaboradores ativos</span><b>—</b><small>sem dados ainda</small></div>
-        <div class="stat"><span>Já acessaram ao menos 1x</span><b>—</b><small>sem dados ainda</small></div>
-        <div class="stat"><span>Nunca acessaram</span><b>—</b><small>sem dados ainda</small></div>
-        <div class="stat"><span>Admins do painel</span><b>2</b></div>
+        <div class="stat"><span>Colaboradores ativos</span><b id="statAtivos">—</b><small>sem dados ainda</small></div>
+        <div class="stat"><span>Já acessaram ao menos 1x</span><b id="statAcessaram">—</b><small>sem dados ainda</small></div>
+        <div class="stat"><span>Nunca acessaram</span><b id="statNuncaAcessaram">—</b><small>sem dados ainda</small></div>
+        <div class="stat"><span>Admins do painel</span><b id="statAdmins">—</b></div>
       </div>
 
       <div class="panel-card">
         <div class="panel-tabs">
-          <div class="lefttabs">
-            <div class="ptab on">Todos (2)</div>
-            <div class="ptab">Nunca acessaram (0)</div>
-            <div class="ptab">Admins (2)</div>
+          <div class="lefttabs" id="colabFiltroTabs">
+            <div class="ptab on" data-filtro="todos" onclick="filtrarColaboradores('todos', this)">Todos (0)</div>
+            <div class="ptab" data-filtro="nunca" onclick="filtrarColaboradores('nunca', this)">Nunca acessaram (0)</div>
+            <div class="ptab" data-filtro="admin" onclick="filtrarColaboradores('admin', this)">Admins (0)</div>
           </div>
         </div>
-        <div class="search-in-panel">🔎 Buscar por nome, loja ou cargo...</div>
+        <input type="text" class="search-in-panel" id="colabBusca" placeholder="🔎 Buscar por nome, loja ou cargo..." oninput="renderColaboradores()" style="width:100%; border:none; background:transparent; font:inherit; outline:none;">
         <table>
           <thead>
             <tr><th>Colaborador</th><th>CPF</th><th>Loja</th><th>Cargo</th><th>Status</th><th>Último acesso</th><th>Acessos</th><th>Nível</th><th></th></tr>
           </thead>
-          <tbody>
-            <tr>
-              <td><b>Silvana Novais</b></td>
-              <td class="cpf-mask">***.•••.•••-12</td>
-              <td>Escritório</td>
-              <td>Administrativo</td>
-              <td><span class="pill ativo">Ativo</span></td>
-              <td>hoje, 14:22</td>
-              <td>48</td>
-              <td><span class="pill admin">Admin</span></td>
-              <td class="row-actions"><button class="link" onclick="editColab('Silvana Novais')">Editar</button></td>
-            </tr>
-            <tr>
-              <td><b>Gabriela (Gabi) Ramos</b></td>
-              <td class="cpf-mask">***.•••.•••-45</td>
-              <td>Escritório</td>
-              <td>Administrativo</td>
-              <td><span class="pill ativo">Ativo</span></td>
-              <td>ontem, 09:10</td>
-              <td>22</td>
-              <td><span class="pill admin">Admin</span></td>
-              <td class="row-actions"><button class="link" onclick="editColab('Gabriela Ramos')">Editar</button></td>
-            </tr>
+          <tbody id="colabTableBody">
+            <tr><td colspan="9" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando colaboradores…</td></tr>
           </tbody>
         </table>
       </div>
@@ -396,36 +392,32 @@
           <h1>Relatórios &amp; adesão</h1>
           <p class="sub">Números em tempo real, com opção de exportar pra análise ou apresentação.</p>
         </div>
-        <button class="ghost-btn">⬇ Exportar CSV/Excel</button>
+        <button class="ghost-btn" onclick="exportarRelatorioCSV()">⬇ Exportar CSV/Excel</button>
       </div>
 
-      <div class="stat-row">
-        <div class="stat"><span>Adesão geral</span><b>—</b><small>sem dados ainda</small></div>
-        <div class="stat"><span>Curso mais concluído</span><b>—</b><small>sem dados ainda</small></div>
-        <div class="stat"><span>Curso com menor adesão</span><b>—</b><small>sem dados ainda</small></div>
-        <div class="stat"><span>Tempo médio até 1º acesso</span><b>—</b><small>sem dados ainda</small></div>
+      <div class="stat-row" id="relStatRow">
+        <div class="stat"><span>Adesão geral</span><b>—</b><small>carregando…</small></div>
+        <div class="stat"><span>Curso mais concluído</span><b>—</b><small>carregando…</small></div>
+        <div class="stat"><span>Curso com menor adesão</span><b>—</b><small>carregando…</small></div>
+        <div class="stat"><span>Tempo médio até 1º acesso</span><b>—</b><small>carregando…</small></div>
       </div>
 
       <div class="rep-grid">
         <div class="rep-card">
           <h4>Adesão por loja</h4>
-          <small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Sem dados ainda. Os números aparecem aqui assim que os colaboradores começarem a acessar a plataforma.</small>
-        </div>
-        <div class="rep-card">
-          <h4>Ranking de engajamento</h4>
-          <small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Sem dados ainda.</small>
+          <div id="relPorLoja"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
         </div>
         <div class="rep-card">
           <h4>Adesão por cargo</h4>
-          <small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Sem dados ainda.</small>
+          <div id="relPorCargo"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+        </div>
+        <div class="rep-card">
+          <h4>Adesão por tipo de local</h4>
+          <div id="relPorLocal"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
         </div>
         <div class="rep-card">
           <h4>Adesão por regional</h4>
-          <small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Sem dados ainda.</small>
-        </div>
-        <div class="rep-card" style="grid-column:1 / -1;">
-          <h4>Adesão por tipo de local</h4>
-          <small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Sem dados ainda. Quando os acessos começarem, misturamos lojas, fábrica e escritório de propósito, já que o objetivo é adesão ao treinamento, não comparação de clima entre lojas.</small>
+          <div id="relPorRegional"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
         </div>
       </div>
 
@@ -433,8 +425,8 @@
         <div class="panel-tabs"><div class="lefttabs"><div class="ptab on">Adesão por colaborador</div></div></div>
         <table>
           <thead><tr><th>Colaborador</th><th>Loja</th><th>Cursos concluídos</th><th>% concluído</th><th>Último acesso</th></tr></thead>
-          <tbody>
-            <tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Sem dados ainda. A tabela é preenchida conforme os colaboradores forem usando a plataforma.</td></tr>
+          <tbody id="relColaboradorBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
           </tbody>
         </table>
       </div>
@@ -446,25 +438,21 @@
 <!-- MODAL: novo curso -->
 <div class="overlay" id="modalCurso" style="display:none;">
   <div class="modal">
-    <div class="modal-head"><h3>Novo curso</h3><button onclick="closeModal('modalCurso')">✕</button></div>
+    <div class="modal-head"><h3 id="modalCursoTitulo">Novo curso</h3><button onclick="closeModal('modalCurso')">✕</button></div>
     <div class="modal-body">
-      <div class="field"><label>Título do curso</label><input type="text" placeholder="Ex: Segurança Alimentar na Cozinha"></div>
-      <div class="field"><label>Descrição curta</label><textarea placeholder="Uma ou duas frases sobre o que o colaborador vai aprender"></textarea></div>
+      <div class="field"><label>Título do curso</label><input type="text" id="cursoTituloInput" placeholder="Ex: Segurança Alimentar na Cozinha"></div>
+      <div class="field"><label>Descrição curta</label><textarea id="cursoDescInput" placeholder="Uma ou duas frases sobre o que o colaborador vai aprender"></textarea></div>
       <div class="field-row">
         <div class="field">
           <label>Categoria</label>
-          <select id="categoriaSelect">
-            <option>🍔 Onboarding</option>
-            <option selected>👨‍🍳 Operação</option>
-            <option>👩‍💼 Liderança</option>
-          </select>
+          <select id="categoriaSelect"></select>
           <small class="hint"><a href="#" onclick="abrirModalCategoria(); return false;" style="color:var(--green-dark); font-weight:700; text-decoration:none;">+ Criar nova categoria</a></small>
         </div>
-        <div class="field"><label>Duração estimada</label><input type="text" placeholder="Ex: 15 min"></div>
+        <div class="field"><label>Duração estimada</label><input type="text" id="cursoDuracaoInput" placeholder="Ex: 15 min"></div>
       </div>
       <div class="field">
         <label>Tipo de conteúdo</label>
-        <div class="status-toggle">
+        <div class="status-toggle" id="tipoConteudoToggle">
           <button class="on" onclick="setTipoConteudo(this,'canva')">🎨 Canva</button>
           <button onclick="setTipoConteudo(this,'video')">🎬 Vídeo</button>
           <button onclick="setTipoConteudo(this,'audio')">🎧 Áudio</button>
@@ -478,11 +466,28 @@
       </div>
       <div class="field">
         <label>Capa do curso (opcional)</label>
-        <div class="dropzone">📎 Arraste uma imagem ou clique pra enviar<br><small>Se não enviar, o card usa a cor + emoji da categoria</small></div>
+        <input type="text" id="cursoCapaInput" placeholder="Cole o link da imagem (ex: subida na pasta assets/ do GitHub)">
+        <small class="hint">Se não preencher, o card usa a cor + emoji da categoria. Suba a imagem em assets/ no seu repositório e cole o link "raw" aqui.</small>
+      </div>
+      <div class="field">
+        <label>Modelo de certificado (opcional)</label>
+        <input type="text" id="cursoCertInput" placeholder="Cole o link da imagem do certificado deste curso">
+        <small class="hint">Usada pra gerar o certificado automático quando o colaborador conclui o curso.</small>
+      </div>
+      <div class="field">
+        <label>Validade do certificado</label>
+        <select id="cursoValidadeInput">
+          <option value="">Não vence</option>
+          <option value="6">6 meses</option>
+          <option value="12">12 meses</option>
+          <option value="24">24 meses</option>
+          <option value="36">36 meses</option>
+        </select>
+        <small class="hint">Depois de vencido, o certificado aparece como "vencido" pro colaborador. Não bloqueia nada sozinho — se quiser liberar de novo, é reabrindo o curso pra ele (editando o progresso) ou publicando uma atualização do curso.</small>
       </div>
       <div class="field">
         <label>Quem pode ver este curso</label>
-        <div class="status-toggle">
+        <div class="status-toggle" id="visibToggle">
           <button class="on" onclick="setVisib(this,false)">Todos os públicos</button>
           <button onclick="setVisib(this,true)">Cargos específicos</button>
         </div>
@@ -497,17 +502,28 @@
           <span class="visib-chip">Gerente Regional</span>
           <span class="visib-chip">Administrativo</span>
         </div>
+        <div id="cursoPublicoSalvoBlock" style="display:none; margin-top:10px; display:flex; gap:8px; align-items:center;">
+          <select id="cursoPublicoSalvoSelect" onchange="aplicarPublicoSalvo(this.value, 'visibChips')" style="flex:1;">
+            <option value="">Carregar um público salvo…</option>
+          </select>
+          <button type="button" class="ghost-btn" onclick="salvarPublicoAtual('visibChips')">💾 Salvar este público</button>
+        </div>
         <small class="hint">Toque nos cargos que devem ver esse curso. Quem não tiver um desses cargos cadastrados nem vê que o curso existe.</small>
       </div>
       <div class="field">
         <label>Selo</label>
-        <div class="status-toggle"><button class="on">Nenhum</button><button>Novo</button><button>Destaque</button></div>
+        <div class="status-toggle" id="seloToggle">
+          <button class="on" onclick="setSelo(this,'nenhum')">Nenhum</button>
+          <button onclick="setSelo(this,'novo')">Novo</button>
+          <button onclick="setSelo(this,'destaque')">Destaque</button>
+        </div>
       </div>
+      <div id="cursoSalvarErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600; margin-top:4px;"></div>
     </div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="closeModal('modalCurso')">Cancelar</button>
-      <button class="btn-secondary">Salvar como rascunho</button>
-      <button class="btn-primary">Publicar curso →</button>
+      <button class="btn-secondary" id="btnSalvarRascunho" onclick="salvarCurso('rascunho')">Salvar como rascunho</button>
+      <button class="btn-primary" id="btnPublicarCurso" onclick="salvarCurso('publicado')">Publicar curso →</button>
     </div>
   </div>
 </div>
@@ -541,43 +557,20 @@
   </div>
 </div>
 
-<!-- MODAL: novo pdf -->
-<div class="overlay" id="modalPdf" style="display:none;">
-  <div class="modal">
-    <div class="modal-head"><h3>Novo material</h3><button onclick="closeModal('modalPdf')">✕</button></div>
-    <div class="modal-body">
-      <div class="field"><label>Título do material</label><input type="text" placeholder="Ex: Política de Faltas e Atestados"></div>
-      <div class="field">
-        <label>Categoria</label>
-        <select><option>POP</option><option>Política</option><option>Guia</option><option>Material de apoio</option></select>
-      </div>
-      <div class="field"><label>Arquivo (PDF)</label><div class="dropzone">📎 Arraste o PDF ou clique pra enviar</div></div>
-      <div class="field">
-        <label>Quem pode ver este material</label>
-        <div class="status-toggle"><button class="on">Todos os públicos</button><button>Cargos específicos</button></div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn-secondary" onclick="closeModal('modalPdf')">Cancelar</button>
-      <button class="btn-primary">Publicar material →</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL: novo colaborador manual -->
 <div class="overlay" id="modalColab" style="display:none;">
   <div class="modal">
-    <div class="modal-head"><h3>Adicionar colaborador</h3><button onclick="closeModal('modalColab')">✕</button></div>
+    <div class="modal-head"><h3 id="modalColabTitulo">Adicionar colaborador</h3><button onclick="closeModal('modalColab')">✕</button></div>
     <div class="modal-body">
-      <div class="field"><label>Nome completo</label><input type="text" placeholder="Nome do colaborador"></div>
+      <div class="field"><label>Nome completo</label><input type="text" id="colabNomeInput" placeholder="Nome do colaborador"></div>
       <div class="field-row">
-        <div class="field"><label>CPF</label><input type="text" placeholder="000.000.000-00"></div>
-        <div class="field"><label>Loja / Unidade</label><input type="text" placeholder="Ex: Cabana Botafogo"></div>
+        <div class="field"><label>CPF</label><input type="text" id="colabCpfInput" placeholder="000.000.000-00"></div>
+        <div class="field"><label>Loja / Unidade</label><input type="text" id="colabLojaInput" placeholder="Ex: Cabana Botafogo"></div>
       </div>
       <div class="field-row">
         <div class="field">
           <label>Cargo</label>
-          <select>
+          <select id="colabCargoInput">
             <option>Atendente de Salão</option><option>Atendente de Caixa</option><option>Cozinheiro(a)</option>
             <option>Auxiliar de Cozinha</option><option>Entregador(a) / Delivery</option><option>Líder de Loja</option>
             <option>Gerente de Loja</option><option>Gerente Regional</option><option>Administrativo</option>
@@ -585,24 +578,37 @@
         </div>
         <div class="field">
           <label>Nível de acesso</label>
-          <select><option>Colaborador</option><option>Admin</option></select>
+          <select id="colabNivelInput"><option>Colaborador</option><option>Admin</option></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Local</label>
+          <select id="colabLocalInput"><option>Loja</option><option>Fábrica</option><option>Escritório</option></select>
+        </div>
+        <div class="field">
+          <label>Regional</label>
+          <input type="text" id="colabRegionalInput" placeholder="Ex: Regional Fulano">
+          <small class="hint">Grupo de lojas que respondem pra um mesmo responsável.</small>
         </div>
       </div>
       <div class="field" id="senhaSection" style="display:none; border-top:1px solid var(--line); padding-top:16px; margin-top:6px;">
         <label>Senha</label>
         <div id="senhaResetBox">
-          <button type="button" class="btn-secondary" style="width:100%;" onclick="resetSenhaColab()">🔑 Redefinir senha</button>
+          <button type="button" class="btn-secondary" style="width:100%;" onclick="resetSenhaColab()">🔑 Gerar nova senha temporária</button>
+          <small class="hint" id="senhaResetHint" style="display:block; margin-top:6px;">Só é possível gerar uma nova senha se a pessoa ainda não tiver criado a senha pessoal dela, ou se a conta tiver sido apagada no Firebase Console.</small>
         </div>
         <div id="senhaResetResult" style="display:none; background:var(--cream); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-top:4px;">
           <div style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">Nova senha temporária:</div>
           <div style="font-family:var(--display); font-size:20px; font-weight:400; letter-spacing:1px; margin-bottom:10px;" id="senhaTempValue">0000</div>
-          <small class="hint" style="color:#B8622C;">⚠️ Esta é uma senha <b>temporária</b>, visível só agora. O colaborador será obrigado a criar uma senha nova e pessoal no próximo acesso — a partir daí, ninguém no painel Admin consegue ver ou recuperar a senha dele, nem mesmo você. Se ele esquecer de novo, repita esse processo.</small>
+          <small class="hint" style="color:#B8622C;">⚠️ Esta é uma senha <b>temporária</b>, visível só agora. O colaborador será obrigado a criar uma senha nova e pessoal no próximo acesso — a partir daí, ninguém no painel Admin consegue ver ou recuperar a senha dele, nem mesmo você. Se ele esquecer de novo, apague a conta dele em Authentication → Users no Firebase Console e clique em "Gerar nova senha temporária" de novo.</small>
         </div>
       </div>
+      <div id="colabSalvarErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600; margin-top:4px;"></div>
     </div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="closeModal('modalColab')">Cancelar</button>
-      <button class="btn-primary">Adicionar →</button>
+      <button class="btn-primary" id="btnSalvarColab" onclick="salvarColaborador()">Adicionar →</button>
     </div>
   </div>
 </div>
@@ -616,22 +622,174 @@ function goTab(name, el){
 }
 function openModal(id){ document.getElementById(id).style.display='flex'; }
 function closeModal(id){ document.getElementById(id).style.display='none'; }
-function editCurso(nome){
-  document.querySelector('#modalCurso .modal-head h3').textContent = 'Editar curso';
-  document.querySelector('#modalCurso input[type="text"]').value = nome;
-  document.querySelector('#modalCurso .btn-primary').textContent = 'Salvar alterações →';
-  openModal('modalCurso');
+
+/* ===================== BIBLIOTECA ===================== */
+let bibliotecaCache = [];
+let filtroBibAtual = 'Todos';
+let bibEditandoId = null;
+
+function iniciarBiblioteca(){
+  onSnapshot(collection(db, 'biblioteca'), (snapshot) => {
+    bibliotecaCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderBiblioteca();
+  }, (err) => console.error('Erro ao carregar biblioteca:', err));
 }
-function editPdf(nome){
-  document.querySelector('#modalPdf .modal-head h3').textContent = 'Substituir material';
-  document.querySelector('#modalPdf input[type="text"]').value = nome;
-  document.querySelector('#modalPdf .btn-primary').textContent = 'Salvar alterações →';
+
+function filtrarBiblioteca(filtro, el){
+  filtroBibAtual = filtro;
+  document.querySelectorAll('#bibFiltroTabs .ptab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  renderBiblioteca();
+}
+
+function renderBiblioteca(){
+  const statRow = document.getElementById('bibStatRow');
+  const tbody = document.getElementById('bibTableBody');
+  if (!statRow) return;
+
+  const total = bibliotecaCache.length;
+  const pops = bibliotecaCache.filter(m => m.Categoria === 'POP').length;
+  const politicas = bibliotecaCache.filter(m => m.Categoria === 'Política').length;
+  const guias = bibliotecaCache.filter(m => m.Categoria === 'Guia').length;
+  statRow.innerHTML = `
+    <div class="stat"><span>Documentos publicados</span><b>${total}</b><small>catálogo atual</small></div>
+    <div class="stat"><span>POPs</span><b>${pops}</b></div>
+    <div class="stat"><span>Políticas</span><b>${politicas}</b></div>
+    <div class="stat"><span>Guias &amp; materiais de apoio</span><b>${guias}</b></div>
+  `;
+
+  const cores = { POP: '#4F9C40', 'Política': '#D89840', Guia: '#D6699E' };
+  const emojis = { POP: '📄', 'Política': '📋', Guia: '📘' };
+  const lista = filtroBibAtual === 'Todos' ? bibliotecaCache : bibliotecaCache.filter(m => m.Categoria === filtroBibAtual);
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum material cadastrado ainda.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(m => {
+    const publico = (m.CargosEspecificos && Array.isArray(m.Cargos) && m.Cargos.length) ? m.Cargos.join(', ') : 'Todos os públicos';
+    const atualizado = m.AtualizadoEm && m.AtualizadoEm.toDate ? m.AtualizadoEm.toDate().toLocaleDateString('pt-BR') : '—';
+    const cor = cores[m.Categoria] || '#4F9C40';
+    const emoji = emojis[m.Categoria] || '📄';
+    return `<tr>
+      <td><div class="course-cell"><div class="course-thumb" style="background:${cor}">${emoji}</div><div><b>${m.Titulo || '(sem título)'}</b><small>PDF</small></div></div></td>
+      <td>${m.Categoria || '—'}</td>
+      <td>${publico}</td>
+      <td>${atualizado}</td>
+      <td class="row-actions"><button onclick="editarMaterial('${m.id}')">Editar</button><button class="danger" onclick="removerMaterial('${m.id}')">Remover</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function limparModalPdf(){
+  bibEditandoId = null;
+  document.getElementById('pdfModalTitulo').textContent = 'Novo material';
+  document.getElementById('pdfTituloInput').value = '';
+  document.getElementById('pdfCategoriaInput').selectedIndex = 0;
+  document.getElementById('pdfLinkInput').value = '';
+  document.getElementById('pdfCargosInput').value = '';
+  const toggle = document.getElementById('pdfVisibToggle');
+  toggle.children[0].classList.add('on');
+  toggle.children[1].classList.remove('on');
+  document.getElementById('pdfCargosBlock').style.display = 'none';
+  document.getElementById('pdfSalvarErro').style.display = 'none';
+}
+
+window.abrirNovoMaterial = function(){
+  limparModalPdf();
   openModal('modalPdf');
-}
+};
+
+window.editarMaterial = function(id){
+  const m = bibliotecaCache.find(x => x.id === id);
+  if (!m) return;
+  limparModalPdf();
+  bibEditandoId = id;
+  document.getElementById('pdfModalTitulo').textContent = 'Editar material';
+  document.getElementById('pdfTituloInput').value = m.Titulo || '';
+  document.getElementById('pdfCategoriaInput').value = m.Categoria || 'POP';
+  document.getElementById('pdfLinkInput').value = m.LinkURL || '';
+  if (m.CargosEspecificos && Array.isArray(m.Cargos) && m.Cargos.length) {
+    const toggle = document.getElementById('pdfVisibToggle');
+    toggle.children[0].classList.remove('on');
+    toggle.children[1].classList.add('on');
+    document.getElementById('pdfCargosBlock').style.display = 'block';
+    document.getElementById('pdfCargosInput').value = m.Cargos.join(', ');
+  }
+  openModal('modalPdf');
+};
+
+window.setPdfVisib = function(btn, show){
+  btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('pdfCargosBlock').style.display = show ? 'block' : 'none';
+};
+
+window.salvarMaterial = async function(){
+  const titulo = document.getElementById('pdfTituloInput').value.trim();
+  const link = document.getElementById('pdfLinkInput').value.trim();
+  const erroEl = document.getElementById('pdfSalvarErro');
+  if (!titulo || !link) {
+    erroEl.textContent = 'Preenche o nome e o link do material antes de salvar.';
+    erroEl.style.display = 'block';
+    return;
+  }
+  const especifico = document.getElementById('pdfVisibToggle').children[1].classList.contains('on');
+  const cargos = especifico
+    ? document.getElementById('pdfCargosInput').value.split(',').map(c => c.trim()).filter(Boolean)
+    : [];
+  const dados = {
+    Titulo: titulo,
+    Categoria: document.getElementById('pdfCategoriaInput').value,
+    LinkURL: link,
+    CargosEspecificos: especifico,
+    Cargos: cargos,
+    AtualizadoEm: serverTimestamp(),
+  };
+  try {
+    if (bibEditandoId) {
+      await setDoc(doc(db, 'biblioteca', bibEditandoId), dados, { merge: true });
+    } else {
+      dados.CriadoEm = serverTimestamp();
+      await addDoc(collection(db, 'biblioteca'), dados);
+    }
+    closeModal('modalPdf');
+  } catch (err) {
+    console.error('Erro ao salvar material:', err);
+    erroEl.textContent = 'Não foi possível salvar agora. Tenta de novo em alguns segundos.';
+    erroEl.style.display = 'block';
+  }
+};
+
+window.removerMaterial = async function(id){
+  const m = bibliotecaCache.find(x => x.id === id);
+  if (!m) return;
+  if (!confirm(`Remover "${m.Titulo}" da biblioteca? Essa ação não pode ser desfeita.`)) return;
+  try {
+    await deleteDoc(doc(db, 'biblioteca', id));
+  } catch (err) {
+    console.error('Erro ao remover material:', err);
+    alert('Não foi possível remover agora. Tenta de novo em alguns segundos.');
+  }
+};
+
 function setVisib(btn, show){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   document.getElementById('visibChips').style.display = show ? 'flex' : 'none';
+  const bloco = document.getElementById('cursoPublicoSalvoBlock');
+  if (bloco) bloco.style.display = show ? 'flex' : 'none';
+}
+function setSelo(btn, valor){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+function onArquivoEscolhido(input, labelId){
+  const label = document.getElementById(labelId);
+  if(label && input.files && input.files[0]){
+    label.textContent = `Selecionado: ${input.files[0].name}`;
+  }
 }
 function abrirModalCategoria(){
   document.getElementById('catNomeInput').value = '';
@@ -643,7 +801,7 @@ function setCatCor(btn){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
 }
-function salvarCategoria(){
+window.salvarCategoria = async function(){
   const nome = document.getElementById('catNomeInput').value.trim();
   const emoji = document.getElementById('catEmojiInput').value.trim() || '📚';
   const corBtn = document.querySelector('#catCorToggle button.on');
@@ -652,22 +810,19 @@ function salvarCategoria(){
     alert('Dá um nome pra categoria antes de criar.');
     return;
   }
-  // atualiza o select do modal de curso
-  const select = document.getElementById('categoriaSelect');
-  if(select){
-    const opt = document.createElement('option');
-    opt.textContent = `${emoji} ${nome}`;
-    opt.selected = true;
-    select.appendChild(opt);
+  if (categoriasParaExibir().some(c => c.nome.toLowerCase() === nome.toLowerCase())) {
+    alert('Já existe uma categoria com esse nome.');
+    return;
   }
-  // se estiver rodando dentro do protótipo completo, atualiza a Home também
-  if(typeof TRILHAS !== 'undefined'){
-    TRILHAS.push({ nome, emoji, cor, desc: `Treinamentos de ${nome.toLowerCase()}.` });
-    if(typeof window.renderCategoryChips === 'function') window.renderCategoryChips();
+  try {
+    await addDoc(collection(db, 'categorias'), { Nome: nome, Emoji: emoji, Cor: cor, CriadoEm: serverTimestamp() });
+    categoriaRecemCriada = nome;
+    closeModal('modalCategoria');
+  } catch (err) {
+    console.error('Erro ao criar categoria:', err);
+    alert('Não foi possível criar a categoria agora. Tenta de novo em alguns segundos.');
   }
-  closeModal('modalCategoria');
-  alert(`Categoria "${emoji} ${nome}" criada! Ela já aparece no campo Categoria do curso e nos chips da Home.\n\n(Nesse protótipo a categoria fica salva só durante a sessão — quando conectarmos o Firestore, ela passa a ser permanente.)`);
-}
+};
 function setTipoConteudo(btn, tipo){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
@@ -676,8 +831,8 @@ function setTipoConteudo(btn, tipo){
   const hint = document.getElementById('linkFieldHint');
   const map = {
     canva: { label: 'Link do curso no Canva', ph: 'https://seu-link.my.canva.site/...', hint: 'Cole aqui o link de compartilhamento do Canva Site ou da apresentação. É o único lugar que você vai colar isso. A plataforma faz o resto.' },
-    video: { label: 'Link do vídeo (YouTube, Vimeo) ou upload', ph: 'https://youtube.com/watch?v=... ou arraste o arquivo', hint: 'Aceita link de plataformas de vídeo ou upload direto do arquivo (MP4). A trilha continua a mesma, só o formato do conteúdo muda.' },
-    audio: { label: 'Link do áudio (podcast) ou upload', ph: 'https://... ou arraste o arquivo MP3', hint: 'Aceita link de host de podcast ou upload direto do arquivo (MP3). Aparece com player de áudio na tela do colaborador.' },
+    video: { label: 'Link do vídeo (YouTube, Vimeo, Google Drive)', ph: 'https://youtube.com/watch?v=...', hint: 'Cole o link de qualquer plataforma de vídeo. Dica: no YouTube, use "não listado" pra não aparecer em buscas públicas.' },
+    audio: { label: 'Link do áudio (podcast, Google Drive)', ph: 'https://...', hint: 'Cole o link de um host de podcast ou de um arquivo compartilhado. Aparece com player de áudio na tela do colaborador.' },
     link: { label: 'URL do conteúdo externo', ph: 'https://...', hint: 'Qualquer link de terceiros. O colaborador vê um botão pra abrir o conteúdo em nova aba.' },
   };
   const cfg = map[tipo];
@@ -685,33 +840,888 @@ function setTipoConteudo(btn, tipo){
   input.placeholder = cfg.ph;
   hint.textContent = cfg.hint;
 }
-function novoColab(){
-  document.querySelector('#modalColab .modal-head h3').textContent = 'Adicionar colaborador';
-  document.querySelectorAll('#modalColab input[type="text"]').forEach(i=>i.value='');
-  document.querySelector('#modalColab .btn-primary').textContent = 'Adicionar →';
-  document.getElementById('senhaSection').style.display = 'none';
-  openModal('modalColab');
-}
-function editColab(nome){
-  document.querySelector('#modalColab .modal-head h3').textContent = 'Editar colaborador';
-  document.querySelector('#modalColab input[type="text"]').value = nome;
-  document.querySelector('#modalColab .btn-primary').textContent = 'Salvar alterações →';
-  document.getElementById('senhaSection').style.display = 'block';
-  document.getElementById('senhaResetBox').style.display = 'block';
-  document.getElementById('senhaResetResult').style.display = 'none';
-  openModal('modalColab');
-}
-function resetSenhaColab(){
-  const cpfInput = document.querySelectorAll('#modalColab input[type="text"]')[1];
-  const cpfDigits = (cpfInput && cpfInput.value.replace(/\D/g,'')) || '';
-  const temp = cpfDigits.length >= 4 ? cpfDigits.slice(-4) : String(Math.floor(1000 + Math.random()*9000));
-  document.getElementById('senhaTempValue').textContent = temp;
-  document.getElementById('senhaResetBox').style.display = 'none';
-  document.getElementById('senhaResetResult').style.display = 'block';
-}
 document.querySelectorAll('.visib-chip').forEach(chip=>{
   chip.addEventListener('click', ()=> chip.classList.toggle('on'));
 });
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // firebaseConfig real do projeto Cabana School (mesmo do index.html / home.html)
+  const firebaseConfig = {
+    apiKey: "AIzaSyALJzDqdBpic88-0CnKXCBUpvMhfilskkg",
+    authDomain: "cabana-school-c.firebaseapp.com",
+    projectId: "cabana-school-c",
+    storageBucket: "cabana-school-c.firebasestorage.app",
+    messagingSenderId: "299980031099",
+    appId: "1:299980031099:web:afcd83482c194d35400ede"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // app "secundário": usado só pra criar/checar contas de colaboradores sem afetar a sessão da admin logada
+  const secondaryApp = initializeApp(firebaseConfig, 'secondary');
+  const secondaryAuth = getAuth(secondaryApp);
+
+  window.fazerLogoutAdmin = async function(){
+    try { await signOut(auth); } catch(e){ console.error(e); }
+    location.href = 'index.html';
+  };
+
+  // trava o painel: só entra quem está logado E é Admin de verdade (checado no Firestore)
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { location.href = 'index.html'; return; }
+    const cpf = (user.email || '').split('@')[0];
+    let dados = {};
+    try {
+      const snap = await getDoc(doc(db, 'colaboradores', cpf));
+      if (snap.exists()) dados = snap.data();
+    } catch (err) {
+      console.error('Erro ao verificar nível de acesso:', err);
+    }
+    if (dados.Nivel !== 'Admin') {
+      alert('Você não tem acesso ao Painel Admin.');
+      location.href = 'home.html';
+      return;
+    }
+    renderCategoriaSelect();
+    iniciarCategorias();
+    iniciarPublicos();
+    iniciarCursos();
+    iniciarColaboradores();
+    iniciarRelatorios();
+    iniciarBiblioteca();
+  });
+
+  /* ===================== CURSOS ===================== */
+  /* ===================== CATEGORIAS ===================== */
+  const CATEGORIAS_PADRAO = [
+    { nome: 'Onboarding', emoji: '🍔', cor: '#4F9C40' },
+    { nome: 'Operação', emoji: '👨‍🍳', cor: '#4F9C40' },
+    { nome: 'Liderança', emoji: '👩‍💼', cor: '#D6699E' },
+  ];
+  let categoriasCache = [];
+  let categoriaRecemCriada = null;
+
+  function categoriasParaExibir(){
+    return categoriasCache.length ? categoriasCache : CATEGORIAS_PADRAO;
+  }
+
+  function iniciarCategorias(){
+    onSnapshot(collection(db, 'categorias'), (snapshot) => {
+      categoriasCache = snapshot.docs.map(d => ({ nome: d.data().Nome, emoji: d.data().Emoji, cor: d.data().Cor }));
+      renderCategoriaSelect();
+    }, (err) => console.error('Erro ao carregar categorias:', err));
+  }
+
+  function renderCategoriaSelect(){
+    const select = document.getElementById('categoriaSelect');
+    if (!select) return;
+    const valorAtual = categoriaRecemCriada || select.value;
+    select.innerHTML = categoriasParaExibir().map(c =>
+      `<option value="${c.nome}">${c.emoji} ${c.nome}</option>`
+    ).join('');
+    if (valorAtual) select.value = valorAtual;
+    categoriaRecemCriada = null;
+  }
+
+  /* ===================== PÚBLICOS-ALVO REUTILIZÁVEIS ===================== */
+  let publicosCache = [];
+
+  function iniciarPublicos(){
+    onSnapshot(collection(db, 'publicos'), (snapshot) => {
+      publicosCache = snapshot.docs.map(d => ({ id: d.id, nome: d.data().Nome, cargos: d.data().Cargos || [] }));
+      renderPublicoSelects();
+    }, (err) => console.error('Erro ao carregar públicos-alvo:', err));
+  }
+
+  function renderPublicoSelects(){
+    const opcoes = '<option value="">Carregar um público salvo…</option>' +
+      publicosCache.map(p => `<option value="${p.nome}">${p.nome} (${p.cargos.length})</option>`).join('');
+    ['cursoPublicoSalvoSelect', 'pdfPublicoSalvoSelect'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = opcoes;
+    });
+  }
+
+  window.aplicarPublicoSalvo = function(nome, containerId){
+    if (!nome) return;
+    const publico = publicosCache.find(p => p.nome === nome);
+    if (!publico) return;
+    document.querySelectorAll(`#${containerId} .visib-chip`).forEach(chip => {
+      chip.classList.toggle('on', publico.cargos.includes(chip.textContent.trim()));
+    });
+  };
+
+  window.aplicarPublicoSalvoTexto = function(nome, inputId){
+    if (!nome) return;
+    const publico = publicosCache.find(p => p.nome === nome);
+    if (!publico) return;
+    document.getElementById(inputId).value = publico.cargos.join(', ');
+  };
+
+  window.salvarPublicoAtual = async function(containerId){
+    const cargos = [...document.querySelectorAll(`#${containerId} .visib-chip.on`)].map(ch => ch.textContent.trim());
+    if (!cargos.length) {
+      alert('Marca pelo menos um cargo antes de salvar como público.');
+      return;
+    }
+    const nome = prompt('Nome pra esse público (ex: Liderança de loja):');
+    if (!nome) return;
+    try {
+      await addDoc(collection(db, 'publicos'), { Nome: nome.trim(), Cargos: cargos, CriadoEm: serverTimestamp() });
+      alert('Público salvo! Já aparece na lista pra reaproveitar em outros cursos e materiais.');
+    } catch (err) {
+      console.error('Erro ao salvar público:', err);
+      alert('Não foi possível salvar agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  window.salvarPublicoAtualTexto = async function(inputId){
+    const cargos = document.getElementById(inputId).value.split(',').map(c => c.trim()).filter(Boolean);
+    if (!cargos.length) {
+      alert('Preenche os cargos antes de salvar como público.');
+      return;
+    }
+    const nome = prompt('Nome pra esse público (ex: Liderança de loja):');
+    if (!nome) return;
+    try {
+      await addDoc(collection(db, 'publicos'), { Nome: nome.trim(), Cargos: cargos, CriadoEm: serverTimestamp() });
+      alert('Público salvo! Já aparece na lista pra reaproveitar em outros cursos e materiais.');
+    } catch (err) {
+      console.error('Erro ao salvar público:', err);
+      alert('Não foi possível salvar agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  function renderCursosStats(){
+    const comAcessoEl = document.getElementById('statCursosComAcesso');
+    if (!comAcessoEl) return; // ainda não carregou colaboradoresCache/progressoCache
+
+    const ativos = (typeof colaboradoresCache !== 'undefined' ? colaboradoresCache : []).filter(c => c.Status === 'ativo');
+    const progresso = typeof progressoCache !== 'undefined' ? progressoCache : [];
+
+    const comAcesso = ativos.filter(c => (c.Acessos || 0) > 0).length;
+    document.getElementById('statCursosComAcesso').textContent = comAcesso;
+    document.getElementById('statCursosComAcessoSub').textContent = ativos.length ? `de ${ativos.length} colaboradores ativos` : 'sem colaboradores ativos ainda';
+
+    const concluidosPorCpf = {};
+    progresso.forEach(p => {
+      if (p.Status !== 'concluido' || !p.Cpf) return;
+      concluidosPorCpf[p.Cpf] = true;
+    });
+    const comConclusao = ativos.filter(c => concluidosPorCpf[c.cpf]).length;
+    const adesao = ativos.length ? Math.round((comConclusao / ativos.length) * 100) : 0;
+    document.getElementById('statCursosAdesao').textContent = ativos.length ? adesao + '%' : '—';
+    document.getElementById('statCursosAdesaoSub').textContent = ativos.length ? `${comConclusao} concluíram ao menos 1 curso` : 'sem dados ainda';
+
+    const seteDiasAtras = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const conclusoesSemana = progresso.filter(p => {
+      if (p.Status !== 'concluido' || !p.ConcluidoEm || !p.ConcluidoEm.toDate) return false;
+      return p.ConcluidoEm.toDate().getTime() >= seteDiasAtras;
+    }).length;
+    document.getElementById('statConclusoesSemana').textContent = conclusoesSemana;
+  }
+
+  let cursosCache = [];
+  let filtroAtual = 'todos';
+  let cursoEditandoId = null;
+
+  function iniciarCursos(){
+    onSnapshot(collection(db, 'cursos'), (snapshot) => {
+      cursosCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderCursos();
+      if (window.renderRelatorios) window.renderRelatorios();
+      renderCursosStats();
+    }, (err) => console.error('Erro ao carregar cursos:', err));
+  }
+
+  function statusPill(status){
+    if (status === 'publicado') return '<span class="pill pub">Publicado</span>';
+    if (status === 'arquivado') return '<span class="pill draft">Arquivado</span>';
+    return '<span class="pill draft">Rascunho</span>';
+  }
+
+  function renderCursos(){
+    const tbody = document.getElementById('cursosTableBody');
+    if (!tbody) return;
+
+    const total = cursosCache.length;
+    const publicados = cursosCache.filter(c => c.Status === 'publicado').length;
+    const rascunhos = cursosCache.filter(c => c.Status === 'rascunho').length;
+    document.querySelector('[data-filtro="todos"]').textContent = `Todos (${total})`;
+    document.querySelector('[data-filtro="publicado"]').textContent = `Publicados (${publicados})`;
+    document.querySelector('[data-filtro="rascunho"]').textContent = `Rascunho (${rascunhos})`;
+    const statPub = document.getElementById('statPublicados');
+    if (statPub) statPub.textContent = publicados;
+
+    let lista = cursosCache.filter(c => c.Status !== 'arquivado');
+    if (filtroAtual !== 'todos') lista = lista.filter(c => c.Status === filtroAtual);
+
+    if (!lista.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum curso ${filtroAtual === 'todos' ? 'cadastrado ainda' : 'nesta categoria'}.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = lista.map(c => {
+      const capaStyle = c.CapaURL ? `background-image:url('${c.CapaURL}'); background-size:cover; background-position:center;` : `background:#B9AFA0`;
+      const visib = c.CargosEspecificos ? 'Cargos específicos' : 'Todos';
+      const subtitulo = c.Status === 'rascunho' ? 'rascunho · ' + (c.Link ? 'link salvo' : 'sem link ainda') : (c.Link || 'sem link');
+      const acaoExtra = c.Status === 'rascunho'
+        ? `<button class="danger" onclick="excluirCurso('${c.id}')">Excluir</button>`
+        : `<button class="danger" onclick="arquivarCurso('${c.id}')">Arquivar</button>`;
+      return `<tr>
+        <td><div class="course-cell"><div class="course-thumb" style="${capaStyle}">${c.CapaURL ? '' : '🍽️'}</div><div><b>${c.Titulo || '(sem título)'}</b><small>${subtitulo}</small></div></div></td>
+        <td>${c.Categoria || '—'}</td>
+        <td><span class="pill pub">${visib}</span></td>
+        <td>${c.Duracao || 'N/D'}</td>
+        <td>${statusPill(c.Status)}</td>
+        <td>—</td>
+        <td class="row-actions"><button onclick="editCurso('${c.id}')">Editar</button>${acaoExtra}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.filtrarCursos = function(filtro, el){
+    filtroAtual = filtro;
+    document.querySelectorAll('#cursoFiltroTabs .ptab').forEach(t => t.classList.remove('on'));
+    el.classList.add('on');
+    renderCursos();
+  };
+
+  function limparModalCurso(){
+    cursoEditandoId = null;
+    document.getElementById('modalCursoTitulo').textContent = 'Novo curso';
+    document.getElementById('cursoTituloInput').value = '';
+    document.getElementById('cursoDescInput').value = '';
+    document.getElementById('categoriaSelect').selectedIndex = 0;
+    document.getElementById('cursoDuracaoInput').value = '';
+    document.getElementById('linkFieldInput').value = '';
+    document.getElementById('cursoCapaInput').value = '';
+    document.getElementById('cursoCertInput').value = '';
+    document.getElementById('cursoValidadeInput').value = '';
+    document.getElementById('cursoSalvarErro').style.display = 'none';
+    document.querySelectorAll('#tipoConteudoToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
+    setTipoConteudo(document.querySelector('#tipoConteudoToggle button'), 'canva');
+    document.querySelectorAll('#visibToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
+    document.getElementById('visibChips').style.display = 'none';
+    document.querySelectorAll('#visibChips .visib-chip').forEach(ch => ch.classList.remove('on'));
+    document.querySelectorAll('#seloToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
+  }
+
+  window.abrirNovoCurso = function(){
+    limparModalCurso();
+    openModal('modalCurso');
+  };
+
+  window.editCurso = function(id){
+    const c = cursosCache.find(x => x.id === id);
+    if (!c) return;
+    limparModalCurso();
+    cursoEditandoId = id;
+    document.getElementById('modalCursoTitulo').textContent = 'Editar curso';
+    document.getElementById('cursoTituloInput').value = c.Titulo || '';
+    document.getElementById('cursoDescInput').value = c.Descricao || '';
+    document.getElementById('cursoDuracaoInput').value = c.Duracao || '';
+    document.getElementById('linkFieldInput').value = c.Link || '';
+    const catSelect = document.getElementById('categoriaSelect');
+    catSelect.value = c.Categoria || '';
+    if (catSelect.value !== c.Categoria) {
+      // curso antigo, salvo com o emoji embutido no texto — tenta casar pelo texto visível
+      [...catSelect.options].forEach((opt, i) => { if (opt.textContent === c.Categoria) catSelect.selectedIndex = i; });
+    }
+    if (c.TipoConteudo) {
+      const btnMap = { canva: 0, video: 1, audio: 2, link: 3 };
+      const idx = btnMap[c.TipoConteudo] ?? 0;
+      const btns = document.querySelectorAll('#tipoConteudoToggle button');
+      btns.forEach(b => b.classList.remove('on'));
+      if (btns[idx]) { btns[idx].classList.add('on'); setTipoConteudo(btns[idx], c.TipoConteudo); }
+    }
+    if (c.CargosEspecificos) {
+      const btns = document.querySelectorAll('#visibToggle button');
+      btns.forEach(b => b.classList.remove('on'));
+      if (btns[1]) btns[1].classList.add('on');
+      document.getElementById('visibChips').style.display = 'flex';
+      if (Array.isArray(c.Cargos)) {
+        document.querySelectorAll('#visibChips .visib-chip').forEach(ch => {
+          ch.classList.toggle('on', c.Cargos.includes(ch.textContent.trim()));
+        });
+      }
+    }
+    if (c.Selo) {
+      const seloMap = { nenhum: 0, novo: 1, destaque: 2 };
+      const btns = document.querySelectorAll('#seloToggle button');
+      btns.forEach(b => b.classList.remove('on'));
+      if (btns[seloMap[c.Selo]]) btns[seloMap[c.Selo]].classList.add('on');
+    }
+    if (c.CapaURL) document.getElementById('cursoCapaInput').value = c.CapaURL;
+    if (c.CertificadoModeloURL) document.getElementById('cursoCertInput').value = c.CertificadoModeloURL;
+    if (c.ValidadeMeses) document.getElementById('cursoValidadeInput').value = String(c.ValidadeMeses);
+    document.getElementById('btnSalvarRascunho').onclick = () => salvarCurso('rascunho');
+    document.getElementById('btnPublicarCurso').onclick = () => salvarCurso('publicado');
+    document.getElementById('btnPublicarCurso').textContent = c.Status === 'publicado' ? 'Salvar alterações →' : 'Publicar curso →';
+    openModal('modalCurso');
+  };
+
+  window.salvarCurso = async function(status){
+    const titulo = document.getElementById('cursoTituloInput').value.trim();
+    const erroEl = document.getElementById('cursoSalvarErro');
+    erroEl.style.display = 'none';
+    if (!titulo) {
+      erroEl.textContent = 'Dá um título pro curso antes de salvar.';
+      erroEl.style.display = 'block';
+      return;
+    }
+
+    const btnRascunho = document.getElementById('btnSalvarRascunho');
+    const btnPublicar = document.getElementById('btnPublicarCurso');
+    btnRascunho.disabled = true; btnPublicar.disabled = true;
+    const textoOriginalPublicar = btnPublicar.textContent;
+    if (status === 'publicado') btnPublicar.textContent = 'Salvando…'; else btnRascunho.textContent = 'Salvando…';
+
+    try {
+      const tipoBtn = document.querySelector('#tipoConteudoToggle button.on');
+      const tipoMap = ['canva','video','audio','link'];
+      const tipoIdx = tipoBtn ? [...tipoBtn.parentElement.children].indexOf(tipoBtn) : 0;
+      const seloBtn = document.querySelector('#seloToggle button.on');
+      const seloMap = ['nenhum','novo','destaque'];
+      const seloIdx = seloBtn ? [...seloBtn.parentElement.children].indexOf(seloBtn) : 0;
+      const cargosEspecificos = document.querySelectorAll('#visibToggle button')[1]?.classList.contains('on') || false;
+      const cargos = cargosEspecificos
+        ? [...document.querySelectorAll('#visibChips .visib-chip.on')].map(ch => ch.textContent.trim())
+        : [];
+
+      const dadosCurso = {
+        Titulo: titulo,
+        Descricao: document.getElementById('cursoDescInput').value.trim(),
+        Categoria: document.getElementById('categoriaSelect').value,
+        Duracao: document.getElementById('cursoDuracaoInput').value.trim(),
+        TipoConteudo: tipoMap[tipoIdx],
+        Link: document.getElementById('linkFieldInput').value.trim(),
+        CapaURL: document.getElementById('cursoCapaInput').value.trim(),
+        CertificadoModeloURL: document.getElementById('cursoCertInput').value.trim(),
+        ValidadeMeses: document.getElementById('cursoValidadeInput').value ? Number(document.getElementById('cursoValidadeInput').value) : null,
+        CargosEspecificos: cargosEspecificos,
+        Cargos: cargos,
+        Selo: seloMap[seloIdx],
+        Status: status,
+        AtualizadoEm: serverTimestamp(),
+      };
+
+      if (cursoEditandoId) {
+        await updateDoc(doc(db, 'cursos', cursoEditandoId), dadosCurso);
+      } else {
+        dadosCurso.CriadoEm = serverTimestamp();
+        const novoRef = doc(collection(db, 'cursos'));
+        await setDoc(novoRef, dadosCurso);
+      }
+
+      closeModal('modalCurso');
+    } catch (err) {
+      console.error('Erro ao salvar curso:', err);
+      erroEl.textContent = 'Não foi possível salvar. Tenta de novo em alguns segundos.';
+      erroEl.style.display = 'block';
+    } finally {
+      btnRascunho.disabled = false; btnPublicar.disabled = false;
+      btnRascunho.textContent = 'Salvar como rascunho';
+      btnPublicar.textContent = textoOriginalPublicar;
+    }
+  };
+
+  window.arquivarCurso = async function(id){
+    if (!confirm('Arquivar este curso? Ele some da lista, mas os dados continuam guardados.')) return;
+    try {
+      await updateDoc(doc(db, 'cursos', id), { Status: 'arquivado' });
+    } catch (err) {
+      console.error('Erro ao arquivar curso:', err);
+      alert('Não foi possível arquivar. Tenta de novo.');
+    }
+  };
+
+  window.excluirCurso = async function(id){
+    if (!confirm('Excluir este rascunho? Essa ação não pode ser desfeita.')) return;
+    try {
+      await deleteDoc(doc(db, 'cursos', id));
+    } catch (err) {
+      console.error('Erro ao excluir curso:', err);
+      alert('Não foi possível excluir. Tenta de novo.');
+    }
+  };
+
+  /* ===================== COLABORADORES ===================== */
+  let colaboradoresCache = [];
+  let filtroColabAtual = 'todos';
+  let colabEditandoCpf = null;
+
+  function iniciarColaboradores(){
+    onSnapshot(collection(db, 'colaboradores'), (snapshot) => {
+      colaboradoresCache = snapshot.docs.map(d => ({ cpf: d.id, ...d.data() }));
+      renderColaboradores();
+      if (window.renderRelatorios) window.renderRelatorios();
+      renderCursosStats();
+    }, (err) => console.error('Erro ao carregar colaboradores:', err));
+  }
+
+  function soDigitos(v){ return (v || '').replace(/\D/g, ''); }
+
+  function mascaraCpf(cpf){
+    if (!cpf || cpf.length !== 11) return cpf || '—';
+    return `***.${cpf.slice(3,6)}.***-${cpf.slice(9,11)}`;
+  }
+
+  function formatarData(ts){
+    if (!ts || !ts.toDate) return 'nunca acessou';
+    const d = ts.toDate();
+    return d.toLocaleDateString('pt-BR') + ', ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  window.renderColaboradores = function(){
+    const tbody = document.getElementById('colabTableBody');
+    if (!tbody) return;
+
+    const total = colaboradoresCache.length;
+    const acessaram = colaboradoresCache.filter(c => c.UltimoAcesso).length;
+    const nuncaAcessaram = total - acessaram;
+    const admins = colaboradoresCache.filter(c => c.Nivel === 'Admin').length;
+    document.getElementById('statAtivos').textContent = colaboradoresCache.filter(c => c.Status !== 'inativo').length;
+    document.getElementById('statAcessaram').textContent = acessaram;
+    document.getElementById('statNuncaAcessaram').textContent = nuncaAcessaram;
+    document.getElementById('statAdmins').textContent = admins;
+    document.querySelector('#colabFiltroTabs [data-filtro="todos"]').textContent = `Todos (${total})`;
+    document.querySelector('#colabFiltroTabs [data-filtro="nunca"]').textContent = `Nunca acessaram (${nuncaAcessaram})`;
+    document.querySelector('#colabFiltroTabs [data-filtro="admin"]').textContent = `Admins (${admins})`;
+
+    let lista = colaboradoresCache;
+    if (filtroColabAtual === 'nunca') lista = lista.filter(c => !c.UltimoAcesso);
+    if (filtroColabAtual === 'admin') lista = lista.filter(c => c.Nivel === 'Admin');
+
+    const busca = (document.getElementById('colabBusca')?.value || '').toLowerCase().trim();
+    if (busca) {
+      lista = lista.filter(c =>
+        (c.Nome || '').toLowerCase().includes(busca) ||
+        (c.Loja || '').toLowerCase().includes(busca) ||
+        (c.Cargo || '').toLowerCase().includes(busca)
+      );
+    }
+
+    if (!lista.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum colaborador encontrado.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = lista.map(c => `
+      <tr>
+        <td><b>${c.Nome || '(sem nome)'}</b></td>
+        <td class="cpf-mask">${mascaraCpf(c.cpf)}</td>
+        <td>${c.Loja || '—'}</td>
+        <td>${c.Cargo || '—'}</td>
+        <td><span class="pill ${c.Status === 'inativo' ? 'draft' : 'ativo'}">${c.Status === 'inativo' ? 'Inativo' : 'Ativo'}</span></td>
+        <td>${formatarData(c.UltimoAcesso)}</td>
+        <td>${c.Acessos || 0}</td>
+        <td><span class="pill ${c.Nivel === 'Admin' ? 'admin' : 'pub'}">${c.Nivel || 'Colaborador'}</span></td>
+        <td class="row-actions"><button class="link" onclick="editColab('${c.cpf}')">Editar</button></td>
+      </tr>`).join('');
+  };
+
+  window.filtrarColaboradores = function(filtro, el){
+    filtroColabAtual = filtro;
+    document.querySelectorAll('#colabFiltroTabs .ptab').forEach(t => t.classList.remove('on'));
+    el.classList.add('on');
+    renderColaboradores();
+  };
+
+  window.abrirNovoColab = function(){
+    colabEditandoCpf = null;
+    document.getElementById('modalColabTitulo').textContent = 'Adicionar colaborador';
+    document.getElementById('colabNomeInput').value = '';
+    document.getElementById('colabCpfInput').value = '';
+    document.getElementById('colabCpfInput').disabled = false;
+    document.getElementById('colabLojaInput').value = '';
+    document.getElementById('colabCargoInput').selectedIndex = 0;
+    document.getElementById('colabNivelInput').selectedIndex = 0;
+    document.getElementById('colabLocalInput').selectedIndex = 0;
+    document.getElementById('colabRegionalInput').value = '';
+    document.getElementById('btnSalvarColab').textContent = 'Adicionar →';
+    document.getElementById('colabSalvarErro').style.display = 'none';
+    document.getElementById('senhaSection').style.display = 'none';
+    document.getElementById('senhaResetBox').style.display = 'block';
+    document.getElementById('senhaResetResult').style.display = 'none';
+    const hint = document.getElementById('senhaResetHint');
+    hint.textContent = 'Só é possível gerar uma nova senha se a pessoa ainda não tiver criado a senha pessoal dela, ou se a conta tiver sido apagada no Firebase Console.';
+    hint.style.color = '';
+    openModal('modalColab');
+  };
+
+  window.editColab = function(cpf){
+    const c = colaboradoresCache.find(x => x.cpf === cpf);
+    if (!c) return;
+    colabEditandoCpf = cpf;
+    document.getElementById('modalColabTitulo').textContent = 'Editar colaborador';
+    document.getElementById('colabNomeInput').value = c.Nome || '';
+    document.getElementById('colabCpfInput').value = cpf;
+    document.getElementById('colabCpfInput').disabled = true; // CPF é o identificador, não muda depois de criado
+    document.getElementById('colabLojaInput').value = c.Loja || '';
+    const cargoSelect = document.getElementById('colabCargoInput');
+    [...cargoSelect.options].forEach((opt,i)=>{ if(opt.textContent === c.Cargo) cargoSelect.selectedIndex = i; });
+    document.getElementById('colabNivelInput').value = c.Nivel === 'Admin' ? 'Admin' : 'Colaborador';
+    document.getElementById('colabLocalInput').value = c.Local || 'Loja';
+    document.getElementById('colabRegionalInput').value = c.Regional || '';
+    document.getElementById('btnSalvarColab').textContent = 'Salvar alterações →';
+    document.getElementById('colabSalvarErro').style.display = 'none';
+    document.getElementById('senhaSection').style.display = 'block';
+    document.getElementById('senhaResetBox').style.display = 'block';
+    document.getElementById('senhaResetResult').style.display = 'none';
+    const hint = document.getElementById('senhaResetHint');
+    hint.textContent = 'Só é possível gerar uma nova senha se a pessoa ainda não tiver criado a senha pessoal dela, ou se a conta tiver sido apagada no Firebase Console.';
+    hint.style.color = '';
+    openModal('modalColab');
+  };
+
+  // cria a conta de login (Firebase Auth) só se ainda não existir uma pra esse CPF.
+  // usa o app secundário pra não derrubar a sessão de quem está usando o painel admin.
+  async function criarContaSeNaoExistir(cpf){
+    const email = `${cpf}@cabana.internal`;
+    const metodos = await fetchSignInMethodsForEmail(secondaryAuth, email);
+    if (metodos.length > 0) return { criada: false };
+    const senhaTemp = cpf.slice(-6);
+    await createUserWithEmailAndPassword(secondaryAuth, email, senhaTemp);
+    await signOut(secondaryAuth);
+    return { criada: true, senha: senhaTemp };
+  }
+
+  window.salvarColaborador = async function(){
+    const nome = document.getElementById('colabNomeInput').value.trim();
+    const cpf = soDigitos(document.getElementById('colabCpfInput').value);
+    const erroEl = document.getElementById('colabSalvarErro');
+    erroEl.style.display = 'none';
+    if (!nome || cpf.length !== 11) {
+      erroEl.textContent = 'Preenche o nome e um CPF válido (11 dígitos) antes de salvar.';
+      erroEl.style.display = 'block';
+      return;
+    }
+
+    const btn = document.getElementById('btnSalvarColab');
+    const textoOriginal = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Salvando…';
+
+    try {
+      const dados = {
+        Nome: nome,
+        Loja: document.getElementById('colabLojaInput').value.trim(),
+        Cargo: document.getElementById('colabCargoInput').value,
+        Nivel: document.getElementById('colabNivelInput').value,
+        Local: document.getElementById('colabLocalInput').value,
+        Regional: document.getElementById('colabRegionalInput').value.trim(),
+        Status: 'ativo',
+      };
+      await setDoc(doc(db, 'colaboradores', cpf), dados, { merge: true });
+
+      let mostrouSenha = false;
+      if (!colabEditandoCpf) {
+        // colaborador novo: garante que ele tenha login
+        const resultado = await criarContaSeNaoExistir(cpf);
+        if (resultado.criada) {
+          await setDoc(doc(db, 'colaboradores', cpf), { PrecisaTrocarSenha: true, CriadoEm: serverTimestamp() }, { merge: true });
+          mostrarSenhaTemp(resultado.senha);
+          mostrouSenha = true;
+        }
+      }
+
+      if (!mostrouSenha) {
+        closeModal('modalColab');
+      }
+    } catch (err) {
+      console.error('Erro ao salvar colaborador:', err);
+      erroEl.textContent = 'Não foi possível salvar. Confere os dados e tenta de novo.';
+      erroEl.style.display = 'block';
+    } finally {
+      btn.disabled = false; btn.textContent = textoOriginal;
+    }
+  };
+
+  function mostrarSenhaTemp(senha){
+    document.getElementById('senhaSection').style.display = 'block';
+    document.getElementById('senhaResetBox').style.display = 'none';
+    document.getElementById('senhaResetResult').style.display = 'block';
+    document.getElementById('senhaTempValue').textContent = senha;
+  }
+
+  window.resetSenhaColab = async function(){
+    const cpf = soDigitos(document.getElementById('colabCpfInput').value);
+    if (cpf.length !== 11) return;
+    const box = document.getElementById('senhaResetBox');
+    const hint = document.getElementById('senhaResetHint');
+    try {
+      const resultado = await criarContaSeNaoExistir(cpf);
+      if (resultado.criada) {
+        await setDoc(doc(db, 'colaboradores', cpf), { PrecisaTrocarSenha: true }, { merge: true });
+        mostrarSenhaTemp(resultado.senha);
+      } else {
+        hint.textContent = 'Essa pessoa já tem uma senha pessoal ativa. Pra gerar uma nova, primeiro apague a conta dela em Firebase Console → Authentication → Users (procure por ' + cpf + '@cabana.internal), depois clique aqui de novo.';
+        hint.style.color = '#B4462B';
+      }
+    } catch (err) {
+      console.error('Erro ao gerar senha:', err);
+      alert('Não foi possível gerar a senha. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  window.baixarModeloExcel = function(){
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['Nome', 'CPF', 'Loja', 'Cargo', 'Nivel'],
+      ['Ex: João da Silva', '12345678900', 'Cabana Botafogo', 'Atendente de Salão', 'Colaborador'],
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Colaboradores');
+    XLSX.writeFile(wb, 'Modelo_Base_Colaboradores.xlsx');
+  };
+
+  let arquivoExcelEscolhido = null;
+  window.onExcelEscolhido = function(input){
+    arquivoExcelEscolhido = input.files[0] || null;
+    document.getElementById('excelFileNome').textContent = arquivoExcelEscolhido ? arquivoExcelEscolhido.name : 'Escolher arquivo';
+    document.getElementById('btnSincronizar').disabled = !arquivoExcelEscolhido;
+  };
+
+  window.sincronizarPlanilha = async function(){
+    if (!arquivoExcelEscolhido) return;
+    const btn = document.getElementById('btnSincronizar');
+    const resultadoEl = document.getElementById('sincronizarResultado');
+    btn.disabled = true; btn.textContent = 'Sincronizando…';
+    resultadoEl.style.display = 'none';
+
+    try {
+      const dadosArquivo = await arquivoExcelEscolhido.arrayBuffer();
+      const wb = XLSX.read(dadosArquivo, { type: 'array' });
+      const primeiraAba = wb.Sheets[wb.SheetNames[0]];
+      const linhas = XLSX.utils.sheet_to_json(primeiraAba, { defval: '' });
+
+      if (!linhas.length) {
+        resultadoEl.textContent = 'A planilha está vazia ou num formato que não reconheço.';
+        resultadoEl.style.color = '#B4462B';
+        resultadoEl.style.display = 'block';
+        return;
+      }
+
+      const pegar = (linha, chaves) => {
+        for (const k of Object.keys(linha)) {
+          if (chaves.includes(k.trim().toLowerCase())) return String(linha[k]).trim();
+        }
+        return '';
+      };
+
+      let adicionados = 0, atualizados = 0, contasCriadas = 0;
+      const cpfsNaPlanilha = new Set();
+      const batch = writeBatch(db);
+
+      for (const linha of linhas) {
+        const nome = pegar(linha, ['nome']);
+        const cpf = soDigitos(pegar(linha, ['cpf']));
+        if (!nome || cpf.length !== 11) continue; // pula linha inválida
+        cpfsNaPlanilha.add(cpf);
+        const jaExistia = colaboradoresCache.some(c => c.cpf === cpf);
+
+        batch.set(doc(db, 'colaboradores', cpf), {
+          Nome: nome,
+          Loja: pegar(linha, ['loja', 'loja / unidade', 'unidade']),
+          Cargo: pegar(linha, ['cargo']),
+          Nivel: pegar(linha, ['nivel', 'nível', 'nivel de acesso']) === 'Admin' ? 'Admin' : 'Colaborador',
+          Local: pegar(linha, ['local', 'tipo de local', 'tipo']) || 'Loja',
+          Regional: pegar(linha, ['regional']),
+          Status: 'ativo',
+        }, { merge: true });
+
+        if (jaExistia) atualizados++; else adicionados++;
+      }
+
+      // quem estava cadastrado mas não veio na planilha nova: marca como inativo (preserva histórico)
+      let desativados = 0;
+      colaboradoresCache.forEach(c => {
+        if (!cpfsNaPlanilha.has(c.cpf) && c.Status !== 'inativo') {
+          batch.update(doc(db, 'colaboradores', c.cpf), { Status: 'inativo' });
+          desativados++;
+        }
+      });
+
+      await batch.commit();
+
+      // cria login só pra quem é realmente novo (evita mexer em quem já tinha conta)
+      for (const cpf of cpfsNaPlanilha) {
+        const jaExistia = colaboradoresCache.some(c => c.cpf === cpf);
+        if (jaExistia) continue;
+        try {
+          const resultado = await criarContaSeNaoExistir(cpf);
+          if (resultado.criada) {
+            await setDoc(doc(db, 'colaboradores', cpf), { PrecisaTrocarSenha: true, CriadoEm: serverTimestamp() }, { merge: true });
+            contasCriadas++;
+          }
+        } catch (err) {
+          console.error('Erro ao criar conta pro CPF ' + cpf, err);
+        }
+      }
+
+      resultadoEl.textContent = `✅ Sincronizado: ${adicionados} novo(s), ${atualizados} atualizado(s), ${desativados} desativado(s). ${contasCriadas} conta(s) de login criada(s) com senha = 6 últimos dígitos do CPF.`;
+      resultadoEl.style.color = 'var(--green-dark)';
+      resultadoEl.style.display = 'block';
+      arquivoExcelEscolhido = null;
+      document.getElementById('excelFileInput').value = '';
+      document.getElementById('excelFileNome').textContent = 'Escolher arquivo';
+    } catch (err) {
+      console.error('Erro ao sincronizar planilha:', err);
+      resultadoEl.textContent = 'Não consegui ler essa planilha. Confere se ela segue o modelo (colunas Nome, CPF, Loja, Cargo, Nivel) e tenta de novo.';
+      resultadoEl.style.color = '#B4462B';
+      resultadoEl.style.display = 'block';
+    } finally {
+      btn.disabled = true; // volta a ficar desabilitado até escolher outro arquivo
+      btn.textContent = 'Sincronizar';
+    }
+  };
+
+  /* ===================== RELATÓRIOS ===================== */
+  let progressoCache = [];
+
+  function iniciarRelatorios(){
+    onSnapshot(collection(db, 'progresso'), (snapshot) => {
+      progressoCache = snapshot.docs.map(d => d.data());
+      if (window.renderRelatorios) window.renderRelatorios();
+      renderCursosStats();
+    }, (err) => console.error('Erro ao carregar progresso:', err));
+  }
+
+  function renderBarras(grupos){
+    const chaves = Object.keys(grupos);
+    if (!chaves.length) return `<small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Sem dados ainda.</small>`;
+    return chaves.sort((a,b) => grupos[b].total - grupos[a].total).map(chave => {
+      const g = grupos[chave];
+      const pct = g.total ? Math.round((g.comConclusao / g.total) * 100) : 0;
+      return `
+        <div style="margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px;">
+            <span>${chave}</span><span style="color:var(--ink-soft);">${g.comConclusao}/${g.total} (${pct}%)</span>
+          </div>
+          <div style="background:var(--cream); border-radius:6px; height:8px; overflow:hidden;">
+            <div style="background:var(--green); height:100%; width:${pct}%;"></div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderRelatorios(){
+    const statRow = document.getElementById('relStatRow');
+    const lojaEl = document.getElementById('relPorLoja');
+    const cargoEl = document.getElementById('relPorCargo');
+    const localEl = document.getElementById('relPorLocal');
+    const regionalEl = document.getElementById('relPorRegional');
+    const rankingBody = document.getElementById('relColaboradorBody');
+    if (!statRow) return; // aba ainda não está no DOM
+
+    const ativos = colaboradoresCache.filter(c => c.Status === 'ativo');
+    const cursosPublicados = cursosCache.filter(c => c.Status === 'publicado');
+
+    // cpf -> Set de cursos concluídos | cursoId -> contagem de conclusões
+    const concluidosPorCpf = {};
+    const concluidosPorCurso = {};
+    progressoCache.forEach(p => {
+      if (p.Status !== 'concluido' || !p.Cpf || !p.CursoId) return;
+      if (!concluidosPorCpf[p.Cpf]) concluidosPorCpf[p.Cpf] = new Set();
+      concluidosPorCpf[p.Cpf].add(p.CursoId);
+      concluidosPorCurso[p.CursoId] = (concluidosPorCurso[p.CursoId] || 0) + 1;
+    });
+
+    const totalAtivos = ativos.length;
+    const comConclusao = ativos.filter(c => concluidosPorCpf[c.cpf] && concluidosPorCpf[c.cpf].size > 0).length;
+    const adesaoGeral = totalAtivos ? Math.round((comConclusao / totalAtivos) * 100) : 0;
+
+    let cursoMais = null, cursoMenos = null;
+    cursosPublicados.forEach(c => {
+      const qtd = concluidosPorCurso[c.id] || 0;
+      if (!cursoMais || qtd > (concluidosPorCurso[cursoMais.id] || 0)) cursoMais = c;
+      if (!cursoMenos || qtd < (concluidosPorCurso[cursoMenos.id] || 0)) cursoMenos = c;
+    });
+
+    // tempo até 1º acesso: só entra na média quem tem as duas datas (cadastros feitos a partir de agora)
+    const temposAcesso = ativos
+      .filter(c => c.CriadoEm && c.CriadoEm.toDate && c.PrimeiroAcesso && c.PrimeiroAcesso.toDate)
+      .map(c => Math.max(0, (c.PrimeiroAcesso.toDate() - c.CriadoEm.toDate()) / (1000 * 60 * 60 * 24)));
+    const tempoMedio = temposAcesso.length ? (temposAcesso.reduce((a,b) => a + b, 0) / temposAcesso.length) : null;
+
+    statRow.innerHTML = `
+      <div class="stat"><span>Adesão geral</span><b>${totalAtivos ? adesaoGeral + '%' : '—'}</b><small>${totalAtivos ? comConclusao + ' de ' + totalAtivos + ' colaboradores concluíram ao menos 1 curso' : 'sem colaboradores ativos ainda'}</small></div>
+      <div class="stat"><span>Curso mais concluído</span><b>${cursoMais ? (concluidosPorCurso[cursoMais.id] || 0) : '—'}</b><small>${cursoMais ? cursoMais.Titulo : 'sem cursos publicados ainda'}</small></div>
+      <div class="stat"><span>Curso com menor adesão</span><b>${cursoMenos ? (concluidosPorCurso[cursoMenos.id] || 0) : '—'}</b><small>${cursoMenos ? cursoMenos.Titulo : 'sem cursos publicados ainda'}</small></div>
+      <div class="stat"><span>Tempo médio até 1º acesso</span><b>${tempoMedio !== null ? Math.round(tempoMedio) + ' dias' : '—'}</b><small>${tempoMedio !== null ? 'baseado em ' + temposAcesso.length + ' colaborador' + (temposAcesso.length === 1 ? '' : 'es') : 'ainda sem dados suficientes (passa a contar a partir de novos cadastros)'}</small></div>
+    `;
+
+    const gruposLoja = {};
+    const gruposCargo = {};
+    const gruposLocal = {};
+    const gruposRegional = {};
+    ativos.forEach(c => {
+      const chaveLoja = c.Loja || '(sem loja)';
+      if (!gruposLoja[chaveLoja]) gruposLoja[chaveLoja] = { total: 0, comConclusao: 0 };
+      gruposLoja[chaveLoja].total++;
+      const chaveCargo = c.Cargo || '(sem cargo)';
+      if (!gruposCargo[chaveCargo]) gruposCargo[chaveCargo] = { total: 0, comConclusao: 0 };
+      gruposCargo[chaveCargo].total++;
+      const chaveLocal = c.Local || 'Loja';
+      if (!gruposLocal[chaveLocal]) gruposLocal[chaveLocal] = { total: 0, comConclusao: 0 };
+      gruposLocal[chaveLocal].total++;
+      const chaveRegional = c.Regional || '(sem regional)';
+      if (!gruposRegional[chaveRegional]) gruposRegional[chaveRegional] = { total: 0, comConclusao: 0 };
+      gruposRegional[chaveRegional].total++;
+      if (concluidosPorCpf[c.cpf] && concluidosPorCpf[c.cpf].size > 0) {
+        gruposLoja[chaveLoja].comConclusao++;
+        gruposCargo[chaveCargo].comConclusao++;
+        gruposLocal[chaveLocal].comConclusao++;
+        gruposRegional[chaveRegional].comConclusao++;
+      }
+    });
+    if (lojaEl) lojaEl.innerHTML = renderBarras(gruposLoja);
+    if (cargoEl) cargoEl.innerHTML = renderBarras(gruposCargo);
+    if (localEl) localEl.innerHTML = renderBarras(gruposLocal);
+    if (regionalEl) regionalEl.innerHTML = renderBarras(gruposRegional);
+
+    const totalCursos = cursosPublicados.length;
+    const linhas = ativos.map(c => {
+      const qtd = concluidosPorCpf[c.cpf] ? concluidosPorCpf[c.cpf].size : 0;
+      const pct = totalCursos ? Math.round((qtd / totalCursos) * 100) : 0;
+      return { nome: c.Nome || '—', loja: c.Loja || '—', qtd, pct, ultimoAcesso: c.UltimoAcesso };
+    }).sort((a, b) => b.qtd - a.qtd);
+
+    if (rankingBody) {
+      rankingBody.innerHTML = linhas.length
+        ? linhas.map(l => `<tr><td>${l.nome}</td><td>${l.loja}</td><td>${l.qtd}</td><td>${l.pct}%</td><td>${formatarData(l.ultimoAcesso)}</td></tr>`).join('')
+        : `<tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Sem colaboradores ativos ainda.</td></tr>`;
+    }
+
+    ultimoRankingCache = linhas;
+  }
+  window.renderRelatorios = renderRelatorios;
+
+  let ultimoRankingCache = [];
+
+  window.exportarRelatorioCSV = function(){
+    if (!ultimoRankingCache.length) {
+      alert('Ainda não há dados de colaboradores pra exportar.');
+      return;
+    }
+    const linhasCsv = [['Colaborador', 'Loja', 'Cursos concluídos', '% concluído', 'Último acesso']];
+    ultimoRankingCache.forEach(l => {
+      linhasCsv.push([l.nome, l.loja, l.qtd, l.pct + '%', formatarData(l.ultimoAcesso)]);
+    });
+    const csv = linhasCsv.map(linha => linha.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `relatorio-adesao-${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
 </script>
 </body>
 </html>
