@@ -392,45 +392,113 @@
         <div>
           <div class="crumb">Admin / Dados</div>
           <h1>Relatórios &amp; adesão</h1>
-          <p class="sub">Números em tempo real, com opção de exportar pra análise ou apresentação.</p>
+          <p class="sub">Números em tempo real, pensados pra ajudar decisão sobre desenvolvimento de pessoas — não só gráfico bonito.</p>
         </div>
         <button class="ghost-btn" onclick="exportarRelatorioCSV()">⬇ Exportar CSV/Excel</button>
       </div>
 
-      <div class="stat-row" id="relStatRow">
-        <div class="stat"><span>Adesão geral</span><b>—</b><small>carregando…</small></div>
-        <div class="stat"><span>Curso mais concluído</span><b>—</b><small>carregando…</small></div>
-        <div class="stat"><span>Curso com menor adesão</span><b>—</b><small>carregando…</small></div>
-        <div class="stat"><span>Tempo médio até 1º acesso</span><b>—</b><small>carregando…</small></div>
-      </div>
-
-      <div class="rep-grid">
-        <div class="rep-card">
-          <h4>Adesão por loja</h4>
-          <div id="relPorLoja"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
-        </div>
-        <div class="rep-card">
-          <h4>Adesão por cargo</h4>
-          <div id="relPorCargo"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
-        </div>
-        <div class="rep-card">
-          <h4>Adesão por tipo de local</h4>
-          <div id="relPorLocal"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
-        </div>
-        <div class="rep-card">
-          <h4>Adesão por regional</h4>
-          <div id="relPorRegional"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+      <div class="panel-tabs" style="margin-bottom:20px;">
+        <div class="lefttabs" id="relSubTabs">
+          <div class="ptab on" data-sub="executiva" onclick="mudarSubRelatorio('executiva', this)">Visão Executiva</div>
+          <div class="ptab" data-sub="colaboradores" onclick="mudarSubRelatorio('colaboradores', this)">Colaboradores</div>
+          <div class="ptab" data-sub="cursos" onclick="mudarSubRelatorio('cursos', this)">Cursos</div>
+          <div class="ptab" data-sub="organizacional" onclick="mudarSubRelatorio('organizacional', this)">Organizacional</div>
+          <div class="ptab" data-sub="acompanhamento" onclick="mudarSubRelatorio('acompanhamento', this)">Acompanhamento</div>
         </div>
       </div>
 
-      <div class="panel-card">
-        <div class="panel-tabs"><div class="lefttabs"><div class="ptab on">Adesão por colaborador</div></div></div>
-        <table>
-          <thead><tr><th>Colaborador</th><th>Loja</th><th>Cursos concluídos</th><th>% concluído</th><th>Último acesso</th></tr></thead>
-          <tbody id="relColaboradorBody">
-            <tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
-          </tbody>
-        </table>
+      <!-- ===== VISÃO EXECUTIVA ===== -->
+      <div id="relSub-executiva" class="rel-subview">
+        <div id="relAlertas" style="margin-bottom:20px;"></div>
+
+        <div class="stat-row" id="relStatRow">
+          <div class="stat"><span>Adesão geral</span><b>—</b><small>carregando…</small></div>
+          <div class="stat"><span>Taxa de conclusão</span><b>—</b><small>carregando…</small></div>
+          <div class="stat"><span>Total de cursos concluídos</span><b>—</b><small>carregando…</small></div>
+          <div class="stat"><span>Tempo médio até 1º acesso</span><b>—</b><small>carregando…</small></div>
+        </div>
+        <div class="stat-row" style="margin-top:14px;">
+          <div class="stat"><span>Tempo médio de conclusão</span><b id="statTempoConclusao">—</b><small id="statTempoConclusaoSub">carregando…</small></div>
+          <div class="stat"><span>Curso mais realizado</span><b id="statCursoMais2">—</b><small id="statCursoMais2Sub">carregando…</small></div>
+          <div class="stat"><span>Curso menos realizado</span><b id="statCursoMenos2">—</b><small id="statCursoMenos2Sub">carregando…</small></div>
+          <div class="stat"><span>Índice de engajamento médio</span><b id="statIndiceEngajamento">—</b><small>combina acesso, conclusão e obrigatórios (0-100)</small></div>
+        </div>
+
+        <div class="rep-grid" style="margin-top:20px;">
+          <div class="rep-card">
+            <h4>Evolução mensal de conclusões</h4>
+            <div id="relEvolucaoMensal"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+          <div class="rep-card">
+            <h4>🏆 Top 5 colaboradores</h4>
+            <div id="relTopColaboradores"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+          <div class="rep-card">
+            <h4>🏆 Top 3 lojas</h4>
+            <div id="relTopLojas"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+          <div class="rep-card">
+            <h4>🏆 Top 3 regionais</h4>
+            <div id="relTopRegionais"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== POR COLABORADOR ===== -->
+      <div id="relSub-colaboradores" class="rel-subview" style="display:none;">
+        <p class="sub" style="margin-bottom:14px;">Status: <b>Em dia</b> (acessou há ≤15 dias), <b>Atenção</b> (16-30 dias), <b>Crítico</b> (30+ dias ou nunca acessou).</p>
+        <div class="panel-card">
+          <table>
+            <thead><tr><th>Colaborador</th><th>Loja</th><th>Cargo</th><th>Concluídos</th><th>Pendentes</th><th>% concluído</th><th>Último acesso</th><th>Dias sem acessar</th><th>Situação</th><th>Índice</th></tr></thead>
+            <tbody id="relColaboradorBody">
+              <tr><td colspan="10" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== POR CURSO ===== -->
+      <div id="relSub-cursos" class="rel-subview" style="display:none;">
+        <div class="panel-card">
+          <table>
+            <thead><tr><th>Curso</th><th>Categoria</th><th>Tipo</th><th>Iniciados</th><th>Concluídos</th><th>Taxa de conclusão</th></tr></thead>
+            <tbody id="relCursoBody">
+              <tr><td colspan="6" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== ORGANIZACIONAL ===== -->
+      <div id="relSub-organizacional" class="rel-subview" style="display:none;">
+        <div class="rep-grid">
+          <div class="rep-card">
+            <h4>Adesão por loja</h4>
+            <div id="relPorLoja"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+          <div class="rep-card">
+            <h4>Adesão por cargo</h4>
+            <div id="relPorCargo"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+          <div class="rep-card">
+            <h4>Adesão por tipo de local</h4>
+            <div id="relPorLocal"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+          <div class="rep-card">
+            <h4>Adesão por regional</h4>
+            <div id="relPorRegional"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ACOMPANHAMENTO ===== -->
+      <div id="relSub-acompanhamento" class="rel-subview" style="display:none;">
+        <div class="rep-grid">
+          <div class="rep-card" style="grid-column:1 / -1;">
+            <h4>🚨 Nunca acessaram</h4>
+            <div id="relNuncaAcessaram"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -475,6 +543,7 @@
         <label>Modelo de certificado (opcional)</label>
         <input type="text" id="cursoCertInput" placeholder="Cole o link da imagem do certificado deste curso">
         <small class="hint">Usada pra gerar o certificado automático quando o colaborador conclui o curso.</small>
+      </div>
       </div>
       <div class="field">
         <label>Validade do certificado</label>
@@ -648,6 +717,12 @@ function onArquivoEscolhido(input, labelId){
     label.textContent = `Selecionado: ${input.files[0].name}`;
   }
 }
+function mudarSubRelatorio(sub, el){
+  document.querySelectorAll('#relSubTabs .ptab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.rel-subview').forEach(v => v.style.display = 'none');
+  document.getElementById('relSub-' + sub).style.display = 'block';
+}
 function abrirModalCargo(){
   document.getElementById('cargoNomeInput').value = '';
   openModal('modalCargo');
@@ -662,28 +737,6 @@ function setCatCor(btn){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
 }
-window.salvarCategoria = async function(){
-  const nome = document.getElementById('catNomeInput').value.trim();
-  const emoji = document.getElementById('catEmojiInput').value.trim() || '📚';
-  const corBtn = document.querySelector('#catCorToggle button.on');
-  const cor = corBtn ? corBtn.dataset.cor : '#4F9C40';
-  if(!nome){
-    alert('Dá um nome pra categoria antes de criar.');
-    return;
-  }
-  if (categoriasParaExibir().some(c => c.nome.toLowerCase() === nome.toLowerCase())) {
-    alert('Já existe uma categoria com esse nome.');
-    return;
-  }
-  try {
-    await addDoc(collection(db, 'categorias'), { Nome: nome, Emoji: emoji, Cor: cor, CriadoEm: serverTimestamp() });
-    categoriaRecemCriada = nome;
-    closeModal('modalCategoria');
-  } catch (err) {
-    console.error('Erro ao criar categoria:', err);
-    alert('Não foi possível criar a categoria agora. Tenta de novo em alguns segundos.');
-  }
-};
 function setTipoConteudo(btn, tipo){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
@@ -859,6 +912,29 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     if (valorAtual) select.value = valorAtual;
     categoriaRecemCriada = null;
   }
+
+  window.salvarCategoria = async function(){
+    const nome = document.getElementById('catNomeInput').value.trim();
+    const emoji = document.getElementById('catEmojiInput').value.trim() || '📚';
+    const corBtn = document.querySelector('#catCorToggle button.on');
+    const cor = corBtn ? corBtn.dataset.cor : '#4F9C40';
+    if(!nome){
+      alert('Dá um nome pra categoria antes de criar.');
+      return;
+    }
+    if (categoriasParaExibir().some(c => c.nome.toLowerCase() === nome.toLowerCase())) {
+      alert('Já existe uma categoria com esse nome.');
+      return;
+    }
+    try {
+      await addDoc(collection(db, 'categorias'), { Nome: nome, Emoji: emoji, Cor: cor, CriadoEm: serverTimestamp() });
+      categoriaRecemCriada = nome;
+      closeModal('modalCategoria');
+    } catch (err) {
+      console.error('Erro ao criar categoria:', err);
+      alert('Não foi possível criar a categoria agora. Tenta de novo em alguns segundos.');
+    }
+  };
 
   /* ===================== PÚBLICOS-ALVO REUTILIZÁVEIS ===================== */
   let publicosCache = [];
@@ -1461,6 +1537,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       // em tempo real pelo onSnapshot, e pode mudar no meio do processo (por causa do próprio
       // batch.commit() logo abaixo), então não dá pra confiar nele de novo depois de escrever
       const cpfsExistentesAntes = new Set(colaboradoresCache.map(c => c.cpf));
+      const porCpfAntes = {};
+      colaboradoresCache.forEach(c => { porCpfAntes[c.cpf] = c; });
 
       const pegar = (linha, chaves) => {
         for (const k of Object.keys(linha)) {
@@ -1469,24 +1547,65 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         return '';
       };
 
-      let adicionados = 0, atualizados = 0, contasCriadas = 0;
+      // ---- 1ª passada: só lê a planilha, não escreve nada ainda ----
+      const linhasValidas = [];
       const cpfsNaPlanilha = new Set();
-      const batch = writeBatch(db);
-
       for (const linha of linhas) {
         const nome = pegar(linha, ['nome']);
         const cpf = soDigitos(pegar(linha, ['cpf']));
         if (!nome || cpf.length !== 11) continue; // pula linha inválida
         cpfsNaPlanilha.add(cpf);
-        const jaExistia = cpfsExistentesAntes.has(cpf);
+        linhasValidas.push({
+          nome, cpf,
+          loja: pegar(linha, ['loja', 'loja / unidade', 'unidade']),
+          cargo: pegar(linha, ['cargo']),
+          nivel: pegar(linha, ['nivel', 'nível', 'nivel de acesso']) === 'Admin' ? 'Admin' : 'Colaborador',
+          local: pegar(linha, ['local', 'tipo de local', 'tipo']) || 'Loja',
+          regional: pegar(linha, ['regional']),
+        });
+      }
 
-        batch.set(doc(db, 'colaboradores', cpf), {
-          Nome: nome,
-          Loja: pegar(linha, ['loja', 'loja / unidade', 'unidade']),
-          Cargo: pegar(linha, ['cargo']),
-          Nivel: pegar(linha, ['nivel', 'nível', 'nivel de acesso']) === 'Admin' ? 'Admin' : 'Colaborador',
-          Local: pegar(linha, ['local', 'tipo de local', 'tipo']) || 'Loja',
-          Regional: pegar(linha, ['regional']),
+      // ---- monta um resumo do que vai mudar, pra confirmar antes de tocar em qualquer dado ----
+      const mudancasCargo = [];
+      linhasValidas.forEach(l => {
+        const antes = porCpfAntes[l.cpf];
+        if (antes && antes.Cargo && l.cargo && antes.Cargo !== l.cargo) {
+          mudancasCargo.push(`${l.nome}: "${antes.Cargo}" → "${l.cargo}"`);
+        }
+      });
+      const seriamDesativados = colaboradoresCache.filter(c => !cpfsNaPlanilha.has(c.cpf) && c.Status !== 'inativo');
+
+      let resumo = `Essa planilha tem ${linhasValidas.length} colaborador(es) válido(s).\n\n`;
+      if (mudancasCargo.length) {
+        resumo += `⚠️ ${mudancasCargo.length} pessoa(s) vão ter o CARGO alterado:\n` + mudancasCargo.slice(0, 10).join('\n') + (mudancasCargo.length > 10 ? `\n...e mais ${mudancasCargo.length - 10}` : '') + '\n\n';
+      }
+      if (seriamDesativados.length) {
+        resumo += `⚠️ ${seriamDesativados.length} pessoa(s) que estão ativas hoje NÃO aparecem nessa planilha e serão marcadas como INATIVAS:\n`
+          + seriamDesativados.slice(0, 10).map(c => c.Nome).join(', ') + (seriamDesativados.length > 10 ? `...e mais ${seriamDesativados.length - 10}` : '')
+          + '\n\nSe essa planilha não é a lista completa de todo mundo, cancela agora e confere o arquivo antes de tentar de novo.\n\n';
+      }
+      resumo += 'Confirma que quer aplicar essas mudanças?';
+
+      if ((mudancasCargo.length || seriamDesativados.length) && !confirm(resumo)) {
+        resultadoEl.textContent = 'Sincronização cancelada — nada foi alterado.';
+        resultadoEl.style.color = 'var(--ink-soft)';
+        resultadoEl.style.display = 'block';
+        return;
+      }
+
+      let adicionados = 0, atualizados = 0, contasCriadas = 0;
+      const batch = writeBatch(db);
+
+      for (const l of linhasValidas) {
+        const jaExistia = cpfsExistentesAntes.has(l.cpf);
+
+        batch.set(doc(db, 'colaboradores', l.cpf), {
+          Nome: l.nome,
+          Loja: l.loja,
+          Cargo: l.cargo,
+          Nivel: l.nivel,
+          Local: l.local,
+          Regional: l.regional,
           Status: 'ativo',
         }, { merge: true });
 
@@ -1574,31 +1693,63 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     }).join('');
   }
 
+  function renderListaCard(linhasHtml, vazioMsg, max){
+    if (!linhasHtml.length) return `<small class="hint" style="color:var(--ink-soft); font-size:12.5px;">${vazioMsg}</small>`;
+    const visiveis = linhasHtml.slice(0, max || 8);
+    const resto = linhasHtml.length - visiveis.length;
+    return visiveis.join('') + (resto > 0 ? `<div style="font-size:12px; color:var(--ink-soft); margin-top:8px;">+ ${resto} outro(s)</div>` : '');
+  }
+
+  function linhaSimples(texto, sub){
+    return `<div style="padding:8px 0; border-bottom:1px solid var(--line); font-size:13px;"><b>${texto}</b>${sub ? `<br><span style="color:var(--ink-soft); font-size:12px;">${sub}</span>` : ''}</div>`;
+  }
+
   function renderRelatorios(){
     const statRow = document.getElementById('relStatRow');
-    const lojaEl = document.getElementById('relPorLoja');
-    const cargoEl = document.getElementById('relPorCargo');
-    const localEl = document.getElementById('relPorLocal');
-    const regionalEl = document.getElementById('relPorRegional');
-    const rankingBody = document.getElementById('relColaboradorBody');
     if (!statRow) return; // aba ainda não está no DOM
 
     const ativos = colaboradoresCache.filter(c => c.Status === 'ativo');
     const cursosPublicados = cursosCache.filter(c => c.Status === 'publicado');
+    const agora = new Date();
 
-    // cpf -> Set de cursos concluídos | cursoId -> contagem de conclusões
-    const concluidosPorCpf = {};
-    const concluidosPorCurso = {};
+    // ---- agregações base a partir do progresso ----
+    const concluidosPorCpf = {};   // cpf -> Set(cursoId)
+    const iniciadosPorCpf = {};    // cpf -> Set(cursoId), inclui concluídos
+    const concluidosPorCurso = {}; // cursoId -> contagem
+    const iniciadosPorCurso = {};  // cursoId -> contagem
+    const temposConclusao = [];    // dias entre início e conclusão
+    const conclusoesPorMes = {};   // 'AAAA-MM' -> contagem
+    let totalIniciados = 0, totalConcluidos = 0;
+
     progressoCache.forEach(p => {
-      if (p.Status !== 'concluido' || !p.Cpf || !p.CursoId) return;
-      if (!concluidosPorCpf[p.Cpf]) concluidosPorCpf[p.Cpf] = new Set();
-      concluidosPorCpf[p.Cpf].add(p.CursoId);
-      concluidosPorCurso[p.CursoId] = (concluidosPorCurso[p.CursoId] || 0) + 1;
+      if (!p.Cpf || !p.CursoId) return;
+      if (!iniciadosPorCpf[p.Cpf]) iniciadosPorCpf[p.Cpf] = new Set();
+      iniciadosPorCpf[p.Cpf].add(p.CursoId);
+      iniciadosPorCurso[p.CursoId] = (iniciadosPorCurso[p.CursoId] || 0) + 1;
+      totalIniciados++;
+
+      if (p.Status === 'concluido') {
+        if (!concluidosPorCpf[p.Cpf]) concluidosPorCpf[p.Cpf] = new Set();
+        concluidosPorCpf[p.Cpf].add(p.CursoId);
+        concluidosPorCurso[p.CursoId] = (concluidosPorCurso[p.CursoId] || 0) + 1;
+        totalConcluidos++;
+
+        if (p.IniciadoEm && p.IniciadoEm.toDate && p.ConcluidoEm && p.ConcluidoEm.toDate) {
+          const dias = Math.max(0, (p.ConcluidoEm.toDate() - p.IniciadoEm.toDate()) / (1000 * 60 * 60 * 24));
+          temposConclusao.push(dias);
+        }
+        if (p.ConcluidoEm && p.ConcluidoEm.toDate) {
+          const d = p.ConcluidoEm.toDate();
+          const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          conclusoesPorMes[chave] = (conclusoesPorMes[chave] || 0) + 1;
+        }
+      }
     });
 
     const totalAtivos = ativos.length;
     const comConclusao = ativos.filter(c => concluidosPorCpf[c.cpf] && concluidosPorCpf[c.cpf].size > 0).length;
     const adesaoGeral = totalAtivos ? Math.round((comConclusao / totalAtivos) * 100) : 0;
+    const taxaConclusao = totalIniciados ? Math.round((totalConcluidos / totalIniciados) * 100) : 0;
 
     let cursoMais = null, cursoMenos = null;
     cursosPublicados.forEach(c => {
@@ -1607,23 +1758,108 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       if (!cursoMenos || qtd < (concluidosPorCurso[cursoMenos.id] || 0)) cursoMenos = c;
     });
 
-    // tempo até 1º acesso: só entra na média quem tem as duas datas (cadastros feitos a partir de agora)
     const temposAcesso = ativos
       .filter(c => c.CriadoEm && c.CriadoEm.toDate && c.PrimeiroAcesso && c.PrimeiroAcesso.toDate)
       .map(c => Math.max(0, (c.PrimeiroAcesso.toDate() - c.CriadoEm.toDate()) / (1000 * 60 * 60 * 24)));
     const tempoMedio = temposAcesso.length ? (temposAcesso.reduce((a,b) => a + b, 0) / temposAcesso.length) : null;
+    const tempoMedioConclusao = temposConclusao.length ? (temposConclusao.reduce((a,b) => a + b, 0) / temposConclusao.length) : null;
 
+    // ---- índice de engajamento por colaborador (0-100) ----
+    function calcularIndice(c){
+      const concluidos = concluidosPorCpf[c.cpf] ? concluidosPorCpf[c.cpf].size : 0;
+      const iniciados = iniciadosPorCpf[c.cpf] ? iniciadosPorCpf[c.cpf].size : 0;
+      const totalCursos = cursosPublicados.length || 1;
+      const acessoScore = Math.min((c.Acessos || 0) / 10, 1);
+      const concluidosScore = Math.min(concluidos / totalCursos, 1);
+      const iniciadosScore = Math.min(iniciados / totalCursos, 1);
+      let recenciaScore = 0;
+      if (c.UltimoAcesso && c.UltimoAcesso.toDate) {
+        const dias = (agora - c.UltimoAcesso.toDate()) / (1000 * 60 * 60 * 24);
+        recenciaScore = dias <= 7 ? 1 : dias <= 30 ? 0.6 : dias <= 60 ? 0.2 : 0;
+      }
+      return Math.round(100 * (acessoScore * 0.25 + concluidosScore * 0.35 + iniciadosScore * 0.2 + recenciaScore * 0.2));
+    }
+
+    const indicesPorCpf = {};
+    ativos.forEach(c => { indicesPorCpf[c.cpf] = calcularIndice(c); });
+    const indiceMedia = ativos.length ? Math.round(ativos.reduce((s, c) => s + indicesPorCpf[c.cpf], 0) / ativos.length) : null;
+
+    // ================= VISÃO EXECUTIVA =================
     statRow.innerHTML = `
-      <div class="stat"><span>Adesão geral</span><b>${totalAtivos ? adesaoGeral + '%' : '—'}</b><small>${totalAtivos ? comConclusao + ' de ' + totalAtivos + ' colaboradores concluíram ao menos 1 curso' : 'sem colaboradores ativos ainda'}</small></div>
-      <div class="stat"><span>Curso mais concluído</span><b>${cursoMais ? (concluidosPorCurso[cursoMais.id] || 0) : '—'}</b><small>${cursoMais ? cursoMais.Titulo : 'sem cursos publicados ainda'}</small></div>
-      <div class="stat"><span>Curso com menor adesão</span><b>${cursoMenos ? (concluidosPorCurso[cursoMenos.id] || 0) : '—'}</b><small>${cursoMenos ? cursoMenos.Titulo : 'sem cursos publicados ainda'}</small></div>
-      <div class="stat"><span>Tempo médio até 1º acesso</span><b>${tempoMedio !== null ? Math.round(tempoMedio) + ' dias' : '—'}</b><small>${tempoMedio !== null ? 'baseado em ' + temposAcesso.length + ' colaborador' + (temposAcesso.length === 1 ? '' : 'es') : 'ainda sem dados suficientes (passa a contar a partir de novos cadastros)'}</small></div>
+      <div class="stat"><span>Adesão geral</span><b>${totalAtivos ? adesaoGeral + '%' : '—'}</b><small>${totalAtivos ? comConclusao + ' de ' + totalAtivos + ' concluíram ao menos 1 curso' : 'sem colaboradores ativos ainda'}</small></div>
+      <div class="stat"><span>Taxa de conclusão</span><b>${totalIniciados ? taxaConclusao + '%' : '—'}</b><small>${totalIniciados ? totalConcluidos + ' de ' + totalIniciados + ' cursos iniciados foram concluídos' : 'ninguém iniciou um curso ainda'}</small></div>
+      <div class="stat"><span>Total de cursos concluídos</span><b>${totalConcluidos}</b><small>somando todos os colaboradores</small></div>
+      <div class="stat"><span>Tempo médio até 1º acesso</span><b>${tempoMedio !== null ? Math.round(tempoMedio) + ' dias' : '—'}</b><small>${tempoMedio !== null ? 'baseado em ' + temposAcesso.length + ' colaborador(es)' : 'ainda sem dados suficientes'}</small></div>
     `;
+    document.getElementById('statTempoConclusao').textContent = tempoMedioConclusao !== null ? Math.round(tempoMedioConclusao) + ' dias' : '—';
+    document.getElementById('statTempoConclusaoSub').textContent = tempoMedioConclusao !== null ? `baseado em ${temposConclusao.length} conclusão(ões)` : 'sem dados suficientes ainda';
+    document.getElementById('statCursoMais2').textContent = cursoMais ? (concluidosPorCurso[cursoMais.id] || 0) : '—';
+    document.getElementById('statCursoMais2Sub').textContent = cursoMais ? cursoMais.Titulo : 'sem cursos publicados ainda';
+    document.getElementById('statCursoMenos2').textContent = cursoMenos ? (concluidosPorCurso[cursoMenos.id] || 0) : '—';
+    document.getElementById('statCursoMenos2Sub').textContent = cursoMenos ? cursoMenos.Titulo : 'sem cursos publicados ainda';
+    document.getElementById('statIndiceEngajamento').textContent = indiceMedia !== null ? indiceMedia : '—';
 
-    const gruposLoja = {};
-    const gruposCargo = {};
-    const gruposLocal = {};
-    const gruposRegional = {};
+    // evolução mensal (últimos 6 meses)
+    const mesesNomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const ultimosMeses = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
+      ultimosMeses.push({ chave: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: `${mesesNomes[d.getMonth()]}/${String(d.getFullYear()).slice(2)}` });
+    }
+    const maxMes = Math.max(1, ...ultimosMeses.map(m => conclusoesPorMes[m.chave] || 0));
+    document.getElementById('relEvolucaoMensal').innerHTML = ultimosMeses.map(m => {
+      const qtd = conclusoesPorMes[m.chave] || 0;
+      const pct = Math.round((qtd / maxMes) * 100);
+      return `<div style="margin-bottom:10px;"><div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px;"><span>${m.label}</span><span style="color:var(--ink-soft);">${qtd}</span></div><div style="background:var(--cream); border-radius:6px; height:8px; overflow:hidden;"><div style="background:var(--green); height:100%; width:${pct}%;"></div></div></div>`;
+    }).join('');
+
+    // ================= POR COLABORADOR =================
+    const linhasColab = ativos.map(c => {
+      const concluidos = concluidosPorCpf[c.cpf] ? concluidosPorCpf[c.cpf].size : 0;
+      const totalCursos = cursosPublicados.length;
+      const pendentes = Math.max(0, totalCursos - concluidos);
+      const pct = totalCursos ? Math.round((concluidos / totalCursos) * 100) : 0;
+      let diasSemAcessar = null;
+      if (c.UltimoAcesso && c.UltimoAcesso.toDate) diasSemAcessar = Math.floor((agora - c.UltimoAcesso.toDate()) / (1000 * 60 * 60 * 24));
+      let situacao, corSit;
+      if (diasSemAcessar === null) { situacao = 'Nunca acessou'; corSit = '#B4462B'; }
+      else if (diasSemAcessar <= 15) { situacao = 'Em dia'; corSit = '#386F2D'; }
+      else if (diasSemAcessar <= 30) { situacao = 'Atenção'; corSit = '#D89840'; }
+      else { situacao = 'Crítico'; corSit = '#B4462B'; }
+      return { nome: c.Nome || '—', loja: c.Loja || '—', cargo: c.Cargo || '—', concluidos, pendentes, pct, ultimoAcesso: c.UltimoAcesso, diasSemAcessar, situacao, corSit, indice: indicesPorCpf[c.cpf] || 0, cpf: c.cpf };
+    }).sort((a, b) => b.concluidos - a.concluidos);
+
+    const colabBody = document.getElementById('relColaboradorBody');
+    if (colabBody) {
+      colabBody.innerHTML = linhasColab.length
+        ? linhasColab.map(l => `<tr><td>${l.nome}</td><td>${l.loja}</td><td>${l.cargo}</td><td>${l.concluidos}</td><td>${l.pendentes}</td><td>${l.pct}%</td><td>${formatarData(l.ultimoAcesso)}</td><td>${l.diasSemAcessar === null ? '—' : l.diasSemAcessar}</td><td><span style="color:${l.corSit}; font-weight:700;">${l.situacao}</span></td><td>${l.indice}</td></tr>`).join('')
+        : `<tr><td colspan="10" style="text-align:center; color:var(--ink-soft); padding:24px;">Sem colaboradores ativos ainda.</td></tr>`;
+    }
+    ultimoRankingCache = linhasColab.map(l => ({ nome: l.nome, loja: l.loja, qtd: l.concluidos, pct: l.pct, ultimoAcesso: l.ultimoAcesso }));
+
+    // top 5 colaboradores
+    document.getElementById('relTopColaboradores').innerHTML = renderListaCard(
+      linhasColab.slice(0, 5).map((l, i) => linhaSimples(`${i + 1}º ${l.nome}`, `${l.concluidos} curso(s) concluído(s) · índice ${l.indice}`)),
+      'Sem dados ainda.', 5
+    );
+
+    // ================= POR CURSO =================
+    const linhasCurso = cursosPublicados.map(c => {
+      const iniciados = iniciadosPorCurso[c.id] || 0;
+      const concluidos = concluidosPorCurso[c.id] || 0;
+      const taxa = iniciados ? Math.round((concluidos / iniciados) * 100) : null;
+      return { titulo: c.Titulo, categoria: c.Categoria || '—', tipo: c.TipoConteudo || '—', iniciados, concluidos, taxa };
+    }).sort((a, b) => b.concluidos - a.concluidos);
+
+    const cursoBody = document.getElementById('relCursoBody');
+    if (cursoBody) {
+      cursoBody.innerHTML = linhasCurso.length
+        ? linhasCurso.map(l => `<tr><td>${l.titulo}</td><td>${l.categoria}</td><td>${l.tipo}</td><td>${l.iniciados}</td><td>${l.concluidos}</td><td>${l.taxa === null ? '—' : l.taxa + '%'}</td></tr>`).join('')
+        : `<tr><td colspan="6" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum curso publicado ainda.</td></tr>`;
+    }
+
+    // ================= ORGANIZACIONAL =================
+    const gruposLoja = {}, gruposCargo = {}, gruposLocal = {}, gruposRegional = {};
     ativos.forEach(c => {
       const chaveLoja = c.Loja || '(sem loja)';
       if (!gruposLoja[chaveLoja]) gruposLoja[chaveLoja] = { total: 0, comConclusao: 0 };
@@ -1644,25 +1880,68 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         gruposRegional[chaveRegional].comConclusao++;
       }
     });
+    const lojaEl = document.getElementById('relPorLoja');
+    const cargoEl = document.getElementById('relPorCargo');
+    const localEl = document.getElementById('relPorLocal');
+    const regionalEl = document.getElementById('relPorRegional');
     if (lojaEl) lojaEl.innerHTML = renderBarras(gruposLoja);
     if (cargoEl) cargoEl.innerHTML = renderBarras(gruposCargo);
     if (localEl) localEl.innerHTML = renderBarras(gruposLocal);
     if (regionalEl) regionalEl.innerHTML = renderBarras(gruposRegional);
 
-    const totalCursos = cursosPublicados.length;
-    const linhas = ativos.map(c => {
-      const qtd = concluidosPorCpf[c.cpf] ? concluidosPorCpf[c.cpf].size : 0;
-      const pct = totalCursos ? Math.round((qtd / totalCursos) * 100) : 0;
-      return { nome: c.Nome || '—', loja: c.Loja || '—', qtd, pct, ultimoAcesso: c.UltimoAcesso };
-    }).sort((a, b) => b.qtd - a.qtd);
-
-    if (rankingBody) {
-      rankingBody.innerHTML = linhas.length
-        ? linhas.map(l => `<tr><td>${l.nome}</td><td>${l.loja}</td><td>${l.qtd}</td><td>${l.pct}%</td><td>${formatarData(l.ultimoAcesso)}</td></tr>`).join('')
-        : `<tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Sem colaboradores ativos ainda.</td></tr>`;
+    // top 3 lojas / regionais (por % de adesão, só quem tem gente de verdade)
+    function topGrupo(grupos, min){
+      return Object.keys(grupos)
+        .filter(k => grupos[k].total >= (min || 1) && k.indexOf('(sem') !== 0)
+        .map(k => ({ nome: k, pct: Math.round((grupos[k].comConclusao / grupos[k].total) * 100), total: grupos[k].total }))
+        .sort((a, b) => b.pct - a.pct)
+        .slice(0, 3);
     }
+    document.getElementById('relTopLojas').innerHTML = renderListaCard(
+      topGrupo(gruposLoja).map((g, i) => linhaSimples(`${i + 1}º ${g.nome}`, `${g.pct}% de adesão · ${g.total} colaborador(es)`)),
+      'Sem dados suficientes ainda.', 3
+    );
+    document.getElementById('relTopRegionais').innerHTML = renderListaCard(
+      topGrupo(gruposRegional).map((g, i) => linhaSimples(`${i + 1}º ${g.nome}`, `${g.pct}% de adesão · ${g.total} colaborador(es)`)),
+      'Sem dados suficientes ainda.', 3
+    );
 
-    ultimoRankingCache = linhas;
+    // ================= ACOMPANHAMENTO =================
+    const nuncaAcessaram = ativos.filter(c => !c.Acessos || c.Acessos === 0);
+    document.getElementById('relNuncaAcessaram').innerHTML = renderListaCard(
+      nuncaAcessaram.map(c => linhaSimples(c.Nome || c.cpf, c.Loja || '')),
+      'Todo mundo já acessou pelo menos uma vez. 🎉', 8
+    );
+
+    // ================= ALERTAS INTELIGENTES =================
+    const alertas = [];
+    if (nuncaAcessaram.length > 0) alertas.push({ texto: `${nuncaAcessaram.length} colaborador(es) nunca acessaram a plataforma`, cor: '#B4462B' });
+    const piorLoja = Object.keys(gruposLoja).filter(k => gruposLoja[k].total >= 2).sort((a,b) => (gruposLoja[a].comConclusao/gruposLoja[a].total) - (gruposLoja[b].comConclusao/gruposLoja[b].total))[0];
+    if (piorLoja) {
+      const pct = Math.round((gruposLoja[piorLoja].comConclusao / gruposLoja[piorLoja].total) * 100);
+      if (pct < 50) alertas.push({ texto: `Loja com pior desempenho: ${piorLoja} (${pct}% de adesão)`, cor: '#D89840' });
+    }
+    const piorRegional = Object.keys(gruposRegional).filter(k => gruposRegional[k].total >= 2 && k.indexOf('(sem') !== 0).sort((a,b) => (gruposRegional[a].comConclusao/gruposRegional[a].total) - (gruposRegional[b].comConclusao/gruposRegional[b].total))[0];
+    if (piorRegional) {
+      const pct = Math.round((gruposRegional[piorRegional].comConclusao / gruposRegional[piorRegional].total) * 100);
+      if (pct < 50) alertas.push({ texto: `Regional com menor engajamento: ${piorRegional} (${pct}% de adesão)`, cor: '#D89840' });
+    }
+    const cursoBaixaAdesao = linhasCurso.filter(l => l.taxa !== null && l.taxa < 30 && l.iniciados >= 3)[0];
+    if (cursoBaixaAdesao) alertas.push({ texto: `Curso com baixa conclusão: "${cursoBaixaAdesao.titulo}" (só ${cursoBaixaAdesao.taxa}% concluem depois de iniciar)`, cor: '#B4462B' });
+    // queda de adesão: compara conclusões deste mês vs mês anterior
+    const chaveMesAtual = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`;
+    const mesAnteriorDate = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
+    const chaveMesAnterior = `${mesAnteriorDate.getFullYear()}-${String(mesAnteriorDate.getMonth() + 1).padStart(2, '0')}`;
+    const qtdAtual = conclusoesPorMes[chaveMesAtual] || 0;
+    const qtdAnterior = conclusoesPorMes[chaveMesAnterior] || 0;
+    if (qtdAnterior >= 3 && qtdAtual < qtdAnterior * 0.6) alertas.push({ texto: `Queda de conclusões este mês (${qtdAtual}) comparado ao anterior (${qtdAnterior})`, cor: '#B4462B' });
+
+    const alertasEl = document.getElementById('relAlertas');
+    if (alertasEl) {
+      alertasEl.innerHTML = alertas.length
+        ? `<div class="rep-grid">${alertas.map(a => `<div class="rep-card" style="border-left:4px solid ${a.cor};"><span style="font-size:13px;">⚠️ ${a.texto}</span></div>`).join('')}</div>`
+        : `<div class="rep-card" style="border-left:4px solid var(--green);"><span style="font-size:13px;">✅ Nenhum alerta no momento — os números estão dentro do esperado.</span></div>`;
+    }
   }
   window.renderRelatorios = renderRelatorios;
 
