@@ -418,10 +418,8 @@
           <div class="stat"><span>Tempo médio até 1º acesso</span><b>—</b><small>carregando…</small></div>
         </div>
         <div class="stat-row" style="margin-top:14px;">
-          <div class="stat"><span>Tempo médio de conclusão</span><b id="statTempoConclusao">—</b><small id="statTempoConclusaoSub">carregando…</small></div>
           <div class="stat"><span>Curso mais realizado</span><b id="statCursoMais2">—</b><small id="statCursoMais2Sub">carregando…</small></div>
           <div class="stat"><span>Curso menos realizado</span><b id="statCursoMenos2">—</b><small id="statCursoMenos2Sub">carregando…</small></div>
-          <div class="stat"><span>Índice de engajamento médio</span><b id="statIndiceEngajamento">—</b><small>combina acesso, conclusão e obrigatórios (0-100)</small></div>
         </div>
 
         <div class="rep-grid" style="margin-top:20px;">
@@ -449,7 +447,7 @@
         <p class="sub" style="margin-bottom:14px;">Status: <b>Em dia</b> (acessou há ≤15 dias), <b>Atenção</b> (16-30 dias), <b>Crítico</b> (30+ dias ou nunca acessou).</p>
         <div class="panel-card">
           <table>
-            <thead><tr><th>Colaborador</th><th>Loja</th><th>Cargo</th><th>Concluídos</th><th>Pendentes</th><th>% concluído</th><th>Último acesso</th><th>Dias sem acessar</th><th>Situação</th><th>Índice</th></tr></thead>
+            <thead><tr><th>Colaborador</th><th>Loja</th><th>Cargo</th><th>Concluídos</th><th>Pendentes</th><th>% concluído</th><th>Último acesso</th><th>Dias sem acessar</th><th>Situação</th></tr></thead>
             <tbody id="relColaboradorBody">
               <tr><td colspan="10" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
             </tbody>
@@ -481,7 +479,7 @@
             <div id="relPorCargo"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
           </div>
           <div class="rep-card">
-            <h4>Adesão por tipo de local</h4>
+            <h4>Adesão por Local</h4>
             <div id="relPorLocal"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
           </div>
           <div class="rep-card">
@@ -591,6 +589,21 @@
 </div>
 
 <!-- MODAL: nova categoria -->
+<div class="overlay" id="modalLoja" style="display:none;">
+  <div class="modal" style="width:400px;">
+    <div class="modal-head"><h3>Nova loja</h3><button onclick="closeModal('modalLoja')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Nome da loja</label><input type="text" id="lojaNomeInput" placeholder="Ex: Cabana Botafogo"></div>
+      <div class="field"><label>Regional</label><input type="text" id="lojaRegionalInput" placeholder="Ex: Regional Fulano"></div>
+      <small class="hint">Depois de criada, essa loja fica disponível no cadastro de qualquer colaborador, já com a regional preenchida sozinha.</small>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalLoja')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarLoja()">Criar loja →</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="modalCargo" style="display:none;">
   <div class="modal" style="width:380px;">
     <div class="modal-head"><h3>Novo cargo</h3><button onclick="closeModal('modalCargo')">✕</button></div>
@@ -641,7 +654,22 @@
       <div class="field"><label>Nome completo</label><input type="text" id="colabNomeInput" placeholder="Nome do colaborador"></div>
       <div class="field-row">
         <div class="field"><label>CPF</label><input type="text" id="colabCpfInput" placeholder="000.000.000-00"></div>
-        <div class="field"><label>Loja / Unidade</label><input type="text" id="colabLojaInput" placeholder="Ex: Cabana Botafogo"></div>
+        <div class="field">
+          <label>Local</label>
+          <select id="colabLocalInput" onchange="atualizarCampoLoja()"><option>Loja</option><option>Fábrica</option><option>Escritório</option></select>
+        </div>
+      </div>
+      <div class="field-row" id="colabLojaRow">
+        <div class="field">
+          <label>Loja / Unidade</label>
+          <select id="colabLojaInput" onchange="atualizarRegionalDaLoja()"></select>
+          <small class="hint"><a href="#" onclick="abrirModalLoja(); return false;" style="color:var(--green-dark); font-weight:700; text-decoration:none;">+ Criar nova loja</a></small>
+        </div>
+        <div class="field">
+          <label>Regional</label>
+          <input type="text" id="colabRegionalDisplay" disabled style="background:var(--cream); color:var(--ink-soft);">
+          <small class="hint">Preenchida automaticamente pela loja escolhida. Pra mudar, edita a loja em "+ Criar nova loja".</small>
+        </div>
       </div>
       <div class="field-row">
         <div class="field">
@@ -655,17 +683,6 @@
         <div class="field">
           <label>Nível de acesso</label>
           <select id="colabNivelInput"><option>Colaborador</option><option>Admin</option></select>
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Local</label>
-          <select id="colabLocalInput"><option>Loja</option><option>Fábrica</option><option>Escritório</option></select>
-        </div>
-        <div class="field">
-          <label>Regional</label>
-          <input type="text" id="colabRegionalInput" placeholder="Ex: Regional Fulano">
-          <small class="hint">Grupo de lojas que respondem pra um mesmo responsável.</small>
         </div>
       </div>
       <div class="field" id="senhaSection" style="display:none; border-top:1px solid var(--line); padding-top:16px; margin-top:6px;">
@@ -808,6 +825,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       sideRole.innerHTML = `<span class="dot"></span> <b>${dados.Nome || 'Admin'}</b>&nbsp;· ${dados.Cargo || 'Admin'}`;
     }
     renderCargosEmTodaParte();
+    iniciarLojas();
     iniciarCargos();
     renderCategoriaSelect();
     iniciarCategorias();
@@ -825,6 +843,61 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     'Gerente de Loja', 'Coordenador Regional', 'Analista', 'Atendente de Salão',
     'Assistente de Cozinha', 'Jovem Aprendiz', 'Especialista', 'Gerente', 'Diretor'
   ];
+  /* ===================== LOJAS ===================== */
+  let lojasCache = [];
+
+  function iniciarLojas(){
+    onSnapshot(collection(db, 'lojas'), (snapshot) => {
+      lojasCache = snapshot.docs.map(d => ({ nome: d.data().Nome, regional: d.data().Regional || '' })).sort((a, b) => a.nome.localeCompare(b.nome));
+      renderLojaSelect();
+    }, (err) => console.error('Erro ao carregar lojas:', err));
+  }
+
+  function renderLojaSelect(){
+    const select = document.getElementById('colabLojaInput');
+    if (!select) return;
+    const valorAtual = select.value;
+    select.innerHTML = '<option value="">Selecione a loja…</option>' + lojasCache.map(l => `<option value="${l.nome}">${l.nome}</option>`).join('');
+    if (valorAtual && lojasCache.some(l => l.nome === valorAtual)) select.value = valorAtual;
+  }
+
+  window.atualizarCampoLoja = function(){
+    const local = document.getElementById('colabLocalInput').value;
+    const row = document.getElementById('colabLojaRow');
+    if (row) row.style.display = local === 'Loja' ? 'grid' : 'none';
+  };
+
+  window.atualizarRegionalDaLoja = function(){
+    const nomeLoja = document.getElementById('colabLojaInput').value;
+    const loja = lojasCache.find(l => l.nome === nomeLoja);
+    document.getElementById('colabRegionalDisplay').value = loja ? loja.regional : '';
+  };
+
+  window.abrirModalLoja = function(){
+    document.getElementById('lojaNomeInput').value = '';
+    document.getElementById('lojaRegionalInput').value = '';
+    openModal('modalLoja');
+  };
+
+  window.salvarLoja = async function(){
+    const nome = document.getElementById('lojaNomeInput').value.trim();
+    const regional = document.getElementById('lojaRegionalInput').value.trim();
+    if (!nome) { alert('Dá um nome pra loja antes de criar.'); return; }
+    if (lojasCache.some(l => l.nome.toLowerCase() === nome.toLowerCase())) { alert('Já existe uma loja com esse nome.'); return; }
+    try {
+      await addDoc(collection(db, 'lojas'), { Nome: nome, Regional: regional, CriadoEm: serverTimestamp() });
+      closeModal('modalLoja');
+      // seleciona a loja recém-criada assim que ela aparecer no select
+      setTimeout(() => {
+        const select = document.getElementById('colabLojaInput');
+        if (select) { select.value = nome; atualizarRegionalDaLoja(); }
+      }, 400);
+    } catch (err) {
+      console.error('Erro ao criar loja:', err);
+      alert('Não foi possível criar a loja agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
   let cargosCache = [];
   let cargosSelecionadosAntesDoRender = [];
 
@@ -1361,11 +1434,12 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('colabNomeInput').value = '';
     document.getElementById('colabCpfInput').value = '';
     document.getElementById('colabCpfInput').disabled = false;
-    document.getElementById('colabLojaInput').value = '';
     document.getElementById('colabCargoInput').selectedIndex = 0;
     document.getElementById('colabNivelInput').selectedIndex = 0;
     document.getElementById('colabLocalInput').selectedIndex = 0;
-    document.getElementById('colabRegionalInput').value = '';
+    document.getElementById('colabLojaInput').value = '';
+    document.getElementById('colabRegionalDisplay').value = '';
+    atualizarCampoLoja();
     document.getElementById('btnSalvarColab').textContent = 'Adicionar →';
     document.getElementById('colabSalvarErro').style.display = 'none';
     document.getElementById('senhaSection').style.display = 'none';
@@ -1385,12 +1459,20 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('colabNomeInput').value = c.Nome || '';
     document.getElementById('colabCpfInput').value = cpf;
     document.getElementById('colabCpfInput').disabled = true; // CPF é o identificador, não muda depois de criado
-    document.getElementById('colabLojaInput').value = c.Loja || '';
     const cargoSelect = document.getElementById('colabCargoInput');
     [...cargoSelect.options].forEach((opt,i)=>{ if(opt.textContent === c.Cargo) cargoSelect.selectedIndex = i; });
     document.getElementById('colabNivelInput').value = c.Nivel === 'Admin' ? 'Admin' : 'Colaborador';
     document.getElementById('colabLocalInput').value = c.Local || 'Loja';
-    document.getElementById('colabRegionalInput').value = c.Regional || '';
+    atualizarCampoLoja();
+    const lojaSelect = document.getElementById('colabLojaInput');
+    if (c.Loja && ![...lojaSelect.options].some(o => o.value === c.Loja)) {
+      // loja antiga, cadastrada como texto livre antes de existir essa lista — adiciona como opção avulsa, pra não perder o dado
+      const opt = document.createElement('option');
+      opt.value = c.Loja; opt.textContent = c.Loja + ' (não cadastrada na lista de lojas)';
+      lojaSelect.appendChild(opt);
+    }
+    lojaSelect.value = c.Loja || '';
+    document.getElementById('colabRegionalDisplay').value = c.Regional || '';
     document.getElementById('btnSalvarColab').textContent = 'Salvar alterações →';
     document.getElementById('colabSalvarErro').style.display = 'none';
     document.getElementById('senhaSection').style.display = 'block';
@@ -1435,13 +1517,14 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     btn.disabled = true; btn.textContent = 'Salvando…';
 
     try {
+      const localEscolhido = document.getElementById('colabLocalInput').value;
       const dados = {
         Nome: nome,
-        Loja: document.getElementById('colabLojaInput').value.trim(),
+        Loja: localEscolhido === 'Loja' ? document.getElementById('colabLojaInput').value.trim() : '',
         Cargo: document.getElementById('colabCargoInput').value,
         Nivel: document.getElementById('colabNivelInput').value,
-        Local: document.getElementById('colabLocalInput').value,
-        Regional: document.getElementById('colabRegionalInput').value.trim(),
+        Local: localEscolhido,
+        Regional: localEscolhido === 'Loja' ? document.getElementById('colabRegionalDisplay').value.trim() : '',
         Status: 'ativo',
       };
       await setDoc(doc(db, 'colaboradores', cpf), dados, { merge: true });
@@ -1717,7 +1800,6 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     const iniciadosPorCpf = {};    // cpf -> Set(cursoId), inclui concluídos
     const concluidosPorCurso = {}; // cursoId -> contagem
     const iniciadosPorCurso = {};  // cursoId -> contagem
-    const temposConclusao = [];    // dias entre início e conclusão
     const conclusoesPorMes = {};   // 'AAAA-MM' -> contagem
     let totalIniciados = 0, totalConcluidos = 0;
 
@@ -1734,10 +1816,6 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         concluidosPorCurso[p.CursoId] = (concluidosPorCurso[p.CursoId] || 0) + 1;
         totalConcluidos++;
 
-        if (p.IniciadoEm && p.IniciadoEm.toDate && p.ConcluidoEm && p.ConcluidoEm.toDate) {
-          const dias = Math.max(0, (p.ConcluidoEm.toDate() - p.IniciadoEm.toDate()) / (1000 * 60 * 60 * 24));
-          temposConclusao.push(dias);
-        }
         if (p.ConcluidoEm && p.ConcluidoEm.toDate) {
           const d = p.ConcluidoEm.toDate();
           const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -1762,27 +1840,6 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       .filter(c => c.CriadoEm && c.CriadoEm.toDate && c.PrimeiroAcesso && c.PrimeiroAcesso.toDate)
       .map(c => Math.max(0, (c.PrimeiroAcesso.toDate() - c.CriadoEm.toDate()) / (1000 * 60 * 60 * 24)));
     const tempoMedio = temposAcesso.length ? (temposAcesso.reduce((a,b) => a + b, 0) / temposAcesso.length) : null;
-    const tempoMedioConclusao = temposConclusao.length ? (temposConclusao.reduce((a,b) => a + b, 0) / temposConclusao.length) : null;
-
-    // ---- índice de engajamento por colaborador (0-100) ----
-    function calcularIndice(c){
-      const concluidos = concluidosPorCpf[c.cpf] ? concluidosPorCpf[c.cpf].size : 0;
-      const iniciados = iniciadosPorCpf[c.cpf] ? iniciadosPorCpf[c.cpf].size : 0;
-      const totalCursos = cursosPublicados.length || 1;
-      const acessoScore = Math.min((c.Acessos || 0) / 10, 1);
-      const concluidosScore = Math.min(concluidos / totalCursos, 1);
-      const iniciadosScore = Math.min(iniciados / totalCursos, 1);
-      let recenciaScore = 0;
-      if (c.UltimoAcesso && c.UltimoAcesso.toDate) {
-        const dias = (agora - c.UltimoAcesso.toDate()) / (1000 * 60 * 60 * 24);
-        recenciaScore = dias <= 7 ? 1 : dias <= 30 ? 0.6 : dias <= 60 ? 0.2 : 0;
-      }
-      return Math.round(100 * (acessoScore * 0.25 + concluidosScore * 0.35 + iniciadosScore * 0.2 + recenciaScore * 0.2));
-    }
-
-    const indicesPorCpf = {};
-    ativos.forEach(c => { indicesPorCpf[c.cpf] = calcularIndice(c); });
-    const indiceMedia = ativos.length ? Math.round(ativos.reduce((s, c) => s + indicesPorCpf[c.cpf], 0) / ativos.length) : null;
 
     // ================= VISÃO EXECUTIVA =================
     statRow.innerHTML = `
@@ -1791,13 +1848,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       <div class="stat"><span>Total de cursos concluídos</span><b>${totalConcluidos}</b><small>somando todos os colaboradores</small></div>
       <div class="stat"><span>Tempo médio até 1º acesso</span><b>${tempoMedio !== null ? Math.round(tempoMedio) + ' dias' : '—'}</b><small>${tempoMedio !== null ? 'baseado em ' + temposAcesso.length + ' colaborador(es)' : 'ainda sem dados suficientes'}</small></div>
     `;
-    document.getElementById('statTempoConclusao').textContent = tempoMedioConclusao !== null ? Math.round(tempoMedioConclusao) + ' dias' : '—';
-    document.getElementById('statTempoConclusaoSub').textContent = tempoMedioConclusao !== null ? `baseado em ${temposConclusao.length} conclusão(ões)` : 'sem dados suficientes ainda';
     document.getElementById('statCursoMais2').textContent = cursoMais ? (concluidosPorCurso[cursoMais.id] || 0) : '—';
     document.getElementById('statCursoMais2Sub').textContent = cursoMais ? cursoMais.Titulo : 'sem cursos publicados ainda';
     document.getElementById('statCursoMenos2').textContent = cursoMenos ? (concluidosPorCurso[cursoMenos.id] || 0) : '—';
     document.getElementById('statCursoMenos2Sub').textContent = cursoMenos ? cursoMenos.Titulo : 'sem cursos publicados ainda';
-    document.getElementById('statIndiceEngajamento').textContent = indiceMedia !== null ? indiceMedia : '—';
 
     // evolução mensal (últimos 6 meses)
     const mesesNomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -1815,9 +1869,11 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 
     // ================= POR COLABORADOR =================
     const linhasColab = ativos.map(c => {
-      const concluidos = concluidosPorCpf[c.cpf] ? concluidosPorCpf[c.cpf].size : 0;
+      const concluidosSet = concluidosPorCpf[c.cpf] || new Set();
+      const concluidos = concluidosSet.size;
       const totalCursos = cursosPublicados.length;
-      const pendentes = Math.max(0, totalCursos - concluidos);
+      const titulosPendentes = cursosPublicados.filter(cu => !concluidosSet.has(cu.id)).map(cu => cu.Titulo);
+      const pendentes = titulosPendentes.length;
       const pct = totalCursos ? Math.round((concluidos / totalCursos) * 100) : 0;
       let diasSemAcessar = null;
       if (c.UltimoAcesso && c.UltimoAcesso.toDate) diasSemAcessar = Math.floor((agora - c.UltimoAcesso.toDate()) / (1000 * 60 * 60 * 24));
@@ -1826,20 +1882,25 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       else if (diasSemAcessar <= 15) { situacao = 'Em dia'; corSit = '#386F2D'; }
       else if (diasSemAcessar <= 30) { situacao = 'Atenção'; corSit = '#D89840'; }
       else { situacao = 'Crítico'; corSit = '#B4462B'; }
-      return { nome: c.Nome || '—', loja: c.Loja || '—', cargo: c.Cargo || '—', concluidos, pendentes, pct, ultimoAcesso: c.UltimoAcesso, diasSemAcessar, situacao, corSit, indice: indicesPorCpf[c.cpf] || 0, cpf: c.cpf };
+      return { nome: c.Nome || '—', loja: c.Loja || '—', cargo: c.Cargo || '—', concluidos, pendentes, titulosPendentes, pct, ultimoAcesso: c.UltimoAcesso, diasSemAcessar, situacao, corSit, cpf: c.cpf };
     }).sort((a, b) => b.concluidos - a.concluidos);
 
     const colabBody = document.getElementById('relColaboradorBody');
     if (colabBody) {
       colabBody.innerHTML = linhasColab.length
-        ? linhasColab.map(l => `<tr><td>${l.nome}</td><td>${l.loja}</td><td>${l.cargo}</td><td>${l.concluidos}</td><td>${l.pendentes}</td><td>${l.pct}%</td><td>${formatarData(l.ultimoAcesso)}</td><td>${l.diasSemAcessar === null ? '—' : l.diasSemAcessar}</td><td><span style="color:${l.corSit}; font-weight:700;">${l.situacao}</span></td><td>${l.indice}</td></tr>`).join('')
-        : `<tr><td colspan="10" style="text-align:center; color:var(--ink-soft); padding:24px;">Sem colaboradores ativos ainda.</td></tr>`;
+        ? linhasColab.map(l => {
+            const pendentesTexto = l.pendentes
+              ? `<span title="${l.titulosPendentes.join(', ').replace(/"/g, '&quot;')}" style="cursor:help; border-bottom:1px dotted var(--ink-soft);">${l.pendentes}</span>`
+              : '0';
+            return `<tr><td>${l.nome}</td><td>${l.loja}</td><td>${l.cargo}</td><td>${l.concluidos}</td><td>${pendentesTexto}</td><td>${l.pct}%</td><td>${formatarData(l.ultimoAcesso)}</td><td>${l.diasSemAcessar === null ? '—' : l.diasSemAcessar}</td><td><span style="color:${l.corSit}; font-weight:700;">${l.situacao}</span></td></tr>`;
+          }).join('')
+        : `<tr><td colspan="9" style="text-align:center; color:var(--ink-soft); padding:24px;">Sem colaboradores ativos ainda.</td></tr>`;
     }
-    ultimoRankingCache = linhasColab.map(l => ({ nome: l.nome, loja: l.loja, qtd: l.concluidos, pct: l.pct, ultimoAcesso: l.ultimoAcesso }));
+    ultimoRankingCache = linhasColab.map(l => ({ nome: l.nome, loja: l.loja, qtd: l.concluidos, pct: l.pct, ultimoAcesso: l.ultimoAcesso, pendentes: l.titulosPendentes.join('; ') }));
 
     // top 5 colaboradores
     document.getElementById('relTopColaboradores').innerHTML = renderListaCard(
-      linhasColab.slice(0, 5).map((l, i) => linhaSimples(`${i + 1}º ${l.nome}`, `${l.concluidos} curso(s) concluído(s) · índice ${l.indice}`)),
+      linhasColab.slice(0, 5).map((l, i) => linhaSimples(`${i + 1}º ${l.nome}`, `${l.concluidos} curso(s) concluído(s)`)),
       'Sem dados ainda.', 5
     );
 
@@ -1861,23 +1922,27 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     // ================= ORGANIZACIONAL =================
     const gruposLoja = {}, gruposCargo = {}, gruposLocal = {}, gruposRegional = {};
     ativos.forEach(c => {
-      const chaveLoja = c.Loja || '(sem loja)';
-      if (!gruposLoja[chaveLoja]) gruposLoja[chaveLoja] = { total: 0, comConclusao: 0 };
-      gruposLoja[chaveLoja].total++;
+      const chaveLocal = c.Local || 'Loja';
+      if (chaveLocal === 'Loja') {
+        const chaveLoja = c.Loja || '(sem loja)';
+        if (!gruposLoja[chaveLoja]) gruposLoja[chaveLoja] = { total: 0, comConclusao: 0 };
+        gruposLoja[chaveLoja].total++;
+        const chaveRegional = c.Regional || '(sem regional)';
+        if (!gruposRegional[chaveRegional]) gruposRegional[chaveRegional] = { total: 0, comConclusao: 0 };
+        gruposRegional[chaveRegional].total++;
+        if (concluidosPorCpf[c.cpf] && concluidosPorCpf[c.cpf].size > 0) {
+          gruposLoja[chaveLoja].comConclusao++;
+          gruposRegional[chaveRegional].comConclusao++;
+        }
+      }
       const chaveCargo = c.Cargo || '(sem cargo)';
       if (!gruposCargo[chaveCargo]) gruposCargo[chaveCargo] = { total: 0, comConclusao: 0 };
       gruposCargo[chaveCargo].total++;
-      const chaveLocal = c.Local || 'Loja';
       if (!gruposLocal[chaveLocal]) gruposLocal[chaveLocal] = { total: 0, comConclusao: 0 };
       gruposLocal[chaveLocal].total++;
-      const chaveRegional = c.Regional || '(sem regional)';
-      if (!gruposRegional[chaveRegional]) gruposRegional[chaveRegional] = { total: 0, comConclusao: 0 };
-      gruposRegional[chaveRegional].total++;
       if (concluidosPorCpf[c.cpf] && concluidosPorCpf[c.cpf].size > 0) {
-        gruposLoja[chaveLoja].comConclusao++;
         gruposCargo[chaveCargo].comConclusao++;
         gruposLocal[chaveLocal].comConclusao++;
-        gruposRegional[chaveRegional].comConclusao++;
       }
     });
     const lojaEl = document.getElementById('relPorLoja');
@@ -1952,9 +2017,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       alert('Ainda não há dados de colaboradores pra exportar.');
       return;
     }
-    const linhasCsv = [['Colaborador', 'Loja', 'Cursos concluídos', '% concluído', 'Último acesso']];
+    const linhasCsv = [['Colaborador', 'Loja', 'Cursos concluídos', '% concluído', 'Último acesso', 'Cursos pendentes']];
     ultimoRankingCache.forEach(l => {
-      linhasCsv.push([l.nome, l.loja, l.qtd, l.pct + '%', formatarData(l.ultimoAcesso)]);
+      linhasCsv.push([l.nome, l.loja, l.qtd, l.pct + '%', formatarData(l.ultimoAcesso), l.pendentes || '']);
     });
     const csv = linhasCsv.map(linha => linha.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
