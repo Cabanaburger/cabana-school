@@ -141,12 +141,13 @@
   }
   .modal{
     background:var(--paper); border-radius:var(--radius-lg); width:560px; max-width:92vw;
-    max-height:88vh; overflow-y:auto; box-shadow:0 40px 80px -20px rgba(0,0,0,0.5);
+    max-height:88vh; box-shadow:0 40px 80px -20px rgba(0,0,0,0.5);
+    display:flex; flex-direction:column;
   }
-  .modal-head{ padding:22px 26px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; }
+  .modal-head{ padding:22px 26px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; flex:none; }
   .modal-head h3{ font-family:var(--display); font-weight:400; font-size:19px; margin:0; }
   .modal-head button{ background:none; font-size:18px; color:var(--ink-soft); }
-  .modal-body{ padding:22px 26px; display:flex; flex-direction:column; gap:16px; }
+  .modal-body{ padding:22px 26px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex:1 1 auto; min-height:0; }
   .field label{ display:block; font-size:12.5px; font-weight:700; margin-bottom:7px; }
   .field input, .field select, .field textarea{
     width:100%; padding:11px 14px; border-radius:10px; border:1px solid var(--line);
@@ -171,7 +172,7 @@
     font-size:12px; font-weight:700; color:var(--ink-soft);
   }
   .visib-chip.on{ background:var(--milkshake); color:#fff; border-color:var(--milkshake); }
-  .modal-foot{ padding:18px 26px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; gap:10px; }
+  .modal-foot{ padding:18px 26px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; gap:10px; flex:none; flex-wrap:wrap; }
   .btn-secondary{ background:var(--cream); border:1px solid var(--line); padding:11px 18px; border-radius:100px; font-size:13px; font-weight:700; }
   .btn-primary{ background:var(--green); color:#fff; padding:11px 22px; border-radius:100px; font-size:13px; font-weight:700; }
 
@@ -359,6 +360,19 @@
       </div>
       <div id="sincronizarResultado" style="display:none; margin:-6px 0 18px; font-size:13px; font-weight:600;"></div>
 
+      <div class="upload-block">
+        <div class="txt">
+          <b>Importar lojas e regionais</b>
+          <span>Planilha com duas colunas: "SETOR REGIONAL" e "LOJAS". Cria as lojas que ainda não existem — não duplica quem já está cadastrado.</span>
+        </div>
+        <div class="actions">
+          <button class="ghost-btn" onclick="document.getElementById('lojasFileInput').click()">📎 <span id="lojasFileNome">Escolher arquivo</span></button>
+          <input type="file" id="lojasFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="onLojasExcelEscolhido(this)">
+          <button class="new-btn" id="btnImportarLojas" onclick="importarLojasPlanilha()" disabled>Importar lojas</button>
+        </div>
+      </div>
+      <div id="importarLojasResultado" style="display:none; margin:-6px 0 18px; font-size:13px; font-weight:600;"></div>
+
       <div class="stat-row">
         <div class="stat"><span>Colaboradores ativos</span><b id="statAtivos">—</b><small>sem dados ainda</small></div>
         <div class="stat"><span>Já acessaram ao menos 1x</span><b id="statAcessaram">—</b><small>sem dados ainda</small></div>
@@ -392,7 +406,6 @@
         <div>
           <div class="crumb">Admin / Dados</div>
           <h1>Relatórios &amp; adesão</h1>
-          <p class="sub">Números em tempo real, pensados pra ajudar decisão sobre desenvolvimento de pessoas — não só gráfico bonito.</p>
         </div>
         <button class="ghost-btn" onclick="exportarRelatorioCSV()">⬇ Exportar CSV/Excel</button>
       </div>
@@ -654,21 +667,21 @@
       <div class="field"><label>Nome completo</label><input type="text" id="colabNomeInput" placeholder="Nome do colaborador"></div>
       <div class="field-row">
         <div class="field"><label>CPF</label><input type="text" id="colabCpfInput" placeholder="000.000.000-00"></div>
-        <div class="field">
-          <label>Local</label>
-          <select id="colabLocalInput" onchange="atualizarCampoLoja()"><option>Loja</option><option>Fábrica</option><option>Escritório</option></select>
-        </div>
+        <div class="field"><label>Admissão</label><input type="date" id="colabAdmissaoInput"></div>
+      </div>
+      <div class="field">
+        <label>Local</label>
+        <select id="colabLocalInput" onchange="atualizarCampoLoja()"><option>Loja</option><option>Fábrica</option><option>Escritório</option></select>
       </div>
       <div class="field-row" id="colabLojaRow">
+        <div class="field">
+          <label>Regional</label>
+          <select id="colabRegionalSelect" onchange="atualizarLojasDaRegional()"></select>
+        </div>
         <div class="field">
           <label>Loja / Unidade</label>
           <select id="colabLojaInput" onchange="atualizarRegionalDaLoja()"></select>
           <small class="hint"><a href="#" onclick="abrirModalLoja(); return false;" style="color:var(--green-dark); font-weight:700; text-decoration:none;">+ Criar nova loja</a></small>
-        </div>
-        <div class="field">
-          <label>Regional</label>
-          <input type="text" id="colabRegionalDisplay" disabled style="background:var(--cream); color:var(--ink-soft);">
-          <small class="hint">Preenchida automaticamente pela loja escolhida. Pra mudar, edita a loja em "+ Criar nova loja".</small>
         </div>
       </div>
       <div class="field-row">
@@ -779,7 +792,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, collection, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, collection, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // firebaseConfig real do projeto Cabana School (mesmo do index.html / home.html)
   const firebaseConfig = {
@@ -849,16 +862,18 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   function iniciarLojas(){
     onSnapshot(collection(db, 'lojas'), (snapshot) => {
       lojasCache = snapshot.docs.map(d => ({ nome: d.data().Nome, regional: d.data().Regional || '' })).sort((a, b) => a.nome.localeCompare(b.nome));
-      renderLojaSelect();
+      renderRegionalSelect();
     }, (err) => console.error('Erro ao carregar lojas:', err));
   }
 
-  function renderLojaSelect(){
-    const select = document.getElementById('colabLojaInput');
+  function renderRegionalSelect(){
+    const select = document.getElementById('colabRegionalSelect');
     if (!select) return;
     const valorAtual = select.value;
-    select.innerHTML = '<option value="">Selecione a loja…</option>' + lojasCache.map(l => `<option value="${l.nome}">${l.nome}</option>`).join('');
-    if (valorAtual && lojasCache.some(l => l.nome === valorAtual)) select.value = valorAtual;
+    const regionais = [...new Set(lojasCache.map(l => l.regional).filter(Boolean))].sort();
+    select.innerHTML = '<option value="">Selecione a regional…</option>' + regionais.map(r => `<option value="${r}">${r}</option>`).join('');
+    if (valorAtual && regionais.includes(valorAtual)) select.value = valorAtual;
+    window.atualizarLojasDaRegional();
   }
 
   window.atualizarCampoLoja = function(){
@@ -867,15 +882,32 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     if (row) row.style.display = local === 'Loja' ? 'grid' : 'none';
   };
 
+  window.atualizarLojasDaRegional = function(){
+    const regional = document.getElementById('colabRegionalSelect').value;
+    const lojaSelect = document.getElementById('colabLojaInput');
+    const valorAtual = lojaSelect.value;
+    const lojasDaRegional = regional ? lojasCache.filter(l => l.regional === regional) : lojasCache;
+    lojaSelect.innerHTML = '<option value="">Selecione a loja…</option>' + lojasDaRegional.map(l => `<option value="${l.nome}">${l.nome}</option>`).join('');
+    if (valorAtual && lojasDaRegional.some(l => l.nome === valorAtual)) lojaSelect.value = valorAtual;
+  };
+
   window.atualizarRegionalDaLoja = function(){
+    // quando a loja é escolhida direto (ou carregada na edição), garante que a regional bate com ela
     const nomeLoja = document.getElementById('colabLojaInput').value;
     const loja = lojasCache.find(l => l.nome === nomeLoja);
-    document.getElementById('colabRegionalDisplay').value = loja ? loja.regional : '';
+    if (loja && loja.regional) {
+      const regionalSelect = document.getElementById('colabRegionalSelect');
+      if (regionalSelect.value !== loja.regional) {
+        regionalSelect.value = loja.regional;
+        window.atualizarLojasDaRegional();
+        document.getElementById('colabLojaInput').value = nomeLoja;
+      }
+    }
   };
 
   window.abrirModalLoja = function(){
     document.getElementById('lojaNomeInput').value = '';
-    document.getElementById('lojaRegionalInput').value = '';
+    document.getElementById('lojaRegionalInput').value = document.getElementById('colabRegionalSelect').value || '';
     openModal('modalLoja');
   };
 
@@ -887,10 +919,12 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     try {
       await addDoc(collection(db, 'lojas'), { Nome: nome, Regional: regional, CriadoEm: serverTimestamp() });
       closeModal('modalLoja');
-      // seleciona a loja recém-criada assim que ela aparecer no select
+      // seleciona a regional e a loja recém-criadas assim que aparecerem nos selects
       setTimeout(() => {
-        const select = document.getElementById('colabLojaInput');
-        if (select) { select.value = nome; atualizarRegionalDaLoja(); }
+        const regionalSelect = document.getElementById('colabRegionalSelect');
+        if (regional) regionalSelect.value = regional;
+        window.atualizarLojasDaRegional();
+        document.getElementById('colabLojaInput').value = nome;
       }, 400);
     } catch (err) {
       console.error('Erro ao criar loja:', err);
@@ -1434,11 +1468,13 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('colabNomeInput').value = '';
     document.getElementById('colabCpfInput').value = '';
     document.getElementById('colabCpfInput').disabled = false;
+    document.getElementById('colabAdmissaoInput').value = '';
     document.getElementById('colabCargoInput').selectedIndex = 0;
     document.getElementById('colabNivelInput').selectedIndex = 0;
     document.getElementById('colabLocalInput').selectedIndex = 0;
+    document.getElementById('colabRegionalSelect').value = '';
+    atualizarLojasDaRegional();
     document.getElementById('colabLojaInput').value = '';
-    document.getElementById('colabRegionalDisplay').value = '';
     atualizarCampoLoja();
     document.getElementById('btnSalvarColab').textContent = 'Adicionar →';
     document.getElementById('colabSalvarErro').style.display = 'none';
@@ -1459,11 +1495,21 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('colabNomeInput').value = c.Nome || '';
     document.getElementById('colabCpfInput').value = cpf;
     document.getElementById('colabCpfInput').disabled = true; // CPF é o identificador, não muda depois de criado
+    document.getElementById('colabAdmissaoInput').value = (c.Admissao && c.Admissao.toDate) ? c.Admissao.toDate().toISOString().slice(0, 10) : '';
     const cargoSelect = document.getElementById('colabCargoInput');
     [...cargoSelect.options].forEach((opt,i)=>{ if(opt.textContent === c.Cargo) cargoSelect.selectedIndex = i; });
     document.getElementById('colabNivelInput').value = c.Nivel === 'Admin' ? 'Admin' : 'Colaborador';
     document.getElementById('colabLocalInput').value = c.Local || 'Loja';
     atualizarCampoLoja();
+    const regionalSelect = document.getElementById('colabRegionalSelect');
+    if (c.Regional && ![...regionalSelect.options].some(o => o.value === c.Regional)) {
+      // regional antiga, digitada como texto livre antes de existir essa lista
+      const optR = document.createElement('option');
+      optR.value = c.Regional; optR.textContent = c.Regional + ' (não cadastrada)';
+      regionalSelect.appendChild(optR);
+    }
+    regionalSelect.value = c.Regional || '';
+    atualizarLojasDaRegional();
     const lojaSelect = document.getElementById('colabLojaInput');
     if (c.Loja && ![...lojaSelect.options].some(o => o.value === c.Loja)) {
       // loja antiga, cadastrada como texto livre antes de existir essa lista — adiciona como opção avulsa, pra não perder o dado
@@ -1472,7 +1518,6 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       lojaSelect.appendChild(opt);
     }
     lojaSelect.value = c.Loja || '';
-    document.getElementById('colabRegionalDisplay').value = c.Regional || '';
     document.getElementById('btnSalvarColab').textContent = 'Salvar alterações →';
     document.getElementById('colabSalvarErro').style.display = 'none';
     document.getElementById('senhaSection').style.display = 'block';
@@ -1518,15 +1563,17 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 
     try {
       const localEscolhido = document.getElementById('colabLocalInput').value;
+      const admissaoValor = document.getElementById('colabAdmissaoInput').value;
       const dados = {
         Nome: nome,
         Loja: localEscolhido === 'Loja' ? document.getElementById('colabLojaInput').value.trim() : '',
         Cargo: document.getElementById('colabCargoInput').value,
         Nivel: document.getElementById('colabNivelInput').value,
         Local: localEscolhido,
-        Regional: localEscolhido === 'Loja' ? document.getElementById('colabRegionalDisplay').value.trim() : '',
+        Regional: localEscolhido === 'Loja' ? document.getElementById('colabRegionalSelect').value.trim() : '',
         Status: 'ativo',
       };
+      if (admissaoValor) dados.Admissao = Timestamp.fromDate(new Date(admissaoValor + 'T12:00:00'));
       await setDoc(doc(db, 'colaboradores', cpf), dados, { merge: true });
 
       let mostrouSenha = false;
@@ -1594,6 +1641,65 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     arquivoExcelEscolhido = input.files[0] || null;
     document.getElementById('excelFileNome').textContent = arquivoExcelEscolhido ? arquivoExcelEscolhido.name : 'Escolher arquivo';
     document.getElementById('btnSincronizar').disabled = !arquivoExcelEscolhido;
+  };
+
+  let arquivoLojasEscolhido = null;
+  window.onLojasExcelEscolhido = function(input){
+    arquivoLojasEscolhido = input.files[0] || null;
+    document.getElementById('lojasFileNome').textContent = arquivoLojasEscolhido ? arquivoLojasEscolhido.name : 'Escolher arquivo';
+    document.getElementById('btnImportarLojas').disabled = !arquivoLojasEscolhido;
+  };
+
+  window.importarLojasPlanilha = async function(){
+    if (!arquivoLojasEscolhido) return;
+    const btn = document.getElementById('btnImportarLojas');
+    const resultadoEl = document.getElementById('importarLojasResultado');
+    btn.disabled = true; btn.textContent = 'Importando…';
+    resultadoEl.style.display = 'none';
+
+    try {
+      const dadosArquivo = await arquivoLojasEscolhido.arrayBuffer();
+      const wb = XLSX.read(dadosArquivo, { type: 'array' });
+      const primeiraAba = wb.Sheets[wb.SheetNames[0]];
+      const linhas = XLSX.utils.sheet_to_json(primeiraAba, { defval: '' });
+
+      const pegar = (linha, chaves) => {
+        for (const k of Object.keys(linha)) {
+          if (chaves.includes(k.trim().toLowerCase())) return String(linha[k]).trim();
+        }
+        return '';
+      };
+
+      let criadas = 0, ignoradas = 0;
+      const nomesJaExistentes = new Set(lojasCache.map(l => l.nome.toLowerCase()));
+      const novasNesseArquivo = new Set(); // evita duplicar se o próprio arquivo repetir a loja
+
+      for (const linha of linhas) {
+        const nome = pegar(linha, ['lojas', 'loja', 'nome']);
+        const regional = pegar(linha, ['setor regional', 'regional']);
+        if (!nome) continue;
+        const chave = nome.toLowerCase();
+        if (nomesJaExistentes.has(chave) || novasNesseArquivo.has(chave)) { ignoradas++; continue; }
+        novasNesseArquivo.add(chave);
+        await addDoc(collection(db, 'lojas'), { Nome: nome, Regional: regional, CriadoEm: serverTimestamp() });
+        criadas++;
+      }
+
+      resultadoEl.textContent = `✅ Importado: ${criadas} loja(s) nova(s) criada(s). ${ignoradas} já existiam e foram ignoradas.`;
+      resultadoEl.style.color = 'var(--green-dark)';
+      resultadoEl.style.display = 'block';
+      arquivoLojasEscolhido = null;
+      document.getElementById('lojasFileInput').value = '';
+      document.getElementById('lojasFileNome').textContent = 'Escolher arquivo';
+    } catch (err) {
+      console.error('Erro ao importar lojas:', err);
+      resultadoEl.textContent = 'Não consegui ler essa planilha. Confere se ela tem as colunas "SETOR REGIONAL" e "LOJAS".';
+      resultadoEl.style.color = '#B4462B';
+      resultadoEl.style.display = 'block';
+    } finally {
+      btn.disabled = true;
+      btn.textContent = 'Importar lojas';
+    }
   };
 
   window.sincronizarPlanilha = async function(){
