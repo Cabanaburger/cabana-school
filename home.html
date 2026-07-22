@@ -967,7 +967,7 @@ function playerHTML(c){
   if(c.tipo === 'video'){
     return `
       <div style="background:var(--ink); border-radius:26px; overflow:hidden; box-shadow:0 30px 60px -24px rgba(0,0,0,0.5);">
-        <video controls style="width:100%; display:block; background:#111; aspect-ratio:16/9;"></video>
+        <video controls src="${c.link}" ${c.capa ? `poster="${c.capa}"` : ''} style="width:100%; display:block; background:#111; aspect-ratio:16/9;"></video>
         <div style="padding:14px 20px; background:#141110; color:#fff; font-size:12px; opacity:.75;">🎬 Vídeo hospedado na própria plataforma. Toca em play pra assistir.</div>
       </div>`;
   }
@@ -976,15 +976,19 @@ function playerHTML(c){
       <div style="background:var(--paper); border:1px solid var(--line); border-radius:26px; box-shadow:0 12px 30px -14px rgba(30,26,20,0.28); padding:26px; text-align:center;">
         <div style="font-size:40px; margin-bottom:10px;">🎧</div>
         <b style="display:block; font-family:var(--display); font-size:16px; margin-bottom:14px;">${c.titulo}</b>
-        <audio controls style="width:100%;"></audio>
+        <audio controls src="${c.link}" style="width:100%;"></audio>
         <div style="font-size:11.5px; color:var(--ink-soft); margin-top:10px;">Formato podcast. Dá pra pausar e voltar de onde parou.</div>
       </div>`;
   }
   if(c.tipo === 'link'){
+    const capaStyle = c.capa
+      ? `background-image:url('${c.capa}'); background-size:cover; background-position:center;`
+      : `background:radial-gradient(circle at 30% 30%, rgba(79,156,64,0.4), transparent 60%), #171310;`;
     return `
       <a href="${c.link}" target="_blank" style="display:block; background:var(--ink); border-radius:26px; overflow:hidden; box-shadow:0 30px 60px -24px rgba(0,0,0,0.5); text-decoration:none; cursor:pointer;">
-        <div style="height:280px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at 30% 30%, rgba(79,156,64,0.4), transparent 60%), #171310;">
-          <div style="width:74px; height:74px; border-radius:50%; background:#fff; color:var(--ink); font-size:22px; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 30px -10px rgba(0,0,0,0.6);">🔗</div>
+        <div style="height:280px; display:flex; align-items:center; justify-content:center; position:relative; ${capaStyle}">
+          ${c.capa ? '<div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 100%);"></div>' : ''}
+          <div style="width:74px; height:74px; border-radius:50%; background:#fff; color:var(--ink); font-size:22px; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 30px -10px rgba(0,0,0,0.6); position:relative; z-index:1;">🔗</div>
         </div>
         <div style="padding:14px 20px; background:#141110; color:#fff; font-size:12px; display:flex; justify-content:space-between; align-items:center;">
           <span style="opacity:.75;">Conteúdo em site externo</span>
@@ -1059,6 +1063,7 @@ function abrirCurso(cursoId){
           <h3>Seu progresso</h3>
           <div class="progress-mini"><div class="bar"><div style="width:${c.progresso}%"></div></div><b>${c.progresso}%</b></div>
           <button class="mark-btn${c.concluido ? ' done' : ''}" onclick="marcarConcluido('${c.id}', '${c.titulo.replace(/'/g,"\\'")}')">${c.concluido ? '✓ Concluído' : '✓ Marcar como concluído'}</button>
+          ${(c.concluido && c.certificadoModelo) ? `<button class="mark-btn" style="background:var(--fries); margin-top:10px;" onclick="gerarCertificado('${c.id}')">🏆 Baixar certificado</button>` : ''}
           <p class="autohint">O progresso também avança automaticamente conforme você acessa. O botão é só pra confirmar quando terminar.</p>
         </div>
         <div class="panel">
