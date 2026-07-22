@@ -236,6 +236,7 @@
             <div class="ptab on" data-filtro="todos" onclick="filtrarCursos('todos', this)">Todos (0)</div>
             <div class="ptab" data-filtro="publicado" onclick="filtrarCursos('publicado', this)">Publicados (0)</div>
             <div class="ptab" data-filtro="rascunho" onclick="filtrarCursos('rascunho', this)">Rascunho (0)</div>
+            <div class="ptab" data-filtro="arquivado" onclick="filtrarCursos('arquivado', this)">Arquivados (0)</div>
           </div>
         </div>
         <table>
@@ -309,7 +310,9 @@
           <button onclick="setPdfVisib(this,true)">Cargos específicos</button>
         </div>
         <div id="pdfCargosBlock" style="display:none; margin-top:10px;">
-          <input type="text" id="pdfCargosInput" placeholder="Ex: Gerente de Loja, Líder de Loja (separe por vírgula)">
+          <input type="text" id="pdfCargosInput" placeholder="Ex: Gerente de Loja, Líder de Loja (separe por vírgula)" list="cargosDatalist">
+          <datalist id="cargosDatalist"></datalist>
+          <small class="hint"><a href="#" onclick="abrirModalCargo(); return false;" style="color:var(--green-dark); font-weight:700; text-decoration:none;">+ Criar novo cargo</a></small>
           <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
             <select id="pdfPublicoSalvoSelect" onchange="aplicarPublicoSalvoTexto(this.value, 'pdfCargosInput')" style="flex:1;">
               <option value="">Carregar um público salvo…</option>
@@ -490,17 +493,8 @@
           <button class="on" onclick="setVisib(this,false)">Todos os públicos</button>
           <button onclick="setVisib(this,true)">Cargos específicos</button>
         </div>
-        <div class="visib-chips" id="visibChips" style="display:none;">
-          <span class="visib-chip">Atendente de Salão</span>
-          <span class="visib-chip">Atendente de Caixa</span>
-          <span class="visib-chip">Cozinheiro(a)</span>
-          <span class="visib-chip">Auxiliar de Cozinha</span>
-          <span class="visib-chip">Entregador(a) / Delivery</span>
-          <span class="visib-chip on">Líder de Loja</span>
-          <span class="visib-chip on">Gerente de Loja</span>
-          <span class="visib-chip">Gerente Regional</span>
-          <span class="visib-chip">Administrativo</span>
-        </div>
+        <div class="visib-chips" id="visibChips" style="display:none;"></div>
+        <small class="hint"><a href="#" onclick="abrirModalCargo(); return false;" style="color:var(--green-dark); font-weight:700; text-decoration:none;">+ Criar novo cargo</a></small>
         <div id="cursoPublicoSalvoBlock" style="display:none; margin-top:10px; display:flex; gap:8px; align-items:center;">
           <select id="cursoPublicoSalvoSelect" onchange="aplicarPublicoSalvo(this.value, 'visibChips')" style="flex:1;">
             <option value="">Carregar um público salvo…</option>
@@ -528,6 +522,20 @@
 </div>
 
 <!-- MODAL: nova categoria -->
+<div class="overlay" id="modalCargo" style="display:none;">
+  <div class="modal" style="width:380px;">
+    <div class="modal-head"><h3>Novo cargo</h3><button onclick="closeModal('modalCargo')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Nome do cargo</label><input type="text" id="cargoNomeInput" placeholder="Ex: Supervisor de Turno"></div>
+      <small class="hint">Esse cargo passa a aparecer em toda a plataforma: cadastro de colaborador, restrição de cursos e materiais da biblioteca.</small>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalCargo')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarCargo()">Criar cargo →</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="modalCategoria" style="display:none;">
   <div class="modal" style="width:420px;">
     <div class="modal-head"><h3>Nova categoria</h3><button onclick="closeModal('modalCategoria')">✕</button></div>
@@ -640,6 +648,10 @@ function onArquivoEscolhido(input, labelId){
     label.textContent = `Selecionado: ${input.files[0].name}`;
   }
 }
+function abrirModalCargo(){
+  document.getElementById('cargoNomeInput').value = '';
+  openModal('modalCargo');
+}
 function abrirModalCategoria(){
   document.getElementById('catNomeInput').value = '';
   document.getElementById('catEmojiInput').value = '';
@@ -742,6 +754,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     if (sideRole) {
       sideRole.innerHTML = `<span class="dot"></span> <b>${dados.Nome || 'Admin'}</b>&nbsp;· ${dados.Cargo || 'Admin'}`;
     }
+    renderCargosEmTodaParte();
+    iniciarCargos();
     renderCategoriaSelect();
     iniciarCategorias();
     iniciarPublicos();
@@ -753,6 +767,69 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 
   /* ===================== CURSOS ===================== */
   /* ===================== CATEGORIAS ===================== */
+  /* ===================== CARGOS ===================== */
+  const CARGOS_PADRAO = [
+    'Gerente de Loja', 'Coordenador Regional', 'Analista', 'Atendente de Salão',
+    'Assistente de Cozinha', 'Jovem Aprendiz', 'Especialista', 'Gerente', 'Diretor'
+  ];
+  let cargosCache = [];
+  let cargosSelecionadosAntesDoRender = [];
+
+  function cargosParaExibir(){
+    return cargosCache.length ? cargosCache : CARGOS_PADRAO;
+  }
+
+  function iniciarCargos(){
+    onSnapshot(collection(db, 'cargos'), (snapshot) => {
+      cargosCache = snapshot.docs.map(d => d.data().Nome).filter(Boolean);
+      renderCargosEmTodaParte();
+    }, (err) => console.error('Erro ao carregar cargos:', err));
+  }
+
+  function renderCargosEmTodaParte(){
+    const cargos = cargosParaExibir();
+
+    // select do cadastro de colaborador
+    const colabSelect = document.getElementById('colabCargoInput');
+    if (colabSelect) {
+      const valorAtual = colabSelect.value;
+      colabSelect.innerHTML = cargos.map(nome => `<option>${nome}</option>`).join('');
+      if (valorAtual && cargos.includes(valorAtual)) colabSelect.value = valorAtual;
+    }
+
+    // chips de "quem pode ver este curso"
+    const visibChips = document.getElementById('visibChips');
+    if (visibChips) {
+      const selecionadosAntes = [...visibChips.querySelectorAll('.visib-chip.on')].map(c => c.textContent.trim());
+      visibChips.innerHTML = cargos.map(nome =>
+        `<span class="visib-chip${selecionadosAntes.includes(nome) ? ' on' : ''}">${nome}</span>`
+      ).join('');
+      visibChips.querySelectorAll('.visib-chip').forEach(chip => {
+        chip.addEventListener('click', () => chip.classList.toggle('on'));
+      });
+    }
+
+    // sugestões de cargo pro campo de texto da biblioteca
+    const datalist = document.getElementById('cargosDatalist');
+    if (datalist) datalist.innerHTML = cargos.map(nome => `<option value="${nome}">`).join('');
+  }
+
+  window.salvarCargo = async function(){
+    const nome = document.getElementById('cargoNomeInput').value.trim();
+    if (!nome) { alert('Dá um nome pro cargo antes de criar.'); return; }
+    if (cargosParaExibir().some(c => c.toLowerCase() === nome.toLowerCase())) {
+      alert('Já existe um cargo com esse nome.');
+      return;
+    }
+    try {
+      await addDoc(collection(db, 'cargos'), { Nome: nome, CriadoEm: serverTimestamp() });
+      closeModal('modalCargo');
+    } catch (err) {
+      console.error('Erro ao criar cargo:', err);
+      alert('Não foi possível criar o cargo agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
   const CATEGORIAS_PADRAO = [
     { nome: 'Onboarding', emoji: '🍔', cor: '#4F9C40' },
     { nome: 'Operação', emoji: '👨‍🍳', cor: '#4F9C40' },
@@ -907,14 +984,17 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     const total = cursosCache.length;
     const publicados = cursosCache.filter(c => c.Status === 'publicado').length;
     const rascunhos = cursosCache.filter(c => c.Status === 'rascunho').length;
-    document.querySelector('[data-filtro="todos"]').textContent = `Todos (${total})`;
+    const arquivados = cursosCache.filter(c => c.Status === 'arquivado').length;
+    document.querySelector('[data-filtro="todos"]').textContent = `Todos (${total - arquivados})`;
     document.querySelector('[data-filtro="publicado"]').textContent = `Publicados (${publicados})`;
     document.querySelector('[data-filtro="rascunho"]').textContent = `Rascunho (${rascunhos})`;
+    document.querySelector('[data-filtro="arquivado"]').textContent = `Arquivados (${arquivados})`;
     const statPub = document.getElementById('statPublicados');
     if (statPub) statPub.textContent = publicados;
 
-    let lista = cursosCache.filter(c => c.Status !== 'arquivado');
-    if (filtroAtual !== 'todos') lista = lista.filter(c => c.Status === filtroAtual);
+    let lista;
+    if (filtroAtual === 'todos') lista = cursosCache.filter(c => c.Status !== 'arquivado');
+    else lista = cursosCache.filter(c => c.Status === filtroAtual);
 
     if (!lista.length) {
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum curso ${filtroAtual === 'todos' ? 'cadastrado ainda' : 'nesta categoria'}.</td></tr>`;
@@ -927,6 +1007,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       const subtitulo = c.Status === 'rascunho' ? 'rascunho · ' + (c.Link ? 'link salvo' : 'sem link ainda') : (c.Link || 'sem link');
       const acaoExtra = c.Status === 'rascunho'
         ? `<button class="danger" onclick="excluirCurso('${c.id}')">Excluir</button>`
+        : c.Status === 'arquivado'
+        ? `<button onclick="reativarCurso('${c.id}')">Reativar</button>`
         : `<button class="danger" onclick="arquivarCurso('${c.id}')">Arquivar</button>`;
       return `<tr>
         <td><div class="course-cell"><div class="course-thumb" style="${capaStyle}">${c.CapaURL ? '' : '🍽️'}</div><div><b>${c.Titulo || '(sem título)'}</b><small>${subtitulo}</small></div></div></td>
@@ -1087,12 +1169,21 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   };
 
   window.arquivarCurso = async function(id){
-    if (!confirm('Arquivar este curso? Ele some da lista, mas os dados continuam guardados.')) return;
+    if (!confirm('Arquivar este curso? Ele sai da lista de publicados e vai pra aba "Arquivados" — os dados continuam guardados e dá pra reativar quando quiser.')) return;
     try {
       await updateDoc(doc(db, 'cursos', id), { Status: 'arquivado' });
     } catch (err) {
       console.error('Erro ao arquivar curso:', err);
       alert('Não foi possível arquivar. Tenta de novo.');
+    }
+  };
+
+  window.reativarCurso = async function(id){
+    try {
+      await updateDoc(doc(db, 'cursos', id), { Status: 'publicado' });
+    } catch (err) {
+      console.error('Erro ao reativar curso:', err);
+      alert('Não foi possível reativar. Tenta de novo.');
     }
   };
 
@@ -1366,6 +1457,11 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         return;
       }
 
+      // fixa quem já existia ANTES de mexer em qualquer coisa — colaboradoresCache é atualizado
+      // em tempo real pelo onSnapshot, e pode mudar no meio do processo (por causa do próprio
+      // batch.commit() logo abaixo), então não dá pra confiar nele de novo depois de escrever
+      const cpfsExistentesAntes = new Set(colaboradoresCache.map(c => c.cpf));
+
       const pegar = (linha, chaves) => {
         for (const k of Object.keys(linha)) {
           if (chaves.includes(k.trim().toLowerCase())) return String(linha[k]).trim();
@@ -1382,7 +1478,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         const cpf = soDigitos(pegar(linha, ['cpf']));
         if (!nome || cpf.length !== 11) continue; // pula linha inválida
         cpfsNaPlanilha.add(cpf);
-        const jaExistia = colaboradoresCache.some(c => c.cpf === cpf);
+        const jaExistia = cpfsExistentesAntes.has(cpf);
 
         batch.set(doc(db, 'colaboradores', cpf), {
           Nome: nome,
@@ -1409,8 +1505,11 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       await batch.commit();
 
       // cria login só pra quem é realmente novo (evita mexer em quem já tinha conta)
+      // usa cpfsExistentesAntes (fixo, de antes do commit) e não colaboradoresCache,
+      // que a esta altura já pode ter sido atualizado pelo próprio listener em tempo real
+      const falhas = [];
       for (const cpf of cpfsNaPlanilha) {
-        const jaExistia = colaboradoresCache.some(c => c.cpf === cpf);
+        const jaExistia = cpfsExistentesAntes.has(cpf);
         if (jaExistia) continue;
         try {
           const resultado = await criarContaSeNaoExistir(cpf);
@@ -1420,10 +1519,16 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
           }
         } catch (err) {
           console.error('Erro ao criar conta pro CPF ' + cpf, err);
+          falhas.push(cpf);
         }
+        // pequena pausa entre criações, pra não estourar o limite de velocidade do Firebase quando sobe muita gente de uma vez
+        await new Promise(r => setTimeout(r, 400));
       }
 
-      resultadoEl.textContent = `✅ Sincronizado: ${adicionados} novo(s), ${atualizados} atualizado(s), ${desativados} desativado(s). ${contasCriadas} conta(s) de login criada(s) com senha = 6 últimos dígitos do CPF.`;
+      const avisoFalhas = falhas.length
+        ? ` ⚠️ ${falhas.length} conta(s) não foram criadas automaticamente (CPF: ${falhas.join(', ')}) — abre cada uma dessas pessoas na aba Colaboradores e clica em "Gerar nova senha temporária".`
+        : '';
+      resultadoEl.textContent = `✅ Sincronizado: ${adicionados} novo(s), ${atualizados} atualizado(s), ${desativados} desativado(s). ${contasCriadas} conta(s) de login criada(s) com senha = 6 últimos dígitos do CPF.${avisoFalhas}`;
       resultadoEl.style.color = 'var(--green-dark)';
       resultadoEl.style.display = 'block';
       arquivoExcelEscolhido = null;
