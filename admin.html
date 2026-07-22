@@ -889,6 +889,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       location.href = 'home.html';
       return;
     }
+    const sideRole = document.querySelector('.side-role');
+    if (sideRole) {
+      sideRole.innerHTML = `<span class="dot"></span> <b>${dados.Nome || 'Admin'}</b>&nbsp;· ${dados.Cargo || 'Admin'}`;
+    }
     renderCategoriaSelect();
     iniciarCategorias();
     iniciarPublicos();
@@ -1386,12 +1390,17 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   // usa o app secundário pra não derrubar a sessão de quem está usando o painel admin.
   async function criarContaSeNaoExistir(cpf){
     const email = `${cpf}@cabana.internal`;
-    const metodos = await fetchSignInMethodsForEmail(secondaryAuth, email);
-    if (metodos.length > 0) return { criada: false };
     const senhaTemp = cpf.slice(-6);
-    await createUserWithEmailAndPassword(secondaryAuth, email, senhaTemp);
-    await signOut(secondaryAuth);
-    return { criada: true, senha: senhaTemp };
+    try {
+      await createUserWithEmailAndPassword(secondaryAuth, email, senhaTemp);
+      await signOut(secondaryAuth);
+      return { criada: true, senha: senhaTemp };
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        return { criada: false }; // conta já existe, segue o fluxo normal
+      }
+      throw err; // qualquer outro erro (rede, senha inválida etc) precisa aparecer mesmo
+    }
   }
 
   window.salvarColaborador = async function(){
