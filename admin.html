@@ -1471,6 +1471,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('colabCargoInput').selectedIndex = 0;
     document.getElementById('colabNivelInput').selectedIndex = 0;
     document.getElementById('colabLocalInput').selectedIndex = 0;
+    renderRegionalSelect();
     document.getElementById('colabRegionalSelect').value = '';
     atualizarLojasDaRegional();
     document.getElementById('colabLojaInput').value = '';
@@ -1500,6 +1501,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('colabNivelInput').value = c.Nivel === 'Admin' ? 'Admin' : 'Colaborador';
     document.getElementById('colabLocalInput').value = c.Local || 'Loja';
     atualizarCampoLoja();
+    renderRegionalSelect();
     const regionalSelect = document.getElementById('colabRegionalSelect');
     if (c.Regional && ![...regionalSelect.options].some(o => o.value === c.Regional)) {
       // regional antiga, digitada como texto livre antes de existir essa lista
