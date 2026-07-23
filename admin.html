@@ -634,6 +634,12 @@
   <div class="modal" style="width:420px;">
     <div class="modal-head"><h3>Nova categoria</h3><button onclick="closeModal('modalCategoria')">✕</button></div>
     <div class="modal-body">
+      <div class="field">
+        <label>Categorias existentes</label>
+        <div id="catListaExistentes" style="display:flex; flex-direction:column; gap:6px;"><small class="hint" style="color:var(--ink-soft);">Carregando…</small></div>
+        <small class="hint">As três primeiras (Onboarding, Operação, Liderança) são o padrão da plataforma e não podem ser removidas por aqui.</small>
+      </div>
+      <div style="border-top:1px solid var(--line); margin:2px 0 6px;"></div>
       <div class="field"><label>Nome da categoria</label><input type="text" id="catNomeInput" placeholder="Ex: Segurança do Trabalho"></div>
       <div class="field">
         <label>Emoji</label>
@@ -998,15 +1004,44 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   let categoriaRecemCriada = null;
 
   function categoriasParaExibir(){
-    return categoriasCache.length ? categoriasCache : CATEGORIAS_PADRAO;
+    const nomesNoFirestore = new Set(categoriasCache.map(c => c.nome));
+    return [...CATEGORIAS_PADRAO.filter(c => !nomesNoFirestore.has(c.nome)), ...categoriasCache];
   }
 
   function iniciarCategorias(){
     onSnapshot(collection(db, 'categorias'), (snapshot) => {
-      categoriasCache = snapshot.docs.map(d => ({ nome: d.data().Nome, emoji: d.data().Emoji, cor: d.data().Cor }));
+      categoriasCache = snapshot.docs.map(d => ({ id: d.id, nome: d.data().Nome, emoji: d.data().Emoji, cor: d.data().Cor }));
       renderCategoriaSelect();
+      renderCatListaExistentes();
     }, (err) => console.error('Erro ao carregar categorias:', err));
   }
+
+  function renderCatListaExistentes(){
+    const el = document.getElementById('catListaExistentes');
+    if (!el) return;
+    const padroesHtml = CATEGORIAS_PADRAO.map(c =>
+      `<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:var(--cream); border-radius:8px; font-size:13px;">
+        <span>${c.emoji} ${c.nome}</span><span style="font-size:11px; color:var(--ink-soft);">padrão</span>
+      </div>`
+    ).join('');
+    const criadasHtml = categoriasCache.map(c =>
+      `<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:var(--cream); border-radius:8px; font-size:13px;">
+        <span>${c.emoji} ${c.nome}</span>
+        <button type="button" onclick="removerCategoria('${c.id}','${c.nome.replace(/'/g, "\\'")}')" style="background:none; color:#B4462B; font-weight:700; font-size:12px; padding:2px 6px;">Remover</button>
+      </div>`
+    ).join('');
+    el.innerHTML = padroesHtml + criadasHtml;
+  }
+
+  window.removerCategoria = async function(id, nome){
+    if (!confirm(`Remover a categoria "${nome}"? Cursos que já usam essa categoria continuam existindo, só não vão mais poder escolher ela pra cursos novos.`)) return;
+    try {
+      await deleteDoc(doc(db, 'categorias', id));
+    } catch (err) {
+      console.error('Erro ao remover categoria:', err);
+      alert('Não foi possível remover agora. Tenta de novo em alguns segundos.');
+    }
+  };
 
   function renderCategoriaSelect(){
     const select = document.getElementById('categoriaSelect');
