@@ -1185,9 +1185,10 @@ function abrirCurso(cursoId){
   }
   function carregarCategorias(){
     onSnapshot(collection(db, 'categorias'), (snap) => {
-      TRILHAS = snap.docs.length
-        ? snap.docs.map(d => ({ nome: d.data().Nome, emoji: d.data().Emoji, cor: d.data().Cor, desc: `Treinamentos de ${(d.data().Nome || '').toLowerCase()}.` }))
-        : TRILHAS_PADRAO;
+      const doFirestore = snap.docs.map(d => ({ nome: d.data().Nome, emoji: d.data().Emoji, cor: d.data().Cor, desc: `Treinamentos de ${(d.data().Nome || '').toLowerCase()}.` }));
+      const nomesNoFirestore = new Set(doFirestore.map(c => c.nome));
+      // as padrão continuam aparecendo sempre, a não ser que alguém crie uma com o mesmo nome (aí a nova prevalece)
+      TRILHAS = [...TRILHAS_PADRAO.filter(c => !nomesNoFirestore.has(c.nome)), ...doFirestore];
       if (typeof renderCategoryChips === 'function') renderCategoryChips();
     }, (err) => console.error('Erro ao carregar categorias:', err));
   }
