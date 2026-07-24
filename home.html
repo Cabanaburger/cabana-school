@@ -1407,8 +1407,9 @@ function abrirCurso(cursoId){
         desenharAjustado(cursoData.Titulo || '', 0.5036, 0.6855, Math.round(img.width * 0.026), img.width * 0.42, false);
 
         ctx.font = `700 ${Math.round(img.width * 0.022)}px Georgia, 'Times New Roman', serif`;
-        ctx.fillText(String(concluidoEm.getDate()).padStart(2, '0'), img.width * 0.3436, img.height * 0.7995);
-        ctx.fillText(String(concluidoEm.getFullYear()), img.width * 0.7199, img.height * 0.7995);
+        const diaMes = `${String(concluidoEm.getDate()).padStart(2, '0')}/${String(concluidoEm.getMonth() + 1).padStart(2, '0')}`;
+        ctx.fillText(diaMes, img.width * 0.3110, img.height * 0.7995);
+        ctx.fillText(String(concluidoEm.getFullYear()), img.width * 0.6884, img.height * 0.7995);
 
         const link = document.createElement('a');
         link.download = `certificado-${(cursoData.Titulo || 'curso').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.png`;
