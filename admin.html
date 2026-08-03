@@ -620,6 +620,12 @@
   <div class="modal" style="width:380px;">
     <div class="modal-head"><h3>Novo cargo</h3><button onclick="closeModal('modalCargo')">✕</button></div>
     <div class="modal-body">
+      <div class="field">
+        <label>Cargos existentes</label>
+        <div id="cargoListaExistentes" style="display:flex; flex-direction:column; gap:6px;"><small class="hint" style="color:var(--ink-soft);">Carregando…</small></div>
+        <small class="hint">Os cargos padrão da plataforma não podem ser removidos por aqui.</small>
+      </div>
+      <div style="border-top:1px solid var(--line); margin:2px 0 6px;"></div>
       <div class="field"><label>Nome do cargo</label><input type="text" id="cargoNomeInput" placeholder="Ex: Supervisor de Turno"></div>
       <small class="hint">Esse cargo passa a aparecer em toda a plataforma: cadastro de colaborador, restrição de cursos e materiais da biblioteca.</small>
     </div>
@@ -941,15 +947,44 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   let cargosSelecionadosAntesDoRender = [];
 
   function cargosParaExibir(){
-    return cargosCache.length ? cargosCache : CARGOS_PADRAO;
+    const nomesNoFirestore = new Set(cargosCache.map(c => c.nome));
+    return [...CARGOS_PADRAO.filter(c => !nomesNoFirestore.has(c)), ...cargosCache.map(c => c.nome)];
   }
 
   function iniciarCargos(){
     onSnapshot(collection(db, 'cargos'), (snapshot) => {
-      cargosCache = snapshot.docs.map(d => d.data().Nome).filter(Boolean);
+      cargosCache = snapshot.docs.map(d => ({ id: d.id, nome: d.data().Nome })).filter(c => c.nome);
       renderCargosEmTodaParte();
+      renderCargoListaExistentes();
     }, (err) => console.error('Erro ao carregar cargos:', err));
   }
+
+  function renderCargoListaExistentes(){
+    const el = document.getElementById('cargoListaExistentes');
+    if (!el) return;
+    const padroesHtml = CARGOS_PADRAO.map(nome =>
+      `<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:var(--cream); border-radius:8px; font-size:13px;">
+        <span>${nome}</span><span style="font-size:11px; color:var(--ink-soft);">padrão</span>
+      </div>`
+    ).join('');
+    const criadosHtml = cargosCache.map(c =>
+      `<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:var(--cream); border-radius:8px; font-size:13px;">
+        <span>${c.nome}</span>
+        <button type="button" onclick="removerCargo('${c.id}','${c.nome.replace(/'/g, "\\'")}')" style="background:none; color:#B4462B; font-weight:700; font-size:12px; padding:2px 6px;">Remover</button>
+      </div>`
+    ).join('');
+    el.innerHTML = padroesHtml + criadosHtml;
+  }
+
+  window.removerCargo = async function(id, nome){
+    if (!confirm(`Remover o cargo "${nome}"? Colaboradores que já tinham esse cargo continuam com ele salvo, só não vai mais aparecer como opção pra novos cadastros.`)) return;
+    try {
+      await deleteDoc(doc(db, 'cargos', id));
+    } catch (err) {
+      console.error('Erro ao remover cargo:', err);
+      alert('Não foi possível remover agora. Tenta de novo em alguns segundos.');
+    }
+  };
 
   function renderCargosEmTodaParte(){
     const cargos = cargosParaExibir();
