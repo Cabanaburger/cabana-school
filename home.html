@@ -592,6 +592,17 @@
 </div>
 <canvas id="certCanvas" style="display:none;"></canvas>
 
+<div id="modalPesquisaMarco" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:95;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(420px,92vw); text-align:center; padding:32px 28px;">
+    <div id="pesquisaMarcoEmoji" style="font-size:40px; margin-bottom:6px;">🎉</div>
+    <h3 id="pesquisaMarcoTitulo" style="margin:0 0 10px; font-family:var(--display); font-weight:400; font-size:20px;"></h3>
+    <p id="pesquisaMarcoTexto" style="color:var(--ink-soft); font-size:13.5px; line-height:1.6; margin:0 0 20px;"></p>
+    <img id="pesquisaMarcoQr" src="" alt="QR code da pesquisa" style="width:170px; height:170px; margin:0 auto 20px; display:block; border-radius:12px; border:1px solid var(--line);">
+    <a id="pesquisaMarcoLink" href="#" target="_blank" style="display:block; background:var(--green); color:#fff; font-weight:700; font-size:13.5px; padding:12px; border-radius:100px; text-decoration:none; margin-bottom:10px;">Abrir pesquisa →</a>
+    <button onclick="fecharPesquisaMarco()" style="background:none; border:none; color:var(--ink-soft); font-size:12.5px; cursor:pointer; text-decoration:underline;">Já respondi / Fechar</button>
+  </div>
+</div>
+
 <div id="modalWelcome" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:90;">
   <div class="modal-welcome">
     <div class="mascote-wrap">
@@ -689,15 +700,17 @@ let TRILHAS = TRILHAS_PADRAO;
 let DOCS = [];
 
 function cardHTML(c){
-  const badge = c.status === "destaque" ? '<span class="badge destaque">Destaque</span>'
+  const badge = c.obrigatorio && !c.concluido ? '<span class="badge" style="background:#B4462B; color:#fff;">Obrigatório</span>'
+              : c.status === "destaque" ? '<span class="badge destaque">Destaque</span>'
               : c.status === "novo" ? '<span class="badge novo">Novo</span>' : '';
   const ctaLabel = c.concluido ? "Revisar" : (c.progresso > 0 ? "Continuar" : "Começar");
   const ctaClass = c.concluido ? "done" : "";
+  const destaqueObrigatorio = c.obrigatorio && !c.concluido ? 'box-shadow:0 0 0 3px #B4462B33; border-radius:16px;' : '';
   const thumbStyle = c.capa
     ? `background-image:url('${c.capa}'); background-size:cover; background-position:center;`
     : `background:${c.cor};`;
   return `
-    <div class="card">
+    <div class="card" style="${destaqueObrigatorio}">
       <div class="thumb" style="${thumbStyle}">
         ${c.capa ? '<div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%);"></div>' : ''}
         ${badge}
@@ -775,13 +788,14 @@ function renderJornada(){
     ringCircle.setAttribute('stroke-dashoffset', circunf * (1 - pct/100));
   }
 
-  const proximo = CURSOS.find(c=>!c.concluido) || null;
+  const pendentes = CURSOS.filter(c=>!c.concluido);
+  const proximo = pendentes.find(c=>c.obrigatorio) || pendentes[0] || null;
   const ringCopyB = document.querySelector('.progress-card .ring-copy b');
   const ringCopySpan = document.querySelector('.progress-card .ring-copy span');
   const continueBtn = document.querySelector('.progress-card .continue-btn');
   if (proximo){
     if (ringCopyB) ringCopyB.textContent = proximo.titulo;
-    if (ringCopySpan) ringCopySpan.textContent = proximo.progresso > 0 ? 'em andamento' : 'ainda não iniciado';
+    if (ringCopySpan) ringCopySpan.textContent = proximo.obrigatorio ? '⚠ obrigatório · faça primeiro' : (proximo.progresso > 0 ? 'em andamento' : 'ainda não iniciado');
     if (continueBtn){
       continueBtn.textContent = (proximo.progresso > 0 ? 'Continuar' : 'Começar agora') + ' →';
       continueBtn.onclick = function(){ abrirCurso(proximo.id); };
@@ -1037,7 +1051,7 @@ function abrirCurso(cursoId){
     <div class="banner">
       <div class="banner-inner">
         <div class="crumb">Home / ${c.categoria} / ${c.titulo}</div>
-        <div class="tag-row"><span class="tag">${c.emoji} ${c.categoria}</span><span class="tag">${c.concluido ? 'Concluído' : (c.progresso>0 ? 'Em andamento · '+c.progresso+'%' : 'Não iniciado')}</span></div>
+        <div class="tag-row"><span class="tag">${c.emoji} ${c.categoria}</span><span class="tag">${c.concluido ? 'Concluído' : (c.progresso>0 ? 'Em andamento · '+c.progresso+'%' : 'Não iniciado')}</span>${c.obrigatorio ? '<span class="tag" style="background:#B4462B; color:#fff;">⚠ Obrigatório</span>' : ''}</div>
         <h1>${c.titulo}</h1>
         <p>${c.descricao}</p>
         <div class="meta-row">
@@ -1061,6 +1075,7 @@ function abrirCurso(cursoId){
       <div>
         <div class="panel">
           <h3>Seu progresso</h3>
+          ${c.vencido ? `<div style="background:#F3D9D0; color:#B4462B; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:10px; margin-bottom:12px;">⏳ Seu certificado venceu — refaça o curso pra renovar.</div>` : ''}
           <div class="progress-mini"><div class="bar"><div style="width:${c.progresso}%"></div></div><b>${c.progresso}%</b></div>
           <button class="mark-btn${c.concluido ? ' done' : ''}" onclick="marcarConcluido('${c.id}', '${c.titulo.replace(/'/g,"\\'")}')">${c.concluido ? '✓ Concluído' : '✓ Marcar como concluído'}</button>
           ${(c.concluido && c.certificadoModelo) ? `<button class="mark-btn" style="background:var(--fries); margin-top:10px;" onclick="gerarCertificado('${c.id}')">🏆 Baixar certificado</button>` : ''}
@@ -1124,6 +1139,8 @@ function abrirCurso(cursoId){
   let currentCpf = null;
   let cargoColaboradorAtual = '';
   let nivelColaboradorAtual = '';
+  let lojaColaboradorAtual = '';
+  let regionalColaboradorAtual = '';
 
   // mapeia os campos reais gravados pelo admin.html (PascalCase) pro formato interno
   // que as funções de render deste arquivo já esperam (titulo, descricao, capa...)
@@ -1134,6 +1151,7 @@ function abrirCurso(cursoId){
     const tipoNormalizado = (data.TipoConteudo || '').toString().toLowerCase().trim();
     // CargosEspecificos é um booleano (marcado no admin); a lista de cargos de verdade fica em Cargos (array)
     const restrito = data.CargosEspecificos === true && Array.isArray(data.Cargos) && data.Cargos.length > 0;
+    const localRestrito = data.LocalEspecifico === true && ((Array.isArray(data.LojasPermitidas) && data.LojasPermitidas.length > 0) || (Array.isArray(data.RegionaisPermitidas) && data.RegionaisPermitidas.length > 0));
     const publico = restrito ? data.Cargos.join(', ') : 'Todos os públicos';
     return {
       id: d.id,
@@ -1146,11 +1164,15 @@ function abrirCurso(cursoId){
       link: data.Link || '',
       certificadoModelo: data.CertificadoModeloURL || '',
       validadeMeses: data.ValidadeMeses || null,
+      obrigatorio: data.Obrigatorio === true,
       emoji: (trilha && trilha.emoji) || '📚',
       cor: (trilha && trilha.cor) || '#4F9C40',
       publico: publico,
       restrito: restrito,
       cargosPermitidos: restrito ? data.Cargos : null,
+      localRestrito: localRestrito,
+      lojasPermitidas: localRestrito ? (data.LojasPermitidas || []) : null,
+      regionaisPermitidas: localRestrito ? (data.RegionaisPermitidas || []) : null,
       status: data.Selo || '',
       objetivo1: data.Objetivo1 || '',
       objetivo2: data.Objetivo2 || '',
@@ -1160,11 +1182,15 @@ function abrirCurso(cursoId){
     };
   }
 
-  // um curso aparece pro colaborador se: não for restrito, OU o cargo dele estiver na lista, OU ele for Admin
-  function colaboradorPodeVer(curso){
-    if (!curso.restrito) return true;
+  // um curso/material aparece pro colaborador se passar nas duas checagens (cargo E local), cada uma
+  // só valendo se tiver sido marcada como restrita — Admin sempre vê tudo, pra poder revisar/gerenciar
+  function colaboradorPodeVer(item){
     if (nivelColaboradorAtual === 'Admin') return true;
-    return Array.isArray(curso.cargosPermitidos) && curso.cargosPermitidos.includes(cargoColaboradorAtual);
+    const passaCargo = !item.restrito || (Array.isArray(item.cargosPermitidos) && item.cargosPermitidos.includes(cargoColaboradorAtual));
+    const passaLocal = !item.localRestrito ||
+      (Array.isArray(item.lojasPermitidas) && item.lojasPermitidas.includes(lojaColaboradorAtual)) ||
+      (Array.isArray(item.regionaisPermitidas) && item.regionaisPermitidas.includes(regionalColaboradorAtual));
+    return passaCargo && passaLocal;
   }
 
   const CORES_BIB = { POP: '#4F9C40', 'Política': '#D89840', Guia: '#D6699E' };
@@ -1172,6 +1198,7 @@ function abrirCurso(cursoId){
   function mapMaterialDoc(d){
     const data = d.data();
     const restrito = data.CargosEspecificos === true && Array.isArray(data.Cargos) && data.Cargos.length > 0;
+    const localRestrito = data.LocalEspecifico === true && ((Array.isArray(data.LojasPermitidas) && data.LojasPermitidas.length > 0) || (Array.isArray(data.RegionaisPermitidas) && data.RegionaisPermitidas.length > 0));
     return {
       id: d.id,
       titulo: data.Titulo || '(sem título)',
@@ -1181,8 +1208,55 @@ function abrirCurso(cursoId){
       cor: CORES_BIB[data.Categoria] || '#4F9C40',
       restrito: restrito,
       cargosPermitidos: restrito ? data.Cargos : null,
+      localRestrito: localRestrito,
+      lojasPermitidas: localRestrito ? (data.LojasPermitidas || []) : null,
+      regionaisPermitidas: localRestrito ? (data.RegionaisPermitidas || []) : null,
     };
   }
+  let marcoPesquisaAtual = null; // 45 ou 90, pra saber qual campo marcar como "fechado" ao dispensar
+
+  async function verificarPesquisasMarco(cpf, dados){
+    if (!dados.Admissao || !dados.Admissao.toDate) return; // sem data de admissão cadastrada, não dá pra calcular
+    try {
+      const configSnap = await getDoc(doc(db, 'configuracoes', 'pesquisas'));
+      if (!configSnap.exists()) return;
+      const config = configSnap.data();
+      const dias = Math.floor((new Date() - dados.Admissao.toDate()) / (1000 * 60 * 60 * 24));
+
+      const marcos = [
+        { dias: 90, campo: 'Pesquisa90Fechada', link: config.Link90, emoji: '🎉', titulo: 'Você está há 90 dias no Cabana!',
+          texto: 'Já faz três meses! Queremos ouvir como você está se sentindo nessa fase. A pesquisa é confidencial e leva poucos minutos — sua opinião ajuda a construir um Cabana cada vez melhor.' },
+        { dias: 45, campo: 'Pesquisa45Fechada', link: config.Link45, emoji: '🎉', titulo: 'Você está há 45 dias no Cabana!',
+          texto: 'Queremos saber como está sendo essa experiência até aqui. Responda nossa pesquisa — é rápida, confidencial, e ajuda a gente a melhorar cada vez mais o dia a dia de quem trabalha com a gente.' },
+      ];
+
+      // mostra o marco mais recente que a pessoa já atingiu e ainda não dispensou (90 tem prioridade sobre 45)
+      const marco = marcos.find(m => dias >= m.dias && m.link && !dados[m.campo]);
+      if (!marco) return;
+
+      marcoPesquisaAtual = marco;
+      document.getElementById('pesquisaMarcoEmoji').textContent = marco.emoji;
+      document.getElementById('pesquisaMarcoTitulo').textContent = marco.titulo;
+      document.getElementById('pesquisaMarcoTexto').textContent = marco.texto;
+      document.getElementById('pesquisaMarcoLink').href = marco.link;
+      document.getElementById('pesquisaMarcoQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(marco.link)}`;
+      document.getElementById('modalPesquisaMarco').style.display = 'flex';
+    } catch (err) {
+      console.error('Erro ao verificar pesquisa de marco:', err);
+    }
+  }
+
+  window.fecharPesquisaMarco = async function(){
+    document.getElementById('modalPesquisaMarco').style.display = 'none';
+    if (!marcoPesquisaAtual || !currentCpf) return;
+    try {
+      await setDoc(doc(db, 'colaboradores', currentCpf), { [marcoPesquisaAtual.campo]: true }, { merge: true });
+    } catch (err) {
+      console.error('Erro ao marcar pesquisa como fechada:', err);
+    }
+    marcoPesquisaAtual = null;
+  };
+
   function carregarCategorias(){
     onSnapshot(collection(db, 'categorias'), (snap) => {
       const doFirestore = snap.docs.map(d => ({ nome: d.data().Nome, emoji: d.data().Emoji, cor: d.data().Cor, desc: `Treinamentos de ${(d.data().Nome || '').toLowerCase()}.` }));
@@ -1228,6 +1302,8 @@ function abrirCurso(cursoId){
       query(collection(db, 'cursos'), where('Status', '==', 'publicado')),
       (snap) => {
         window.CURSOS = snap.docs.map(mapCursoDoc).filter(colaboradorPodeVer);
+        // cursos obrigatórios sempre aparecem primeiro, pra deixar claro o que é prioridade
+        window.CURSOS.sort((a, b) => (a.obrigatorio ? 0 : 1) - (b.obrigatorio ? 0 : 1));
         aplicarProgressoEmCursos(cpf).then(() => {
           window.cursosCarregados = true;
           if (window.renderCards) window.renderCards();
@@ -1248,12 +1324,18 @@ function abrirCurso(cursoId){
   async function aplicarProgressoEmCursos(cpf){
     try {
       const progSnap = await getDocs(query(collection(db, 'progresso'), where('Cpf', '==', cpf)));
-      const statusPorCurso = {};
-      progSnap.forEach(d => { statusPorCurso[d.data().CursoId] = d.data().Status; });
+      const progressoPorCurso = {};
+      progSnap.forEach(d => { progressoPorCurso[d.data().CursoId] = d.data(); });
       window.CURSOS.forEach(c => {
-        const status = statusPorCurso[c.id];
-        c.concluido = status === 'concluido';
-        c.progresso = c.concluido ? 100 : (status === 'em_andamento' ? 50 : 0);
+        const prog = progressoPorCurso[c.id];
+        const status = prog && prog.Status;
+        const concluidoDeVerdade = status === 'concluido';
+        const vencido = concluidoDeVerdade && c.validadeMeses && prog.ConcluidoEm && prog.ConcluidoEm.toDate
+          ? mesesEntre(prog.ConcluidoEm.toDate(), new Date()) >= c.validadeMeses
+          : false;
+        c.vencido = vencido;
+        c.concluido = concluidoDeVerdade && !vencido;
+        c.progresso = c.concluido ? 100 : (status === 'em_andamento' || vencido ? 50 : 0);
       });
     } catch (err) {
       console.error('Erro ao carregar progresso do colaborador:', err);
@@ -1293,7 +1375,7 @@ function abrirCurso(cursoId){
       }, { merge: true });
 
       const c = window.CURSOS && window.CURSOS.find(x => x.id === cursoId);
-      if (c){ c.concluido = true; c.progresso = 100; }
+      if (c){ c.concluido = true; c.progresso = 100; c.vencido = false; }
       if (window.renderCards) window.renderCards();
       if (window.renderJornada) window.renderJornada();
       if (c && window.abrirCurso) window.abrirCurso(cursoId); // reabre a tela do curso já com o botão atualizado
@@ -1339,20 +1421,22 @@ function abrirCurso(cursoId){
         const dataTexto = concluidoEm ? concluidoEm.toLocaleDateString('pt-BR') : '—';
         const validadeMeses = cursoData ? cursoData.ValidadeMeses : null;
         let selo = '<span class="pill" style="background:#DFEED5; color:#386F2D;">Válido</span>';
+        let vencido = false;
         if (validadeMeses && concluidoEm) {
-          const vencido = mesesEntre(concluidoEm, agora) >= validadeMeses;
+          vencido = mesesEntre(concluidoEm, agora) >= validadeMeses;
           if (vencido) selo = '<span class="pill" style="background:#F3D9D0; color:#B4462B;">Vencido</span>';
         }
         const temModelo = cursoData && cursoData.CertificadoModeloURL;
         const btn = temModelo
           ? `<button class="ghost-btn" onclick="gerarCertificado('${item.CursoId}')">⬇ Baixar</button>`
           : `<span style="font-size:12px; color:var(--ink-soft);">sem modelo cadastrado</span>`;
+        const btnRefazer = vencido ? `<button class="ghost-btn" onclick="closeModal('modalCertificados'); abrirCurso('${item.CursoId}')">↻ Refazer</button>` : '';
         return `<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);">
           <div>
             <b style="font-size:14px;">${item.CursoTitulo || '(curso removido)'}</b><br>
             <small style="color:var(--ink-soft);">Concluído em ${dataTexto}</small>
           </div>
-          <div style="display:flex; align-items:center; gap:10px;">${selo}${btn}</div>
+          <div style="display:flex; align-items:center; gap:10px;">${selo}${btnRefazer}${btn}</div>
         </div>`;
       }).join('');
 
@@ -1456,9 +1540,12 @@ function abrirCurso(cursoId){
     // precisa estar definido antes de carregar cursos, pra filtrar certo por "cargos específicos"
     cargoColaboradorAtual = cargo;
     nivelColaboradorAtual = nivel;
+    lojaColaboradorAtual = loja;
+    regionalColaboradorAtual = dados.Regional || '';
     carregarCategorias();
     carregarCursosEProgresso(cpf);
     carregarBiblioteca();
+    verificarPesquisasMarco(cpf, dados);
 
     // menu do avatar com nome, cargo e loja reais
     const info = document.getElementById('avatarMenuInfo');
