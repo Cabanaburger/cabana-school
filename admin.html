@@ -323,6 +323,20 @@
         </div>
         <small class="hint">Quem não tiver um dos cargos listados nem vê que o material existe.</small>
       </div>
+      <div class="field">
+        <label>Restringir também por loja ou regional</label>
+        <div class="status-toggle" id="pdfVisibLocalToggle">
+          <button class="on" onclick="setPdfVisibLocal(this,false)">Todos os locais</button>
+          <button onclick="setPdfVisibLocal(this,true)">Loja(s)/Regional(is) específicas</button>
+        </div>
+        <div id="pdfVisibLocalBlock" style="display:none; margin-top:10px;">
+          <small class="hint" style="display:block; margin-bottom:6px;">Regionais (libera todas as lojas daquela regional)</small>
+          <div class="visib-chips" id="pdfVisibRegionaisChips" style="margin-bottom:12px;"></div>
+          <small class="hint" style="display:block; margin-bottom:6px;">Lojas específicas</small>
+          <div class="visib-chips" id="pdfVisibLojasChips"></div>
+        </div>
+        <small class="hint">Se marcar cargo E loja/regional juntos, só vê quem bater as duas condições ao mesmo tempo.</small>
+      </div>
       <div id="pdfSalvarErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600; margin-top:4px;"></div>
     </div>
     <div class="modal-foot">
@@ -372,6 +386,25 @@
         </div>
       </div>
       <div id="importarLojasResultado" style="display:none; margin:-6px 0 18px; font-size:13px; font-weight:600;"></div>
+
+      <div class="upload-block">
+        <div class="txt">
+          <b>Pesquisas de 45 e 90 dias</b>
+          <span>Link do formulário que aparece pro colaborador (com QR code) quando ele bate 45 e 90 dias de casa. Ele só vê o aviso uma vez — depois de fechar, não aparece de novo.</span>
+        </div>
+      </div>
+      <div class="field-row" style="margin-bottom:14px;">
+        <div class="field">
+          <label>Link da pesquisa de 45 dias</label>
+          <input type="text" id="pesquisaLink45Input" placeholder="Cole o link do Google Forms">
+        </div>
+        <div class="field">
+          <label>Link da pesquisa de 90 dias</label>
+          <input type="text" id="pesquisaLink90Input" placeholder="Cole o link do Google Forms">
+        </div>
+      </div>
+      <button class="new-btn" onclick="salvarLinksPesquisa()">Salvar links das pesquisas</button>
+      <div id="pesquisaLinksResultado" style="display:none; margin:10px 0 18px; font-size:13px; font-weight:600;"></div>
 
       <div class="stat-row">
         <div class="stat"><span>Colaboradores ativos</span><b id="statAtivos">—</b><small>sem dados ainda</small></div>
@@ -457,7 +490,12 @@
 
       <!-- ===== POR COLABORADOR ===== -->
       <div id="relSub-colaboradores" class="rel-subview" style="display:none;">
-        <p class="sub" style="margin-bottom:14px;">Status: <b>Em dia</b> (acessou há ≤15 dias), <b>Atenção</b> (16-30 dias), <b>Crítico</b> (30+ dias ou nunca acessou).</p>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
+          <p class="sub" style="margin:0;">Status: <b>Em dia</b> (acessou há ≤15 dias), <b>Atenção</b> (16-30 dias), <b>Crítico</b> (30+ dias ou nunca acessou).</p>
+          <select id="relFiltroLoja" onchange="renderRelatorios()" style="min-width:220px;">
+            <option value="">Todas as lojas</option>
+          </select>
+        </div>
         <div class="panel-card">
           <table>
             <thead><tr><th>Colaborador</th><th>Loja</th><th>Cargo</th><th>Concluídos</th><th>Pendentes</th><th>% concluído</th><th>Último acesso</th><th>Dias sem acessar</th><th>Situação</th></tr></thead>
@@ -505,9 +543,13 @@
       <!-- ===== ACOMPANHAMENTO ===== -->
       <div id="relSub-acompanhamento" class="rel-subview" style="display:none;">
         <div class="rep-grid">
-          <div class="rep-card" style="grid-column:1 / -1;">
+          <div class="rep-card">
             <h4>🚨 Nunca acessaram</h4>
             <div id="relNuncaAcessaram"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+          <div class="rep-card">
+            <h4>⌛ Certificados vencidos</h4>
+            <div id="relVencidos"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
           </div>
         </div>
       </div>
@@ -556,6 +598,14 @@
         <small class="hint">Usada pra gerar o certificado automático quando o colaborador conclui o curso.</small>
       </div>
       <div class="field">
+        <label>Este curso é obrigatório?</label>
+        <div class="status-toggle" id="cursoObrigatorioToggle">
+          <button class="on" onclick="setObrigatorio(this,false)">Opcional</button>
+          <button onclick="setObrigatorio(this,true)">Obrigatório</button>
+        </div>
+        <small class="hint">Aparece com destaque na trilha do colaborador, indicando o que fazer primeiro.</small>
+      </div>
+      <div class="field">
         <label>Validade do certificado</label>
         <select id="cursoValidadeInput">
           <option value="">Não vence</option>
@@ -581,6 +631,20 @@
           <button type="button" class="ghost-btn" onclick="salvarPublicoAtual('visibChips')">💾 Salvar este público</button>
         </div>
         <small class="hint">Toque nos cargos que devem ver esse curso. Quem não tiver um desses cargos cadastrados nem vê que o curso existe.</small>
+      </div>
+      <div class="field">
+        <label>Restringir também por loja ou regional</label>
+        <div class="status-toggle" id="visibLocalToggle">
+          <button class="on" onclick="setVisibLocal(this,false)">Todos os locais</button>
+          <button onclick="setVisibLocal(this,true)">Loja(s)/Regional(is) específicas</button>
+        </div>
+        <div id="visibLocalBlock" style="display:none; margin-top:10px;">
+          <small class="hint" style="display:block; margin-bottom:6px;">Regionais (libera todas as lojas daquela regional)</small>
+          <div class="visib-chips" id="visibRegionaisChips" style="margin-bottom:12px;"></div>
+          <small class="hint" style="display:block; margin-bottom:6px;">Lojas específicas</small>
+          <div class="visib-chips" id="visibLojasChips"></div>
+        </div>
+        <small class="hint">Se marcar cargo E loja/regional juntos, só vê quem bater as duas condições ao mesmo tempo.</small>
       </div>
       <div class="field">
         <label>Selo</label>
@@ -748,6 +812,21 @@ function setVisib(btn, show){
   const bloco = document.getElementById('cursoPublicoSalvoBlock');
   if (bloco) bloco.style.display = show ? 'flex' : 'none';
 }
+function setObrigatorio(btn, valor){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  btn.parentElement.dataset.valor = valor ? '1' : '0';
+}
+function setVisibLocal(btn, show){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('visibLocalBlock').style.display = show ? 'block' : 'none';
+}
+function setPdfVisibLocal(btn, show){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('pdfVisibLocalBlock').style.display = show ? 'block' : 'none';
+}
 function setSelo(btn, valor){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
@@ -851,6 +930,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     renderCargosEmTodaParte();
     iniciarLojas();
     iniciarCargos();
+    iniciarConfiguracoes();
     renderCategoriaSelect();
     iniciarCategorias();
     iniciarPublicos();
@@ -870,11 +950,58 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   /* ===================== LOJAS ===================== */
   let lojasCache = [];
 
+  function iniciarConfiguracoes(){
+    onSnapshot(doc(db, 'configuracoes', 'pesquisas'), (snap) => {
+      const dados = snap.exists() ? snap.data() : {};
+      const input45 = document.getElementById('pesquisaLink45Input');
+      const input90 = document.getElementById('pesquisaLink90Input');
+      if (input45 && document.activeElement !== input45) input45.value = dados.Link45 || '';
+      if (input90 && document.activeElement !== input90) input90.value = dados.Link90 || '';
+    }, (err) => console.error('Erro ao carregar configurações de pesquisa:', err));
+  }
+
+  window.salvarLinksPesquisa = async function(){
+    const link45 = document.getElementById('pesquisaLink45Input').value.trim();
+    const link90 = document.getElementById('pesquisaLink90Input').value.trim();
+    const resultadoEl = document.getElementById('pesquisaLinksResultado');
+    try {
+      await setDoc(doc(db, 'configuracoes', 'pesquisas'), { Link45: link45, Link90: link90 }, { merge: true });
+      resultadoEl.textContent = '✅ Links salvos.';
+      resultadoEl.style.color = 'var(--green-dark)';
+      resultadoEl.style.display = 'block';
+    } catch (err) {
+      console.error('Erro ao salvar links de pesquisa:', err);
+      resultadoEl.textContent = 'Não foi possível salvar agora. Tenta de novo em alguns segundos.';
+      resultadoEl.style.color = '#B4462B';
+      resultadoEl.style.display = 'block';
+    }
+  };
+
   function iniciarLojas(){
     onSnapshot(collection(db, 'lojas'), (snapshot) => {
       lojasCache = snapshot.docs.map(d => ({ nome: d.data().Nome, regional: d.data().Regional || '' })).sort((a, b) => a.nome.localeCompare(b.nome));
       renderRegionalSelect();
+      renderLojaRegionalChips();
     }, (err) => console.error('Erro ao carregar lojas:', err));
+  }
+
+  function renderLojaRegionalChips(){
+    const regionais = [...new Set(lojasCache.map(l => l.regional).filter(Boolean))].sort();
+    const lojas = lojasCache.map(l => l.nome);
+
+    [{ el: 'visibRegionaisChips', itens: regionais }, { el: 'pdfVisibRegionaisChips', itens: regionais },
+     { el: 'visibLojasChips', itens: lojas }, { el: 'pdfVisibLojasChips', itens: lojas }
+    ].forEach(({ el, itens }) => {
+      const container = document.getElementById(el);
+      if (!container) return;
+      const selecionadosAntes = [...container.querySelectorAll('.visib-chip.on')].map(c => c.textContent.trim());
+      container.innerHTML = itens.length
+        ? itens.map(nome => `<span class="visib-chip${selecionadosAntes.includes(nome) ? ' on' : ''}">${nome}</span>`).join('')
+        : `<small class="hint" style="color:var(--ink-soft); font-size:12px;">Nenhuma cadastrada ainda.</small>`;
+      container.querySelectorAll('.visib-chip').forEach(chip => {
+        chip.addEventListener('click', () => chip.classList.toggle('on'));
+      });
+    });
   }
 
   function renderRegionalSelect(){
@@ -1263,7 +1390,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         ? `<button onclick="reativarCurso('${c.id}')">Reativar</button>`
         : `<button class="danger" onclick="arquivarCurso('${c.id}')">Arquivar</button>`;
       return `<tr>
-        <td><div class="course-cell"><div class="course-thumb" style="${capaStyle}">${c.CapaURL ? '' : '🍽️'}</div><div><b>${c.Titulo || '(sem título)'}</b><small>${subtitulo}</small></div></div></td>
+        <td><div class="course-cell"><div class="course-thumb" style="${capaStyle}">${c.CapaURL ? '' : '🍽️'}</div><div><b>${c.Titulo || '(sem título)'}</b>${c.Obrigatorio ? ' <span class="pill" style="background:#F3D9D0; color:#B4462B;">Obrigatório</span>' : ''}<small>${subtitulo}</small></div></div></td>
         <td>${c.Categoria || '—'}</td>
         <td><span class="pill pub">${visib}</span></td>
         <td>${c.Duracao || 'N/D'}</td>
@@ -1292,12 +1419,17 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('cursoCapaInput').value = '';
     document.getElementById('cursoCertInput').value = '';
     document.getElementById('cursoValidadeInput').value = '';
+    document.querySelectorAll('#cursoObrigatorioToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
+    document.getElementById('cursoObrigatorioToggle').dataset.valor = '0';
     document.getElementById('cursoSalvarErro').style.display = 'none';
     document.querySelectorAll('#tipoConteudoToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
     setTipoConteudo(document.querySelector('#tipoConteudoToggle button'), 'canva');
     document.querySelectorAll('#visibToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
     document.getElementById('visibChips').style.display = 'none';
     document.querySelectorAll('#visibChips .visib-chip').forEach(ch => ch.classList.remove('on'));
+    document.querySelectorAll('#visibLocalToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
+    document.getElementById('visibLocalBlock').style.display = 'none';
+    document.querySelectorAll('#visibRegionaisChips .visib-chip, #visibLojasChips .visib-chip').forEach(ch => ch.classList.remove('on'));
     document.querySelectorAll('#seloToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
   }
 
@@ -1340,6 +1472,22 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         });
       }
     }
+    if (c.LocalEspecifico) {
+      const btnsLocal = document.querySelectorAll('#visibLocalToggle button');
+      btnsLocal.forEach(b => b.classList.remove('on'));
+      if (btnsLocal[1]) btnsLocal[1].classList.add('on');
+      document.getElementById('visibLocalBlock').style.display = 'block';
+      if (Array.isArray(c.LojasPermitidas)) {
+        document.querySelectorAll('#visibLojasChips .visib-chip').forEach(ch => {
+          ch.classList.toggle('on', c.LojasPermitidas.includes(ch.textContent.trim()));
+        });
+      }
+      if (Array.isArray(c.RegionaisPermitidas)) {
+        document.querySelectorAll('#visibRegionaisChips .visib-chip').forEach(ch => {
+          ch.classList.toggle('on', c.RegionaisPermitidas.includes(ch.textContent.trim()));
+        });
+      }
+    }
     if (c.Selo) {
       const seloMap = { nenhum: 0, novo: 1, destaque: 2 };
       const btns = document.querySelectorAll('#seloToggle button');
@@ -1347,6 +1495,11 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       if (btns[seloMap[c.Selo]]) btns[seloMap[c.Selo]].classList.add('on');
     }
     if (c.CapaURL) document.getElementById('cursoCapaInput').value = c.CapaURL;
+    const obrigToggle = document.getElementById('cursoObrigatorioToggle');
+    const obrigBtns = obrigToggle.querySelectorAll('button');
+    obrigBtns.forEach(b => b.classList.remove('on'));
+    obrigBtns[c.Obrigatorio ? 1 : 0].classList.add('on');
+    obrigToggle.dataset.valor = c.Obrigatorio ? '1' : '0';
     if (c.CertificadoModeloURL) document.getElementById('cursoCertInput').value = c.CertificadoModeloURL;
     if (c.ValidadeMeses) document.getElementById('cursoValidadeInput').value = String(c.ValidadeMeses);
     document.getElementById('btnSalvarRascunho').onclick = () => salvarCurso('rascunho');
@@ -1382,6 +1535,13 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       const cargos = cargosEspecificos
         ? [...document.querySelectorAll('#visibChips .visib-chip.on')].map(ch => ch.textContent.trim())
         : [];
+      const localEspecifico = document.querySelectorAll('#visibLocalToggle button')[1]?.classList.contains('on') || false;
+      const lojasPermitidas = localEspecifico
+        ? [...document.querySelectorAll('#visibLojasChips .visib-chip.on')].map(ch => ch.textContent.trim())
+        : [];
+      const regionaisPermitidas = localEspecifico
+        ? [...document.querySelectorAll('#visibRegionaisChips .visib-chip.on')].map(ch => ch.textContent.trim())
+        : [];
 
       const dadosCurso = {
         Titulo: titulo,
@@ -1393,8 +1553,12 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         CapaURL: document.getElementById('cursoCapaInput').value.trim(),
         CertificadoModeloURL: document.getElementById('cursoCertInput').value.trim(),
         ValidadeMeses: document.getElementById('cursoValidadeInput').value ? Number(document.getElementById('cursoValidadeInput').value) : null,
+        Obrigatorio: document.getElementById('cursoObrigatorioToggle').dataset.valor === '1',
         CargosEspecificos: cargosEspecificos,
         Cargos: cargos,
+        LocalEspecifico: localEspecifico,
+        LojasPermitidas: lojasPermitidas,
+        RegionaisPermitidas: regionaisPermitidas,
         Selo: seloMap[seloIdx],
         Status: status,
         AtualizadoEm: serverTimestamp(),
@@ -1953,6 +2117,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     }).join('');
   }
 
+  function mesesEntre(d1, d2){
+    return (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+  }
+
   function renderListaCard(linhasHtml, vazioMsg, max){
     if (!linhasHtml.length) return `<small class="hint" style="color:var(--ink-soft); font-size:12.5px;">${vazioMsg}</small>`;
     const visiveis = linhasHtml.slice(0, max || 8);
@@ -1988,6 +2156,12 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       totalIniciados++;
 
       if (p.Status === 'concluido') {
+        const cursoRef = cursosCache.find(c => c.id === p.CursoId);
+        const vencido = cursoRef && cursoRef.ValidadeMeses && p.ConcluidoEm && p.ConcluidoEm.toDate
+          ? mesesEntre(p.ConcluidoEm.toDate(), agora) >= cursoRef.ValidadeMeses
+          : false;
+        if (vencido) return; // certificado vencido conta como pendente de novo, não como concluído
+
         if (!concluidosPorCpf[p.Cpf]) concluidosPorCpf[p.Cpf] = new Set();
         concluidosPorCpf[p.Cpf].add(p.CursoId);
         concluidosPorCurso[p.CursoId] = (concluidosPorCurso[p.CursoId] || 0) + 1;
@@ -2045,7 +2219,17 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     }).join('');
 
     // ================= POR COLABORADOR =================
-    const linhasColab = ativos.map(c => {
+    const filtroLojaSelect = document.getElementById('relFiltroLoja');
+    if (filtroLojaSelect) {
+      const valorFiltroAtual = filtroLojaSelect.value;
+      const nomesLojas = [...new Set(lojasCache.map(l => l.nome))].sort();
+      filtroLojaSelect.innerHTML = '<option value="">Todas as lojas</option>' + nomesLojas.map(n => `<option value="${n}">${n}</option>`).join('');
+      if (valorFiltroAtual && nomesLojas.includes(valorFiltroAtual)) filtroLojaSelect.value = valorFiltroAtual;
+    }
+    const filtroLoja = filtroLojaSelect ? filtroLojaSelect.value : '';
+    const ativosFiltrados = filtroLoja ? ativos.filter(c => c.Loja === filtroLoja) : ativos;
+
+    const linhasColab = ativosFiltrados.map(c => {
       const concluidosSet = concluidosPorCpf[c.cpf] || new Set();
       const concluidos = concluidosSet.size;
       const totalCursos = cursosPublicados.length;
@@ -2154,6 +2338,18 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       nuncaAcessaram.map(c => linhaSimples(c.Nome || c.cpf, c.Loja || '')),
       'Todo mundo já acessou pelo menos uma vez. 🎉', 8
     );
+
+    const vencidos = [];
+    progressoCache.forEach(p => {
+      if (p.Status !== 'concluido' || !p.ConcluidoEm || !p.ConcluidoEm.toDate) return;
+      const curso = cursosCache.find(c => c.id === p.CursoId);
+      if (!curso || !curso.ValidadeMeses) return;
+      if (mesesEntre(p.ConcluidoEm.toDate(), agora) >= curso.ValidadeMeses) {
+        const colab = colaboradoresCache.find(c => c.cpf === p.Cpf);
+        vencidos.push(linhaSimples(`${colab ? colab.Nome : p.Cpf} — ${curso.Titulo}`, `Concluído em ${formatarData(p.ConcluidoEm).split(',')[0]}, validade de ${curso.ValidadeMeses} meses`));
+      }
+    });
+    document.getElementById('relVencidos').innerHTML = renderListaCard(vencidos, 'Nenhum certificado vencido no momento.', 10);
 
     // ================= ALERTAS INTELIGENTES =================
     const alertas = [];
@@ -2276,6 +2472,9 @@ function limparModalPdf(){
   toggle.children[0].classList.add('on');
   toggle.children[1].classList.remove('on');
   document.getElementById('pdfCargosBlock').style.display = 'none';
+  document.querySelectorAll('#pdfVisibLocalToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
+  document.getElementById('pdfVisibLocalBlock').style.display = 'none';
+  document.querySelectorAll('#pdfVisibRegionaisChips .visib-chip, #pdfVisibLojasChips .visib-chip').forEach(ch => ch.classList.remove('on'));
   document.getElementById('pdfSalvarErro').style.display = 'none';
 }
 
@@ -2300,6 +2499,22 @@ window.editarMaterial = function(id){
     document.getElementById('pdfCargosBlock').style.display = 'block';
     document.getElementById('pdfCargosInput').value = m.Cargos.join(', ');
   }
+  if (m.LocalEspecifico) {
+    const toggleLocal = document.getElementById('pdfVisibLocalToggle');
+    toggleLocal.children[0].classList.remove('on');
+    toggleLocal.children[1].classList.add('on');
+    document.getElementById('pdfVisibLocalBlock').style.display = 'block';
+    if (Array.isArray(m.LojasPermitidas)) {
+      document.querySelectorAll('#pdfVisibLojasChips .visib-chip').forEach(ch => {
+        ch.classList.toggle('on', m.LojasPermitidas.includes(ch.textContent.trim()));
+      });
+    }
+    if (Array.isArray(m.RegionaisPermitidas)) {
+      document.querySelectorAll('#pdfVisibRegionaisChips .visib-chip').forEach(ch => {
+        ch.classList.toggle('on', m.RegionaisPermitidas.includes(ch.textContent.trim()));
+      });
+    }
+  }
   openModal('modalPdf');
 };
 
@@ -2322,12 +2537,22 @@ window.salvarMaterial = async function(){
   const cargos = especifico
     ? document.getElementById('pdfCargosInput').value.split(',').map(c => c.trim()).filter(Boolean)
     : [];
+  const localEspecifico = document.getElementById('pdfVisibLocalToggle').children[1].classList.contains('on');
+  const lojasPermitidas = localEspecifico
+    ? [...document.querySelectorAll('#pdfVisibLojasChips .visib-chip.on')].map(ch => ch.textContent.trim())
+    : [];
+  const regionaisPermitidas = localEspecifico
+    ? [...document.querySelectorAll('#pdfVisibRegionaisChips .visib-chip.on')].map(ch => ch.textContent.trim())
+    : [];
   const dados = {
     Titulo: titulo,
     Categoria: document.getElementById('pdfCategoriaInput').value,
     LinkURL: link,
     CargosEspecificos: especifico,
     Cargos: cargos,
+    LocalEspecifico: localEspecifico,
+    LojasPermitidas: lojasPermitidas,
+    RegionaisPermitidas: regionaisPermitidas,
     AtualizadoEm: serverTimestamp(),
   };
   try {
