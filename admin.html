@@ -440,7 +440,10 @@
           <div class="crumb">Admin / Dados</div>
           <h1>Relatórios &amp; adesão</h1>
         </div>
-        <button class="ghost-btn" onclick="exportarRelatorioCSV()">⬇ Exportar CSV/Excel</button>
+        <div style="display:flex; gap:10px;">
+          <button class="ghost-btn" onclick="exportarRelatorioCSV()">⬇ Exportar resumo</button>
+          <button class="ghost-btn" onclick="exportarRelatorioDetalhadoCSV()">⬇ Exportar detalhado (por curso)</button>
+        </div>
       </div>
 
       <div class="panel-tabs" style="margin-bottom:20px;">
@@ -2259,6 +2262,23 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     }
     ultimoRankingCache = linhasColab.map(l => ({ nome: l.nome, loja: l.loja, qtd: l.concluidos, pct: l.pct, ultimoAcesso: l.ultimoAcesso, pendentes: l.titulosPendentes.join('; ') }));
 
+    // uma linha por colaborador + curso, pra filtrar no Excel por curso específico e status
+    ultimoDetalhadoCache = [];
+    ativosFiltrados.forEach(c => {
+      const concluidosSet = concluidosPorCpf[c.cpf] || new Set();
+      cursosPublicados.forEach(curso => {
+        ultimoDetalhadoCache.push({
+          nome: c.Nome || '—',
+          cargo: c.Cargo || '—',
+          loja: c.Loja || '—',
+          regional: c.Regional || '—',
+          curso: curso.Titulo || '—',
+          obrigatorio: curso.Obrigatorio ? 'Sim' : 'Não',
+          status: concluidosSet.has(curso.id) ? 'Concluído' : 'Pendente',
+        });
+      });
+    });
+
     // top 5 colaboradores
     document.getElementById('relTopColaboradores').innerHTML = renderListaCard(
       linhasColab.slice(0, 5).map((l, i) => linhaSimples(`${i + 1}º ${l.nome}`, `${l.concluidos} curso(s) concluído(s)`)),
@@ -2384,6 +2404,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   window.renderRelatorios = renderRelatorios;
 
   let ultimoRankingCache = [];
+  let ultimoDetalhadoCache = [];
 
   window.exportarRelatorioCSV = function(){
     if (!ultimoRankingCache.length) {
@@ -2399,6 +2420,24 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `relatorio-adesao-${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  window.exportarRelatorioDetalhadoCSV = function(){
+    if (!ultimoDetalhadoCache.length) {
+      alert('Ainda não há dados pra exportar.');
+      return;
+    }
+    const linhasCsv = [['Colaborador', 'Cargo', 'Loja', 'Regional', 'Curso', 'Obrigatório', 'Status']];
+    ultimoDetalhadoCache.forEach(l => {
+      linhasCsv.push([l.nome, l.cargo, l.loja, l.regional, l.curso, l.obrigatorio, l.status]);
+    });
+    const csv = linhasCsv.map(linha => linha.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `relatorio-detalhado-por-curso-${new Date().toISOString().slice(0,10)}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
   };
