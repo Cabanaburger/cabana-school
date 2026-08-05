@@ -511,6 +511,9 @@
 
       <!-- ===== POR CURSO ===== -->
       <div id="relSub-cursos" class="rel-subview" style="display:none;">
+        <div style="text-align:right; margin-bottom:10px;">
+          <button class="ghost-btn" onclick="exportarRelatorioCursosCSV()">⬇ Exportar</button>
+        </div>
         <div class="panel-card">
           <table>
             <thead><tr><th>Curso</th><th>Categoria</th><th>Tipo</th><th>Iniciados</th><th>Concluídos</th><th>Taxa de conclusão</th></tr></thead>
@@ -523,6 +526,9 @@
 
       <!-- ===== ORGANIZACIONAL ===== -->
       <div id="relSub-organizacional" class="rel-subview" style="display:none;">
+        <div style="text-align:right; margin-bottom:10px;">
+          <button class="ghost-btn" onclick="exportarRelatorioOrganizacionalCSV()">⬇ Exportar</button>
+        </div>
         <div class="rep-grid">
           <div class="rep-card">
             <h4>Adesão por loja</h4>
@@ -2292,6 +2298,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       const taxa = iniciados ? Math.round((concluidos / iniciados) * 100) : null;
       return { titulo: c.Titulo, categoria: c.Categoria || '—', tipo: c.TipoConteudo || '—', iniciados, concluidos, taxa };
     }).sort((a, b) => b.concluidos - a.concluidos);
+    ultimoCursosCache = linhasCurso;
 
     const cursoBody = document.getElementById('relCursoBody');
     if (cursoBody) {
@@ -2334,6 +2341,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     if (cargoEl) cargoEl.innerHTML = renderBarras(gruposCargo);
     if (localEl) localEl.innerHTML = renderBarras(gruposLocal);
     if (regionalEl) regionalEl.innerHTML = renderBarras(gruposRegional);
+    ultimoOrganizacionalCache = { gruposLoja, gruposCargo, gruposLocal, gruposRegional };
 
     // top 3 lojas / regionais (por % de adesão, só quem tem gente de verdade)
     function topGrupo(grupos, min){
@@ -2405,23 +2413,31 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 
   let ultimoRankingCache = [];
   let ultimoDetalhadoCache = [];
+  let ultimoCursosCache = [];
+  let ultimoOrganizacionalCache = null;
+
+  function baixarXLSX(linhas, nomeArquivo, nomeAba){
+    const ws = XLSX.utils.aoa_to_sheet(linhas);
+    // largura das colunas, calculada pelo conteúdo, pra não vir tudo espremido
+    ws['!cols'] = linhas[0].map((_, i) => {
+      const maior = linhas.reduce((max, linha) => Math.max(max, String(linha[i] ?? '').length), 10);
+      return { wch: Math.min(50, maior + 2) };
+    });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, nomeAba || 'Relatório');
+    XLSX.writeFile(wb, nomeArquivo);
+  }
 
   window.exportarRelatorioCSV = function(){
     if (!ultimoRankingCache.length) {
       alert('Ainda não há dados de colaboradores pra exportar.');
       return;
     }
-    const linhasCsv = [['Colaborador', 'Loja', 'Cursos concluídos', '% concluído', 'Último acesso', 'Cursos pendentes']];
+    const linhas = [['Colaborador', 'Loja', 'Cursos concluídos', '% concluído', 'Último acesso', 'Cursos pendentes']];
     ultimoRankingCache.forEach(l => {
-      linhasCsv.push([l.nome, l.loja, l.qtd, l.pct + '%', formatarData(l.ultimoAcesso), l.pendentes || '']);
+      linhas.push([l.nome, l.loja, l.qtd, l.pct + '%', formatarData(l.ultimoAcesso), l.pendentes || '']);
     });
-    const csv = linhasCsv.map(linha => linha.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `relatorio-adesao-${new Date().toISOString().slice(0,10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    baixarXLSX(linhas, `relatorio-adesao-${new Date().toISOString().slice(0,10)}.xlsx`, 'Resumo');
   };
 
   window.exportarRelatorioDetalhadoCSV = function(){
@@ -2429,17 +2445,39 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       alert('Ainda não há dados pra exportar.');
       return;
     }
-    const linhasCsv = [['Colaborador', 'Cargo', 'Loja', 'Regional', 'Curso', 'Obrigatório', 'Status']];
+    const linhas = [['Colaborador', 'Cargo', 'Loja', 'Regional', 'Curso', 'Obrigatório', 'Status']];
     ultimoDetalhadoCache.forEach(l => {
-      linhasCsv.push([l.nome, l.cargo, l.loja, l.regional, l.curso, l.obrigatorio, l.status]);
+      linhas.push([l.nome, l.cargo, l.loja, l.regional, l.curso, l.obrigatorio, l.status]);
     });
-    const csv = linhasCsv.map(linha => linha.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `relatorio-detalhado-por-curso-${new Date().toISOString().slice(0,10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    baixarXLSX(linhas, `relatorio-detalhado-por-curso-${new Date().toISOString().slice(0,10)}.xlsx`, 'Detalhado por curso');
+  };
+
+  window.exportarRelatorioCursosCSV = function(){
+    if (!ultimoCursosCache.length) { alert('Ainda não há cursos publicados pra exportar.'); return; }
+    const linhas = [['Curso', 'Categoria', 'Tipo', 'Iniciados', 'Concluídos', 'Taxa de conclusão']];
+    ultimoCursosCache.forEach(l => {
+      linhas.push([l.titulo, l.categoria, l.tipo, l.iniciados, l.concluidos, l.taxa === null ? '—' : l.taxa + '%']);
+    });
+    baixarXLSX(linhas, `relatorio-cursos-${new Date().toISOString().slice(0,10)}.xlsx`, 'Cursos');
+  };
+
+  window.exportarRelatorioOrganizacionalCSV = function(){
+    if (!ultimoOrganizacionalCache) { alert('Ainda não há dados pra exportar.'); return; }
+    const linhas = [['Dimensão', 'Grupo', 'Colaboradores', 'Concluíram ao menos 1 curso', '% adesão']];
+    const dimensoes = [
+      ['Loja', ultimoOrganizacionalCache.gruposLoja],
+      ['Cargo', ultimoOrganizacionalCache.gruposCargo],
+      ['Local', ultimoOrganizacionalCache.gruposLocal],
+      ['Regional', ultimoOrganizacionalCache.gruposRegional],
+    ];
+    dimensoes.forEach(([nomeDimensao, grupos]) => {
+      Object.keys(grupos).forEach(chave => {
+        const g = grupos[chave];
+        const pct = g.total ? Math.round((g.comConclusao / g.total) * 100) : 0;
+        linhas.push([nomeDimensao, chave, g.total, g.comConclusao, pct + '%']);
+      });
+    });
+    baixarXLSX(linhas, `relatorio-organizacional-${new Date().toISOString().slice(0,10)}.xlsx`, 'Organizacional');
   };
 /* ===================== BIBLIOTECA ===================== */
 let bibliotecaCache = [];
