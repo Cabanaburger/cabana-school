@@ -477,7 +477,7 @@
       <h1>Seu próximo passo começa <span>aqui no Cabana.</span></h1>
       <p class="lede">Treinamentos, guias e conteúdos de aprendizagem organizados num só lugar, direto do padrão Cabana, pensado pra quem tá na loja e no dia a dia.</p>
       <div class="hero-search">
-        <input type="text" id="heroSearch" placeholder="Buscar por curso, categoria ou palavra-chave...">
+        <input type="text" id="heroSearch" autocomplete="off" placeholder="Buscar por curso, categoria ou palavra-chave...">
         <button>Buscar</button>
       </div>
       <div class="hero-chips" id="heroChips"></div>
@@ -843,6 +843,7 @@ function renderJornada(){
     const n = niveis[i];
     const isCurrent = proximoNivel ? n.nome === proximoNivel.nome : i === niveis.length - 1;
     node.classList.toggle('current', isCurrent);
+    node.classList.toggle('done', concluidos >= n.min);
   });
 }
 window.renderJornada = renderJornada;
@@ -1064,13 +1065,6 @@ function abrirCurso(cursoId){
     <div class="layout">
       <div>
         ${playerHTML(c)}
-        <div class="content-block">
-          <h2>Objetivos do treinamento</h2>
-          <div class="obj-grid">
-            <div class="obj-card"><b>O que você vai aprender</b>${c.objetivo1}</div>
-            <div class="obj-card"><b>Pra que serve</b>${c.objetivo2}</div>
-          </div>
-        </div>
       </div>
       <div>
         <div class="panel">
