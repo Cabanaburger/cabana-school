@@ -2238,12 +2238,25 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     const filtroLoja = filtroLojaSelect ? filtroLojaSelect.value : '';
     const ativosFiltrados = filtroLoja ? ativos.filter(c => c.Loja === filtroLoja) : ativos;
 
+    // um curso só "conta" pra uma pessoa se ela realmente teria acesso a ele (mesma regra de cargo/loja/regional da Home)
+    function cursoAplicavelA(curso, colab){
+      if (colab.Nivel === 'Admin') return true;
+      const passaCargo = !(curso.CargosEspecificos === true && Array.isArray(curso.Cargos) && curso.Cargos.length)
+        || curso.Cargos.includes(colab.Cargo);
+      const temRestricaoLocal = curso.LocalEspecifico === true && ((Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.length) || (Array.isArray(curso.RegionaisPermitidas) && curso.RegionaisPermitidas.length));
+      const passaLocal = !temRestricaoLocal
+        || (Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.includes(colab.Loja))
+        || (Array.isArray(curso.RegionaisPermitidas) && curso.RegionaisPermitidas.includes(colab.Regional));
+      return passaCargo && passaLocal;
+    }
+
     const linhasColab = ativosFiltrados.map(c => {
       const concluidosSet = concluidosPorCpf[c.cpf] || new Set();
-      const concluidos = concluidosSet.size;
-      const totalCursos = cursosPublicados.length;
-      const titulosPendentes = cursosPublicados.filter(cu => !concluidosSet.has(cu.id)).map(cu => cu.Titulo);
+      const cursosDelaAplicaveis = cursosPublicados.filter(cu => cursoAplicavelA(cu, c));
+      const totalCursos = cursosDelaAplicaveis.length;
+      const titulosPendentes = cursosDelaAplicaveis.filter(cu => !concluidosSet.has(cu.id)).map(cu => cu.Titulo);
       const pendentes = titulosPendentes.length;
+      const concluidos = totalCursos - pendentes;
       const pct = totalCursos ? Math.round((concluidos / totalCursos) * 100) : 0;
       let diasSemAcessar = null;
       if (c.UltimoAcesso && c.UltimoAcesso.toDate) diasSemAcessar = Math.floor((agora - c.UltimoAcesso.toDate()) / (1000 * 60 * 60 * 24));
@@ -2272,7 +2285,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     ultimoDetalhadoCache = [];
     ativosFiltrados.forEach(c => {
       const concluidosSet = concluidosPorCpf[c.cpf] || new Set();
-      cursosPublicados.forEach(curso => {
+      cursosPublicados.filter(cu => cursoAplicavelA(cu, c)).forEach(curso => {
         ultimoDetalhadoCache.push({
           nome: c.Nome || '—',
           cargo: c.Cargo || '—',
