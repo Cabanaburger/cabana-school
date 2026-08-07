@@ -613,6 +613,11 @@
         <small class="hint">Aparece com destaque na trilha do colaborador, indicando o que fazer primeiro.</small>
       </div>
       <div class="field">
+        <label>Ordem sugerida (opcional)</label>
+        <input type="number" id="cursoOrdemInput" min="1" placeholder="Ex: 1, 2, 3...">
+        <small class="hint">Só usada entre os cursos obrigatórios, pra sugerir por qual começar (1º, 2º...). Não trava nada — é só uma recomendação.</small>
+      </div>
+      <div class="field">
         <label>Validade do certificado</label>
         <select id="cursoValidadeInput">
           <option value="">Não vence</option>
@@ -1563,6 +1568,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('cursoValidadeInput').value = '';
     document.querySelectorAll('#cursoObrigatorioToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
     document.getElementById('cursoObrigatorioToggle').dataset.valor = '0';
+    document.getElementById('cursoOrdemInput').value = '';
     document.getElementById('cursoSalvarErro').style.display = 'none';
     document.querySelectorAll('#tipoConteudoToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
     setTipoConteudo(document.querySelector('#tipoConteudoToggle button'), 'canva');
@@ -1642,6 +1648,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     obrigBtns.forEach(b => b.classList.remove('on'));
     obrigBtns[c.Obrigatorio ? 1 : 0].classList.add('on');
     obrigToggle.dataset.valor = c.Obrigatorio ? '1' : '0';
+    document.getElementById('cursoOrdemInput').value = c.Ordem || '';
     if (c.CertificadoModeloURL) document.getElementById('cursoCertInput').value = c.CertificadoModeloURL;
     if (c.ValidadeMeses) document.getElementById('cursoValidadeInput').value = String(c.ValidadeMeses);
     document.getElementById('btnSalvarRascunho').onclick = () => salvarCurso('rascunho');
@@ -1696,6 +1703,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         CertificadoModeloURL: document.getElementById('cursoCertInput').value.trim(),
         ValidadeMeses: document.getElementById('cursoValidadeInput').value ? Number(document.getElementById('cursoValidadeInput').value) : null,
         Obrigatorio: document.getElementById('cursoObrigatorioToggle').dataset.valor === '1',
+        Ordem: document.getElementById('cursoOrdemInput').value ? Number(document.getElementById('cursoOrdemInput').value) : null,
         CargosEspecificos: cargosEspecificos,
         Cargos: cargos,
         LocalEspecifico: localEspecifico,
