@@ -760,6 +760,11 @@ setTimeout(function(){
 }, 10000);
 
 /* busca em tempo real (filtra por título e categoria) */
+document.getElementById('heroSearch').value = ''; // força vazio mesmo se o navegador tentar restaurar valor de antes
+window.addEventListener('pageshow', () => {
+  const campo = document.getElementById('heroSearch');
+  if (campo) campo.value = '';
+});
 document.getElementById('heroSearch').addEventListener('input', (e)=>{
   const q = e.target.value.toLowerCase();
   const filtered = CURSOS.filter(c =>
@@ -897,9 +902,10 @@ function filterBib(cat){
   document.getElementById('bibList').innerHTML = list.map(docCardHTML).join('') || '<p style="font-size:13px; color:var(--ink-soft); text-align:center; padding:20px;">Nenhum documento nessa categoria ainda.</p>';
 }
 function openBiblioteca(cat){
-  const cats = ['Todos', ...Object.keys(EMOJIS_BIB)];
+  const emojisBib = window.EMOJIS_BIB || {};
+  const cats = ['Todos', ...Object.keys(emojisBib)];
   document.getElementById('bibFilters').innerHTML = cats.map(c=>
-    `<button class="bib-chip" data-cat="${c}" onclick="filterBib('${c}')">${c==='Todos' ? 'Todos' : (EMOJIS_BIB[c] || '') + ' ' + c}</button>`
+    `<button class="bib-chip" data-cat="${c}" onclick="filterBib('${c}')">${c==='Todos' ? 'Todos' : (emojisBib[c] || '') + ' ' + c}</button>`
   ).join('');
   filterBib(cat);
   document.getElementById('modalBiblioteca').style.display='flex';
@@ -1215,6 +1221,8 @@ function abrirCurso(cursoId){
   const EMOJIS_BIB_PADRAO = { POP: '📄', 'Política': '📋', Guia: '📘' };
   let CORES_BIB = { ...CORES_BIB_PADRAO };
   let EMOJIS_BIB = { ...EMOJIS_BIB_PADRAO };
+  window.CORES_BIB = CORES_BIB;
+  window.EMOJIS_BIB = EMOJIS_BIB;
 
   function carregarCategoriasBiblioteca(){
     onSnapshot(collection(db, 'categoriasBiblioteca'), (snap) => {
@@ -1224,6 +1232,8 @@ function abrirCurso(cursoId){
         const data = d.data();
         if (data.Nome) { CORES_BIB[data.Nome] = data.Cor || '#4F9C40'; EMOJIS_BIB[data.Nome] = data.Emoji || '📚'; }
       });
+      window.CORES_BIB = CORES_BIB;
+      window.EMOJIS_BIB = EMOJIS_BIB;
     }, (err) => console.error('Erro ao carregar categorias de biblioteca:', err));
   }
 
@@ -1311,7 +1321,7 @@ function abrirCurso(cursoId){
     el.innerHTML = Object.keys(porCategoria).map(cat => {
       const qtd = porCategoria[cat];
       const emoji = EMOJIS_BIB[cat] || '📄';
-      return `<div class="lib-card" onclick="openBiblioteca('${cat}')" style="cursor:pointer;"><div class="em">${emoji}</div><div><b>${cat}s</b><br><span>${qtd} documento${qtd === 1 ? '' : 's'}</span></div></div>`;
+      return `<div class="lib-card" onclick="openBiblioteca('${cat}')" style="cursor:pointer;"><div class="em">${emoji}</div><div><b>${cat}</b><br><span>${qtd} documento${qtd === 1 ? '' : 's'}</span></div></div>`;
     }).join('');
   }
 
