@@ -540,6 +540,16 @@
   <div class="cat-rail" id="catRail"></div>
 </section>
 
+<section class="block" id="obrigatorios" style="display:none;">
+  <div class="block-head">
+    <div>
+      <h2>📌 Seus treinamentos obrigatórios</h2>
+      <p>Esses são prioridade — o resto da plataforma pode esperar.</p>
+    </div>
+  </div>
+  <div class="grid" id="obrigatoriosGrid"></div>
+</section>
+
 <section class="block" id="cursos">
   <div class="block-head">
     <div>
@@ -699,13 +709,14 @@ let TRILHAS = TRILHAS_PADRAO;
 
 let DOCS = [];
 
-function cardHTML(c){
+function cardHTML(c, ordinal){
   const badge = c.obrigatorio && !c.concluido ? '<span class="badge" style="background:#B4462B; color:#fff;">Obrigatório</span>'
               : c.status === "destaque" ? '<span class="badge destaque">Destaque</span>'
               : c.status === "novo" ? '<span class="badge novo">Novo</span>' : '';
   const ctaLabel = c.concluido ? "Revisar" : (c.progresso > 0 ? "Continuar" : "Começar");
   const ctaClass = c.concluido ? "done" : "";
   const destaqueObrigatorio = c.obrigatorio && !c.concluido ? 'box-shadow:0 0 0 3px #B4462B33; border-radius:16px;' : '';
+  const numeroOrdinal = ordinal ? `<div style="position:absolute; top:10px; right:10px; width:28px; height:28px; border-radius:50%; background:#fff; color:var(--ink); font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.25);">${ordinal}º</div>` : '';
   const thumbStyle = c.capa
     ? `background-image:url('${c.capa}'); background-size:cover; background-position:center;`
     : `background:${c.cor};`;
@@ -714,6 +725,7 @@ function cardHTML(c){
       <div class="thumb" style="${thumbStyle}">
         ${c.capa ? '<div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%);"></div>' : ''}
         ${badge}
+        ${numeroOrdinal}
         ${c.capa ? '' : `<span>${c.emoji}</span>`}
         <span class="cat-tag">${c.categoria}</span>
       </div>
@@ -733,6 +745,17 @@ function cardHTML(c){
     </div>`;
 }
 
+function renderObrigatorios(){
+  const secao = document.getElementById('obrigatorios');
+  const grid = document.getElementById('obrigatoriosGrid');
+  if (!secao || !grid || !cursosCarregados) return;
+  const pendentes = CURSOS.filter(c => c.obrigatorio && !c.concluido)
+    .sort((a, b) => (a.ordem || 999) - (b.ordem || 999));
+  if (!pendentes.length) { secao.style.display = 'none'; return; }
+  secao.style.display = 'block';
+  grid.innerHTML = pendentes.map((c, i) => cardHTML(c, i + 1)).join('');
+}
+
 function renderCards(lista){
   const grid = document.getElementById('cardGrid');
   if (!grid) return;
@@ -740,10 +763,13 @@ function renderCards(lista){
     grid.innerHTML = '<p style="font-size:13.5px; color:var(--ink-soft);">Carregando cursos...</p>';
     return;
   }
-  const dados = lista || CURSOS;
+  // na visão padrão (Em destaque), os obrigatórios pendentes já aparecem na seção própria acima —
+  // aqui só evita duplicar. Se for uma lista filtrada (categoria, busca), mostra tudo normalmente.
+  const dados = lista || CURSOS.filter(c => !(c.obrigatorio && !c.concluido));
   grid.innerHTML = dados.length
-    ? dados.map(cardHTML).join('')
+    ? dados.map(c => cardHTML(c)).join('')
     : '<p style="font-size:13.5px; color:var(--ink-soft);">Nenhum curso publicado ainda.</p>';
+  renderObrigatorios();
 }
 window.renderCards = renderCards;
 renderCards();
@@ -1189,6 +1215,7 @@ function abrirCurso(cursoId){
       certificadoModelo: data.CertificadoModeloURL || '',
       validadeMeses: data.ValidadeMeses || null,
       obrigatorio: data.Obrigatorio === true,
+      ordem: data.Ordem || null,
       emoji: (trilha && trilha.emoji) || '📚',
       cor: (trilha && trilha.cor) || '#4F9C40',
       publico: publico,
