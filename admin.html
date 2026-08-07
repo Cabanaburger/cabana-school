@@ -273,9 +273,6 @@
         <div class="panel-tabs">
           <div class="lefttabs" id="bibFiltroTabs">
             <div class="ptab on" data-filtro="Todos" onclick="filtrarBiblioteca('Todos', this)">Todos</div>
-            <div class="ptab" data-filtro="POP" onclick="filtrarBiblioteca('POP', this)">POPs</div>
-            <div class="ptab" data-filtro="Política" onclick="filtrarBiblioteca('Política', this)">Políticas</div>
-            <div class="ptab" data-filtro="Guia" onclick="filtrarBiblioteca('Guia', this)">Guias</div>
           </div>
         </div>
         <table>
@@ -297,7 +294,8 @@
       </div>
       <div class="field">
         <label>Categoria</label>
-        <select id="pdfCategoriaInput"><option>POP</option><option>Política</option><option>Guia</option></select>
+        <select id="pdfCategoriaInput"></select>
+        <small class="hint"><a href="#" onclick="abrirModalCategoriaBiblioteca(); return false;" style="color:var(--green-dark); font-weight:700; text-decoration:none;">+ Criar nova categoria</a></small>
       </div>
       <div class="field">
         <label>Link do material (PDF)</label>
@@ -709,6 +707,39 @@
   </div>
 </div>
 
+<div class="overlay" id="modalCategoriaBiblioteca" style="display:none;">
+  <div class="modal" style="width:420px;">
+    <div class="modal-head"><h3>Nova categoria de material</h3><button onclick="closeModal('modalCategoriaBiblioteca')">✕</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Categorias existentes</label>
+        <div id="catBibListaExistentes" style="display:flex; flex-direction:column; gap:6px;"><small class="hint" style="color:var(--ink-soft);">Carregando…</small></div>
+        <small class="hint">As três primeiras (POP, Política, Guia) são o padrão da plataforma e não podem ser removidas por aqui.</small>
+      </div>
+      <div style="border-top:1px solid var(--line); margin:2px 0 6px;"></div>
+      <div class="field"><label>Nome da categoria</label><input type="text" id="catBibNomeInput" placeholder="Ex: Benefícios"></div>
+      <div class="field">
+        <label>Emoji</label>
+        <input type="text" id="catBibEmojiInput" placeholder="Ex: 🎁" maxlength="4" style="width:80px;">
+        <small class="hint">Cole um emoji que represente a categoria. Ele aparece nos cards da Biblioteca.</small>
+      </div>
+      <div class="field">
+        <label>Cor</label>
+        <div class="status-toggle" id="catBibCorToggle">
+          <button class="on" data-cor="#4F9C40" onclick="setCatBibCor(this)" style="background:#4F9C40; color:#fff;">Verde</button>
+          <button data-cor="#D89840" onclick="setCatBibCor(this)" style="background:#D89840; color:#fff;">Fries</button>
+          <button data-cor="#D6699E" onclick="setCatBibCor(this)" style="background:#D6699E; color:#fff;">Milkshake</button>
+          <button data-cor="#D9754C" onclick="setCatBibCor(this)" style="background:#D9754C; color:#fff;">Bacon</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalCategoriaBiblioteca')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarCategoriaBiblioteca()">Criar categoria →</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="modalCategoria" style="display:none;">
   <div class="modal" style="width:420px;">
     <div class="modal-head"><h3>Nova categoria</h3><button onclick="closeModal('modalCategoria')">✕</button></div>
@@ -856,6 +887,16 @@ function abrirModalCargo(){
   document.getElementById('cargoNomeInput').value = '';
   openModal('modalCargo');
 }
+function abrirModalCategoriaBiblioteca(){
+  document.getElementById('catBibNomeInput').value = '';
+  document.getElementById('catBibEmojiInput').value = '';
+  document.querySelectorAll('#catBibCorToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
+  openModal('modalCategoriaBiblioteca');
+}
+function setCatBibCor(btn){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
 function abrirModalCategoria(){
   document.getElementById('catNomeInput').value = '';
   document.getElementById('catEmojiInput').value = '';
@@ -942,6 +983,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     iniciarConfiguracoes();
     renderCategoriaSelect();
     iniciarCategorias();
+    iniciarCategoriasBiblioteca();
     iniciarPublicos();
     iniciarCursos();
     iniciarColaboradores();
@@ -1163,6 +1205,97 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     } catch (err) {
       console.error('Erro ao criar cargo:', err);
       alert('Não foi possível criar o cargo agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  const CATEGORIAS_BIBLIOTECA_PADRAO = [
+    { nome: 'POP', emoji: '📄', cor: '#4F9C40' },
+    { nome: 'Política', emoji: '📋', cor: '#D89840' },
+    { nome: 'Guia', emoji: '📘', cor: '#D6699E' },
+  ];
+  let categoriasBibliotecaCache = [];
+  let categoriaBibliotecaRecemCriada = null;
+
+  function categoriasBibliotecaParaExibir(){
+    const nomesNoFirestore = new Set(categoriasBibliotecaCache.map(c => c.nome));
+    return [...CATEGORIAS_BIBLIOTECA_PADRAO.filter(c => !nomesNoFirestore.has(c.nome)), ...categoriasBibliotecaCache];
+  }
+
+  function iniciarCategoriasBiblioteca(){
+    onSnapshot(collection(db, 'categoriasBiblioteca'), (snapshot) => {
+      categoriasBibliotecaCache = snapshot.docs.map(d => ({ id: d.id, nome: d.data().Nome, emoji: d.data().Emoji, cor: d.data().Cor }));
+      renderCategoriaBibliotecaSelect();
+      renderCatBibListaExistentes();
+    }, (err) => console.error('Erro ao carregar categorias de biblioteca:', err));
+  }
+
+  function renderCategoriaBibliotecaSelect(){
+    const select = document.getElementById('pdfCategoriaInput');
+    if (!select) return;
+    const valorAtual = categoriaBibliotecaRecemCriada || select.value;
+    select.innerHTML = categoriasBibliotecaParaExibir().map(c => `<option value="${c.nome}">${c.emoji} ${c.nome}</option>`).join('');
+    if (valorAtual) select.value = valorAtual;
+    categoriaBibliotecaRecemCriada = null;
+    renderBibFiltroTabs();
+  }
+
+  function renderBibFiltroTabs(){
+    const container = document.getElementById('bibFiltroTabs');
+    if (!container) return;
+    const ativa = document.querySelector('#bibFiltroTabs .ptab.on');
+    const filtroAtivo = ativa ? ativa.dataset.filtro : 'Todos';
+    const tabs = ['<div class="ptab' + (filtroAtivo === 'Todos' ? ' on' : '') + '" data-filtro="Todos" onclick="filtrarBiblioteca(\'Todos\', this)">Todos</div>'];
+    categoriasBibliotecaParaExibir().forEach(c => {
+      const on = filtroAtivo === c.nome ? ' on' : '';
+      tabs.push(`<div class="ptab${on}" data-filtro="${c.nome}" onclick="filtrarBiblioteca('${c.nome}', this)">${c.emoji} ${c.nome}</div>`);
+    });
+    container.innerHTML = tabs.join('');
+  }
+
+  function renderCatBibListaExistentes(){
+    const el = document.getElementById('catBibListaExistentes');
+    if (!el) return;
+    const padroesHtml = CATEGORIAS_BIBLIOTECA_PADRAO.map(c =>
+      `<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:var(--cream); border-radius:8px; font-size:13px;">
+        <span>${c.emoji} ${c.nome}</span><span style="font-size:11px; color:var(--ink-soft);">padrão</span>
+      </div>`
+    ).join('');
+    const criadasHtml = categoriasBibliotecaCache.map(c =>
+      `<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:var(--cream); border-radius:8px; font-size:13px;">
+        <span>${c.emoji} ${c.nome}</span>
+        <button type="button" onclick="removerCategoriaBiblioteca('${c.id}','${c.nome.replace(/'/g, "\\'")}')" style="background:none; color:#B4462B; font-weight:700; font-size:12px; padding:2px 6px;">Remover</button>
+      </div>`
+    ).join('');
+    el.innerHTML = padroesHtml + criadasHtml;
+  }
+
+  window.salvarCategoriaBiblioteca = async function(){
+    const nome = document.getElementById('catBibNomeInput').value.trim();
+    const emoji = document.getElementById('catBibEmojiInput').value.trim() || '📚';
+    const corBtn = document.querySelector('#catBibCorToggle button.on');
+    const cor = corBtn ? corBtn.dataset.cor : '#4F9C40';
+    if (!nome) { alert('Dá um nome pra categoria antes de criar.'); return; }
+    if (categoriasBibliotecaParaExibir().some(c => c.nome.toLowerCase() === nome.toLowerCase())) {
+      alert('Já existe uma categoria com esse nome.');
+      return;
+    }
+    try {
+      await addDoc(collection(db, 'categoriasBiblioteca'), { Nome: nome, Emoji: emoji, Cor: cor, CriadoEm: serverTimestamp() });
+      categoriaBibliotecaRecemCriada = nome;
+      closeModal('modalCategoriaBiblioteca');
+    } catch (err) {
+      console.error('Erro ao criar categoria de biblioteca:', err);
+      alert('Não foi possível criar a categoria agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  window.removerCategoriaBiblioteca = async function(id, nome){
+    if (!confirm(`Remover a categoria "${nome}"? Materiais que já usam essa categoria continuam existindo, só não vão mais poder escolher ela pra materiais novos.`)) return;
+    try {
+      await deleteDoc(doc(db, 'categoriasBiblioteca', id));
+    } catch (err) {
+      console.error('Erro ao remover categoria de biblioteca:', err);
+      alert('Não foi possível remover agora. Tenta de novo em alguns segundos.');
     }
   };
 
@@ -2527,8 +2660,8 @@ function renderBiblioteca(){
     <div class="stat"><span>Guias &amp; materiais de apoio</span><b>${guias}</b></div>
   `;
 
-  const cores = { POP: '#4F9C40', 'Política': '#D89840', Guia: '#D6699E' };
-  const emojis = { POP: '📄', 'Política': '📋', Guia: '📘' };
+  const infoCategoria = {};
+  categoriasBibliotecaParaExibir().forEach(c => { infoCategoria[c.nome] = c; });
   const lista = filtroBibAtual === 'Todos' ? bibliotecaCache : bibliotecaCache.filter(m => m.Categoria === filtroBibAtual);
 
   if (!lista.length) {
@@ -2539,8 +2672,8 @@ function renderBiblioteca(){
   tbody.innerHTML = lista.map(m => {
     const publico = (m.CargosEspecificos && Array.isArray(m.Cargos) && m.Cargos.length) ? m.Cargos.join(', ') : 'Todos os públicos';
     const atualizado = m.AtualizadoEm && m.AtualizadoEm.toDate ? m.AtualizadoEm.toDate().toLocaleDateString('pt-BR') : '—';
-    const cor = cores[m.Categoria] || '#4F9C40';
-    const emoji = emojis[m.Categoria] || '📄';
+    const cor = (infoCategoria[m.Categoria] && infoCategoria[m.Categoria].cor) || '#4F9C40';
+    const emoji = (infoCategoria[m.Categoria] && infoCategoria[m.Categoria].emoji) || '📄';
     return `<tr>
       <td><div class="course-cell"><div class="course-thumb" style="background:${cor}">${emoji}</div><div><b>${m.Titulo || '(sem título)'}</b><small>PDF</small></div></div></td>
       <td>${m.Categoria || '—'}</td>
