@@ -477,7 +477,7 @@
       <h1>Seu próximo passo começa <span>aqui no Cabana.</span></h1>
       <p class="lede">Treinamentos, guias e conteúdos de aprendizagem organizados num só lugar, direto do padrão Cabana, pensado pra quem tá na loja e no dia a dia.</p>
       <div class="hero-search">
-        <input type="text" id="heroSearch" autocomplete="off" placeholder="Buscar por curso, categoria ou palavra-chave...">
+        <input type="text" id="heroSearch" name="busca-cabana-nao-autopreencher" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" role="searchbox" placeholder="Buscar por curso, categoria ou palavra-chave...">
         <button>Buscar</button>
       </div>
       <div class="hero-chips" id="heroChips"></div>
@@ -853,10 +853,34 @@ function openModal(id){ const m=document.getElementById(id); if(m) m.style.displ
 function closeModal(id){ const m=document.getElementById(id); if(m) m.style.display='none'; }
 
 /* ===== biblioteca ===== */
+function extrairYoutubeId(url){
+  if (!url) return null;
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
 function docCardHTML(d){
   const baixarBtn = d.link
     ? `<a href="${d.link}" target="_blank" rel="noopener" style="font-size:12.5px; font-weight:700; color:var(--green-dark); background:var(--paper); border:1px solid var(--line); padding:8px 14px; border-radius:100px; flex:none;">Abrir</a>`
     : `<a href="#" onclick="return false;" style="font-size:12.5px; font-weight:700; color:var(--ink-soft); background:var(--paper); border:1px solid var(--line); padding:8px 14px; border-radius:100px; flex:none;">Sem link</a>`;
+
+  const youtubeId = extrairYoutubeId(d.link);
+  if (youtubeId) {
+    return `
+      <a href="${d.link}" target="_blank" rel="noopener" style="display:flex; align-items:center; gap:14px; background:var(--cream); border:1px solid var(--line); border-radius:14px; padding:10px 16px; text-decoration:none; color:inherit;">
+        <div style="position:relative; width:88px; height:56px; border-radius:10px; overflow:hidden; flex:none; background:#000;">
+          <img src="https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg" alt="" style="width:100%; height:100%; object-fit:cover; display:block;">
+          <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
+            <div style="width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.92); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink); padding-left:2px;">▶</div>
+          </div>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <b style="display:block; font-size:13.5px;">${d.titulo}</b>
+          <span style="font-size:11.5px; color:var(--ink-soft);">🎬 ${d.categoria}</span>
+        </div>
+        <span style="font-size:12.5px; font-weight:700; color:var(--green-dark); background:var(--paper); border:1px solid var(--line); padding:8px 14px; border-radius:100px; flex:none;">Assistir</span>
+      </a>`;
+  }
+
   return `
     <div style="display:flex; align-items:center; gap:14px; background:var(--cream); border:1px solid var(--line); border-radius:14px; padding:12px 16px;">
       <div style="width:40px; height:40px; border-radius:10px; background:${d.cor}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:17px; flex:none;">${d.emoji}</div>
@@ -873,9 +897,9 @@ function filterBib(cat){
   document.getElementById('bibList').innerHTML = list.map(docCardHTML).join('') || '<p style="font-size:13px; color:var(--ink-soft); text-align:center; padding:20px;">Nenhum documento nessa categoria ainda.</p>';
 }
 function openBiblioteca(cat){
-  const cats = ['Todos','POP','Guia','Política'];
+  const cats = ['Todos', ...Object.keys(EMOJIS_BIB)];
   document.getElementById('bibFilters').innerHTML = cats.map(c=>
-    `<button class="bib-chip" data-cat="${c}" onclick="filterBib('${c}')">${c==='Todos'?'Todos':c+'s'}</button>`
+    `<button class="bib-chip" data-cat="${c}" onclick="filterBib('${c}')">${c==='Todos' ? 'Todos' : (EMOJIS_BIB[c] || '') + ' ' + c}</button>`
   ).join('');
   filterBib(cat);
   document.getElementById('modalBiblioteca').style.display='flex';
@@ -1187,8 +1211,22 @@ function abrirCurso(cursoId){
     return passaCargo && passaLocal;
   }
 
-  const CORES_BIB = { POP: '#4F9C40', 'Política': '#D89840', Guia: '#D6699E' };
-  const EMOJIS_BIB = { POP: '📄', 'Política': '📋', Guia: '📘' };
+  const CORES_BIB_PADRAO = { POP: '#4F9C40', 'Política': '#D89840', Guia: '#D6699E' };
+  const EMOJIS_BIB_PADRAO = { POP: '📄', 'Política': '📋', Guia: '📘' };
+  let CORES_BIB = { ...CORES_BIB_PADRAO };
+  let EMOJIS_BIB = { ...EMOJIS_BIB_PADRAO };
+
+  function carregarCategoriasBiblioteca(){
+    onSnapshot(collection(db, 'categoriasBiblioteca'), (snap) => {
+      CORES_BIB = { ...CORES_BIB_PADRAO };
+      EMOJIS_BIB = { ...EMOJIS_BIB_PADRAO };
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if (data.Nome) { CORES_BIB[data.Nome] = data.Cor || '#4F9C40'; EMOJIS_BIB[data.Nome] = data.Emoji || '📚'; }
+      });
+    }, (err) => console.error('Erro ao carregar categorias de biblioteca:', err));
+  }
+
   function mapMaterialDoc(d){
     const data = d.data();
     const restrito = data.CargosEspecificos === true && Array.isArray(data.Cargos) && data.Cargos.length > 0;
@@ -1538,6 +1576,7 @@ function abrirCurso(cursoId){
     regionalColaboradorAtual = dados.Regional || '';
     carregarCategorias();
     carregarCursosEProgresso(cpf);
+    carregarCategoriasBiblioteca();
     carregarBiblioteca();
     verificarPesquisasMarco(cpf, dados);
 
