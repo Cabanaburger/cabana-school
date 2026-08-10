@@ -557,7 +557,7 @@
   <div class="block-head">
     <div>
       <h2>📌 Seus treinamentos obrigatórios</h2>
-      <p>Comece por aqui — o resto da plataforma espera por você.</p>
+      <p>É por aqui que sua jornada começa.</p>
     </div>
   </div>
   <div class="grid" id="obrigatoriosGrid"></div>
@@ -873,8 +873,10 @@ function renderJornada(){
   if (levelNameEl) levelNameEl.textContent = atual ? atual.nome : 'Novato';
 
   const fillEl = document.querySelector('.level-fill');
-  const maxMin = niveis[niveis.length-1].min;
-  if (fillEl) fillEl.style.width = `${Math.min(100, Math.round((concluidos/maxMin)*100))}%`;
+  let indiceAtual = -1;
+  niveis.forEach((n, i) => { if (concluidos >= n.min) indiceAtual = i; });
+  const fillPct = indiceAtual >= 0 ? Math.round((indiceAtual / (niveis.length - 1)) * 100) : 0;
+  if (fillEl) fillEl.style.width = `${fillPct}%`;
 
   const hintEl = document.querySelector('.level-hint');
   if (hintEl){
