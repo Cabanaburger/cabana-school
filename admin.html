@@ -433,6 +433,19 @@
 
       <div class="upload-block">
         <div class="txt">
+          <b>Importar cargos</b>
+          <span>Planilha com uma coluna "Cargo" (ou "Nome") — um cargo por linha. Cria os que ainda não existem em Configurações → Cargos; não duplica quem já está cadastrado.</span>
+        </div>
+        <div class="actions">
+          <button class="ghost-btn" onclick="document.getElementById('cargosFileInput').click()">📎 <span id="cargosFileNome">Escolher arquivo</span></button>
+          <input type="file" id="cargosFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="onCargosExcelEscolhido(this)">
+          <button class="new-btn" id="btnImportarCargos" onclick="importarCargosPlanilha()" disabled>Importar cargos</button>
+        </div>
+      </div>
+      <div id="importarCargosResultado" style="display:none; margin:-6px 0 18px; font-size:13px; font-weight:600;"></div>
+
+      <div class="upload-block">
+        <div class="txt">
           <b>Pesquisas de 45 e 90 dias</b>
           <span>Link do formulário que aparece pro colaborador (com QR code) quando ele bate 45 e 90 dias de casa. Ele só vê o aviso uma vez — depois de fechar, não aparece de novo.</span>
         </div>
@@ -901,8 +914,8 @@
         </div>
         <div class="visib-chips" id="trilhaVisibLocalChips" style="display:none;">
           <span class="visib-chip">Loja</span>
-          <span class="visib-chip">Fábrica</span>
-          <span class="visib-chip">Escritório</span>
+          <span class="visib-chip">Cozinha Central</span>
+          <span class="visib-chip">Casa Cabana</span>
         </div>
         <small class="hint">Se marcar cargo E local juntos, só entra na trilha quem bater as duas condições ao mesmo tempo.</small>
       </div>
@@ -1003,7 +1016,7 @@
       <div class="field">
         <label>Cargos existentes</label>
         <div id="cargoListaExistentes" style="display:flex; flex-direction:column; gap:6px;"><small class="hint" style="color:var(--ink-soft);">Carregando…</small></div>
-        <small class="hint">Os cargos padrão da plataforma não podem ser removidos por aqui.</small>
+        <small class="hint"><button type="button" id="btnCarregarCargosPadrao" onclick="carregarCargosPadrao()" style="background:none; border:none; padding:0; color:var(--green-dark); font-weight:700; font-size:inherit; cursor:pointer;">🌱 Carregar lista inicial de cargos</button> — adiciona algumas sugestões prontas (pode remover as que não quiser depois).</small>
       </div>
       <div style="border-top:1px solid var(--line); margin:2px 0 6px;"></div>
       <div class="field"><label>Nome do cargo</label><input type="text" id="cargoNomeInput" placeholder="Ex: Supervisor de Turno"></div>
@@ -1095,7 +1108,7 @@
       </div>
       <div class="field">
         <label>Local</label>
-        <select id="colabLocalInput" onchange="atualizarCampoLoja()"><option>Loja</option><option>Fábrica</option><option>Escritório</option></select>
+        <select id="colabLocalInput" onchange="atualizarCampoLoja()"><option>Loja</option><option>Cozinha Central</option><option>Casa Cabana</option></select>
       </div>
       <div class="field-row" id="colabLojaRow">
         <div class="field">
@@ -1412,9 +1425,13 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   /* ===================== CURSOS ===================== */
   /* ===================== CATEGORIAS ===================== */
   /* ===================== CARGOS ===================== */
-  const CARGOS_PADRAO = [
-    'Gerente de Loja', 'Coordenador Regional', 'Analista', 'Atendente de Salão',
-    'Assistente de Cozinha', 'Jovem Aprendiz', 'Especialista', 'Gerente', 'Diretor'
+  // Lista só usada pelo botão "Carregar lista inicial de cargos" (ver salvarCargo/carregarCargosPadrao,
+  // mais abaixo) — agosto/2026: os cargos deixaram de ser fixos no código (não dava pra remover os
+  // "padrão" pela tela). Agora TODO cargo mora na coleção "cargos" do Firestore e pode ser removido
+  // por ali, inclusive os que vieram desse carregamento inicial.
+  const CARGOS_SUGESTAO_INICIAL = [
+    'Atendente de Salão', 'Atendente de Caixa', 'Cozinheiro(a)', 'Auxiliar de Cozinha',
+    'Entregador(a) / Delivery', 'Líder de Loja', 'Gerente de Loja', 'Gerente Regional', 'Administrativo'
   ];
   /* ===================== LOJAS ===================== */
   let lojasCache = [];
@@ -1543,8 +1560,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   let cargosSelecionadosAntesDoRender = [];
 
   function cargosParaExibir(){
-    const nomesNoFirestore = new Set(cargosCache.map(c => c.nome));
-    return [...CARGOS_PADRAO.filter(c => !nomesNoFirestore.has(c)), ...cargosCache.map(c => c.nome)];
+    return cargosCache.map(c => c.nome);
   }
 
   function iniciarCargos(){
@@ -1558,19 +1574,35 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   function renderCargoListaExistentes(){
     const el = document.getElementById('cargoListaExistentes');
     if (!el) return;
-    const padroesHtml = CARGOS_PADRAO.map(nome =>
-      `<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:var(--cream); border-radius:8px; font-size:13px;">
-        <span>${nome}</span><span style="font-size:11px; color:var(--ink-soft);">padrão</span>
-      </div>`
-    ).join('');
-    const criadosHtml = cargosCache.map(c =>
+    if (!cargosCache.length) {
+      el.innerHTML = '<small class="hint" style="color:var(--ink-soft);">Nenhum cargo cadastrado ainda. Cria um abaixo, ou clica em "Carregar lista inicial" pra começar com sugestões prontas.</small>';
+      return;
+    }
+    el.innerHTML = cargosCache.map(c =>
       `<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:var(--cream); border-radius:8px; font-size:13px;">
         <span>${c.nome}</span>
         <button type="button" onclick="removerCargo('${c.id}','${c.nome.replace(/'/g, "\\'")}')" style="background:none; color:#B4462B; font-weight:700; font-size:12px; padding:2px 6px;">Remover</button>
       </div>`
     ).join('');
-    el.innerHTML = padroesHtml + criadosHtml;
   }
+
+  window.carregarCargosPadrao = async function(){
+    const btn = document.getElementById('btnCarregarCargosPadrao');
+    const nomesJaExistentes = new Set(cargosCache.map(c => c.nome.toLowerCase()));
+    const faltando = CARGOS_SUGESTAO_INICIAL.filter(nome => !nomesJaExistentes.has(nome.toLowerCase()));
+    if (!faltando.length) { alert('Esses cargos sugeridos já estão todos cadastrados.'); return; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Carregando…'; }
+    try {
+      const batch = writeBatch(db);
+      faltando.forEach(nome => batch.set(doc(collection(db, 'cargos')), { Nome: nome, CriadoEm: serverTimestamp() }));
+      await batch.commit();
+    } catch (err) {
+      console.error('Erro ao carregar cargos sugeridos:', err);
+      alert('Não foi possível carregar os cargos agora. Tenta de novo em alguns segundos.');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🌱 Carregar lista inicial de cargos'; }
+    }
+  };
 
   window.removerCargo = async function(id, nome){
     if (!confirm(`Remover o cargo "${nome}"? Colaboradores que já tinham esse cargo continuam com ele salvo, só não vai mais aparecer como opção pra novos cadastros.`)) return;
@@ -3135,6 +3167,66 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     }
   };
 
+  let arquivoCargosEscolhido = null;
+  window.onCargosExcelEscolhido = function(input){
+    arquivoCargosEscolhido = input.files[0] || null;
+    document.getElementById('cargosFileNome').textContent = arquivoCargosEscolhido ? arquivoCargosEscolhido.name : 'Escolher arquivo';
+    document.getElementById('btnImportarCargos').disabled = !arquivoCargosEscolhido;
+  };
+
+  window.importarCargosPlanilha = async function(){
+    if (!arquivoCargosEscolhido) return;
+    const btn = document.getElementById('btnImportarCargos');
+    const resultadoEl = document.getElementById('importarCargosResultado');
+    btn.disabled = true; btn.textContent = 'Importando…';
+    resultadoEl.style.display = 'none';
+
+    try {
+      const dadosArquivo = await arquivoCargosEscolhido.arrayBuffer();
+      const wb = XLSX.read(dadosArquivo, { type: 'array' });
+      const primeiraAba = wb.Sheets[wb.SheetNames[0]];
+      const linhas = XLSX.utils.sheet_to_json(primeiraAba, { defval: '' });
+
+      const pegar = (linha, chaves) => {
+        for (const k of Object.keys(linha)) {
+          if (chaves.includes(k.trim().toLowerCase())) return String(linha[k]).trim();
+        }
+        return '';
+      };
+
+      let criados = 0, ignorados = 0;
+      const nomesJaExistentes = new Set(cargosCache.map(c => c.nome.toLowerCase()));
+      const novosNesseArquivo = new Set(); // evita duplicar se o próprio arquivo repetir o cargo
+      const batch = writeBatch(db);
+
+      for (const linha of linhas) {
+        const nome = pegar(linha, ['cargo', 'cargos', 'nome', 'nome do cargo']);
+        if (!nome) continue;
+        const chave = nome.toLowerCase();
+        if (nomesJaExistentes.has(chave) || novosNesseArquivo.has(chave)) { ignorados++; continue; }
+        novosNesseArquivo.add(chave);
+        batch.set(doc(collection(db, 'cargos')), { Nome: nome, CriadoEm: serverTimestamp() });
+        criados++;
+      }
+      if (criados) await batch.commit();
+
+      resultadoEl.textContent = `✅ Importado: ${criados} cargo(s) novo(s) criado(s). ${ignorados} já existiam e foram ignorados.`;
+      resultadoEl.style.color = 'var(--green-dark)';
+      resultadoEl.style.display = 'block';
+      arquivoCargosEscolhido = null;
+      document.getElementById('cargosFileInput').value = '';
+      document.getElementById('cargosFileNome').textContent = 'Escolher arquivo';
+    } catch (err) {
+      console.error('Erro ao importar cargos:', err);
+      resultadoEl.textContent = 'Não consegui ler essa planilha. Confere se ela tem uma coluna "Cargo" (ou "Nome").';
+      resultadoEl.style.color = '#B4462B';
+      resultadoEl.style.display = 'block';
+    } finally {
+      btn.disabled = !arquivoCargosEscolhido;
+      btn.textContent = 'Importar cargos';
+    }
+  };
+
   window.sincronizarPlanilha = async function(){
     if (!arquivoExcelEscolhido) return;
     const btn = document.getElementById('btnSincronizar');
@@ -3144,7 +3236,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 
     try {
       const dadosArquivo = await arquivoExcelEscolhido.arrayBuffer();
-      const wb = XLSX.read(dadosArquivo, { type: 'array' });
+      // cellDates:true faz colunas de data virarem objeto Date de verdade (em vez do número
+      // serial do Excel) quando a célula na planilha original já está formatada como data
+      const wb = XLSX.read(dadosArquivo, { type: 'array', cellDates: true });
       const primeiraAba = wb.Sheets[wb.SheetNames[0]];
       const linhas = XLSX.utils.sheet_to_json(primeiraAba, { defval: '' });
 
@@ -3169,6 +3263,27 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         return '';
       };
 
+      // pega uma coluna de data sem perder o valor real: célula já formatada como data (com
+      // cellDates:true acima) chega como objeto Date; senão tenta interpretar texto no formato
+      // AAAA-MM-DD (o do modelo) ou DD/MM/AAAA (o mais comum quando alguém digita a mão)
+      const pegarData = (linha, chaves) => {
+        for (const k of Object.keys(linha)) {
+          if (!chaves.includes(k.trim().toLowerCase())) continue;
+          const valor = linha[k];
+          if (valor instanceof Date && !isNaN(valor)) return valor;
+          const texto = String(valor || '').trim();
+          if (!texto) return null;
+          let m = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+          m = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+          if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+          const tentativa = new Date(texto);
+          if (!isNaN(tentativa)) return tentativa;
+          return null;
+        }
+        return null;
+      };
+
       // ---- 1ª passada: só lê a planilha, não escreve nada ainda ----
       const linhasValidas = [];
       const cpfsNaPlanilha = new Set();
@@ -3181,6 +3296,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
           nome, cpf,
           loja: pegar(linha, ['loja', 'loja / unidade', 'unidade']),
           cargo: pegar(linha, ['cargo']),
+          admissao: pegarData(linha, ['data de admissão', 'data de admissao', 'admissão', 'admissao']),
           nivel: pegar(linha, ['nivel', 'nível', 'nivel de acesso']) === 'Admin' ? 'Admin' : 'Colaborador',
           local: pegar(linha, ['local', 'tipo de local', 'tipo']) || 'Loja',
           regional: pegar(linha, ['regional']),
@@ -3257,6 +3373,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
           Gestor: l.gestor,
           CargoGestor: l.cargoGestor,
           CpfGestor: l.cpfGestor,
+          // só grava se a planilha realmente trouxe uma data válida nessa linha — assim não apaga
+          // uma admissão já cadastrada manualmente pra quem a planilha não preencheu essa coluna
+          ...(l.admissao ? { Admissao: Timestamp.fromDate(l.admissao) } : {}),
         }, { merge: true });
 
         if (jaExistia) atualizados++; else adicionados++;
