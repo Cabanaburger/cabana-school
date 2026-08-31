@@ -148,6 +148,8 @@
     max-height:88vh; box-shadow:0 40px 80px -20px rgba(0,0,0,0.5);
     display:flex; flex-direction:column;
   }
+  /* modal do curso é bem maior — o formulário tem prova embutida, que precisa de mais espaço horizontal */
+  .modal-curso-ampla{ width:min(1040px, 96vw); }
   .modal-head{ padding:22px 26px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; flex:none; }
   .modal-head h3{ font-family:var(--display); font-weight:400; font-size:19px; margin:0; }
   .modal-head button{ background:none; font-size:18px; color:var(--ink-soft); }
@@ -160,6 +162,16 @@
   .field textarea{ resize:vertical; min-height:64px; }
   .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .field small.hint{ display:block; margin-top:6px; font-size:11.5px; color:var(--ink-soft); }
+  /* perguntas da prova — essas inputs ficam fora de .field, então precisam do próprio estilo */
+  .pergunta-alternativas{ display:grid; grid-template-columns:1fr; gap:8px; }
+  .modal-curso-ampla .pergunta-alternativas{ grid-template-columns:1fr 1fr; gap:8px 16px; }
+  .alt-row{ display:flex; align-items:center; gap:10px; }
+  .alt-row input[type="radio"]{ flex:none; width:18px; height:18px; accent-color:var(--green); cursor:pointer; }
+  .alt-texto{
+    flex:1; min-width:0; padding:9px 12px; border-radius:8px; border:1px solid var(--line);
+    background:var(--paper); font-family:inherit; font-size:13px; color:var(--ink); outline:none;
+  }
+  .alt-texto:focus{ border-color:var(--green); }
   .dropzone{
     border:1.5px dashed var(--line); border-radius:12px; padding:20px; text-align:center;
     font-size:12.5px; color:var(--ink-soft); background:var(--cream);
@@ -710,7 +722,7 @@
 
 <!-- MODAL: novo curso -->
 <div class="overlay" id="modalCurso" style="display:none;">
-  <div class="modal">
+  <div class="modal modal-curso-ampla">
     <div class="modal-head"><h3 id="modalCursoTitulo">Novo curso</h3><button onclick="closeModal('modalCurso')">✕</button></div>
     <div class="modal-body">
       <div class="field"><label>Título do curso</label><input type="text" id="cursoTituloInput" placeholder="Ex: Segurança Alimentar na Cozinha"></div>
@@ -726,17 +738,16 @@
       <div class="field">
         <label>Tipo de conteúdo</label>
         <div class="status-toggle" id="tipoConteudoToggle">
-          <button class="on" onclick="setTipoConteudo(this,'canva')">🎨 Canva</button>
+          <button class="on" onclick="setTipoConteudo(this,'link')">🔗 Link externo</button>
           <button onclick="setTipoConteudo(this,'video')">🎬 Vídeo</button>
           <button onclick="setTipoConteudo(this,'audio')">🎧 Áudio</button>
-          <button onclick="setTipoConteudo(this,'link')">🔗 Link externo</button>
           <button onclick="setTipoConteudo(this,'html')">📄 Upload de curso (HTML)</button>
         </div>
       </div>
       <div class="field" id="linkFieldWrap">
-        <label id="linkFieldLabel">Link do curso no Canva</label>
-        <input type="text" id="linkFieldInput" placeholder="https://seu-link.my.canva.site/...">
-        <small class="hint" id="linkFieldHint">Cole aqui o link de compartilhamento do Canva Site ou da apresentação. É o único lugar que você vai colar isso. A plataforma faz o resto.</small>
+        <label id="linkFieldLabel">URL do conteúdo externo</label>
+        <input type="text" id="linkFieldInput" placeholder="https://...">
+        <small class="hint" id="linkFieldHint">Qualquer link de terceiros — Canva, Google Slides, um site publicado, etc. O colaborador vê um botão pra abrir o conteúdo em nova aba.</small>
       </div>
       <div class="field" id="htmlUploadWrap" style="display:none;">
         <label>Arquivo do curso (HTML)</label>
@@ -1193,9 +1204,9 @@ function adicionarPergunta(dados){
     <textarea class="pergunta-texto" placeholder="Digite a pergunta" style="width:100%; margin-bottom:8px; min-height:50px;">${texto}</textarea>
     <div class="pergunta-alternativas">
       ${alternativas.map((alt, i) => `
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <div class="alt-row">
           <input type="radio" name="correta-${idx}" value="${i}" ${i === correta ? 'checked' : ''}>
-          <input type="text" class="alt-texto" placeholder="Alternativa ${i + 1}" value="${alt.replace(/"/g, '&quot;')}" style="flex:1;">
+          <input type="text" class="alt-texto" placeholder="Alternativa ${i + 1}" value="${alt.replace(/"/g, '&quot;')}">
         </div>
       `).join('')}
     </div>
@@ -2185,7 +2196,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('provaPerguntasContainer').innerHTML = '';
     document.getElementById('cursoSalvarErro').style.display = 'none';
     document.querySelectorAll('#tipoConteudoToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
-    setTipoConteudo(document.querySelector('#tipoConteudoToggle button'), 'canva');
+    setTipoConteudo(document.querySelector('#tipoConteudoToggle button'), 'link');
     document.querySelectorAll('#visibToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
     document.getElementById('visibChips').style.display = 'none';
     document.querySelectorAll('#visibChips .visib-chip').forEach(ch => ch.classList.remove('on'));
@@ -2217,7 +2228,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       [...catSelect.options].forEach((opt, i) => { if (opt.textContent === c.Categoria) catSelect.selectedIndex = i; });
     }
     if (c.TipoConteudo) {
-      const btnMap = { canva: 0, video: 1, audio: 2, link: 3, html: 4 };
+      // 'canva' é tipo legado (o botão foi removido — Canva agora entra como "Link externo"),
+      // mapeado pro mesmo índice de 'link' pra abrir cursos antigos sem erro
+      const btnMap = { canva: 0, link: 0, video: 1, audio: 2, html: 3 };
       const idx = btnMap[c.TipoConteudo] ?? 0;
       const btns = document.querySelectorAll('#tipoConteudoToggle button');
       btns.forEach(b => b.classList.remove('on'));
@@ -2300,7 +2313,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 
     try {
       const tipoBtn = document.querySelector('#tipoConteudoToggle button.on');
-      const tipoMap = ['canva','video','audio','link','html'];
+      const tipoMap = ['link','video','audio','html'];
       const tipoIdx = tipoBtn ? [...tipoBtn.parentElement.children].indexOf(tipoBtn) : 0;
       const seloBtn = document.querySelector('#seloToggle button.on');
       const seloMap = ['nenhum','novo','destaque'];
