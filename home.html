@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cabana School</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon16.png">
+<link rel="apple-touch-icon" href="icon180.png">
+<meta name="theme-color" content="#4F9C40">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cabana School">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
   @font-face {
     font-family: 'Cooper Fallback';
@@ -477,6 +486,8 @@
         <div id="avatarMenuInfo" style="padding:10px 12px; font-size:12.5px; color:var(--ink-soft); border-bottom:1px solid var(--line); margin-bottom:6px;"><b style="color:var(--ink);">&nbsp;</b><br>&nbsp;</div>
         <div id="menuAdminBtn" onclick="location.href='admin.html'" style="display:none; padding:10px 12px; font-size:13.5px; font-weight:700; border-radius:8px; cursor:pointer;">🛠️ Painel Admin</div>
         <div onclick="abrirMeusCertificados()" style="padding:10px 12px; font-size:13.5px; font-weight:600; border-radius:8px; cursor:pointer;">🏆 Meus certificados</div>
+        <div onclick="abrirRanking()" style="padding:10px 12px; font-size:13.5px; font-weight:600; border-radius:8px; cursor:pointer;">🏅 Ranking Cabana</div>
+        <div id="menuLojaBtn" onclick="abrirLojaRecompensas()" style="display:none; padding:10px 12px; font-size:13.5px; font-weight:600; border-radius:8px; cursor:pointer;">🎁 Trocar pontos</div>
         <div onclick="fazerLogout()" style="padding:10px 12px; font-size:13.5px; font-weight:600; color:var(--ink-soft); border-radius:8px; cursor:pointer;">🚪 Sair</div>
       </div>
     </div>
@@ -523,6 +534,13 @@
   </div>
 </div>
 
+<section class="block" id="bannersSection" style="display:none;">
+  <div style="position:relative; border-radius:20px; overflow:hidden; box-shadow:0 20px 40px -18px rgba(30,26,20,0.35);">
+    <div id="bannerSlides" style="display:flex; transition:transform .5s ease;"></div>
+    <div id="bannerDots" style="position:absolute; bottom:12px; left:0; right:0; display:flex; justify-content:center; gap:6px;"></div>
+  </div>
+</section>
+
 <section class="block level-block">
   <div class="level-card">
     <div class="level-head">
@@ -541,6 +559,16 @@
     </div>
     <div class="level-hint">Faltam <b>1 curso</b> pra você virar Novato</div>
   </div>
+</section>
+
+<section class="block" id="minhaTrilhaSection" style="display:none;">
+  <div class="block-head">
+    <div>
+      <h2>🧭 Sua trilha de aprendizagem</h2>
+      <p>A ordem recomendada dos treinamentos pra você.</p>
+    </div>
+  </div>
+  <div id="minhaTrilhaLista" style="display:flex; flex-direction:column; gap:16px;"></div>
 </section>
 
 <section class="block" id="categorias">
@@ -602,6 +630,55 @@
   </div>
 </div>
 
+<div id="modalProva" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:96; padding:20px;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(600px,94vw); max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
+      <h3 id="provaModalTitulo" style="margin:0; font-family:var(--display); font-weight:400;">📝 Prova</h3>
+      <button onclick="closeModal('modalProva')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
+    </div>
+    <div id="provaModalCorpo" style="padding:20px 24px; overflow-y:auto;"></div>
+    <div style="padding:16px 24px; border-top:1px solid var(--line);">
+      <button class="mark-btn" onclick="enviarProva()">Enviar respostas →</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalRanking" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:92;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(560px,92vw); max-height:82vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
+      <h3 style="margin:0; font-family:var(--display); font-weight:400;">🏅 Ranking Cabana</h3>
+      <button onclick="closeModal('modalRanking')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
+    </div>
+    <div style="padding:16px 24px; overflow-y:auto;">
+      <div id="rankingMeusPontos" style="margin-bottom:16px;"></div>
+      <p style="font-size:13px; color:var(--ink-soft); margin:0 0 16px;">Esses são os cabaneiros mais dedicados do momento — bora chegar junto! 🎉</p>
+      <div id="rankingColaboradores"><small style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+      <div id="rankingSequenciasWrap" style="margin-top:20px; display:none;">
+        <h4 style="margin:0 0 10px; font-size:13.5px; color:var(--ink-soft); font-weight:700;">🔥 Sequências em alta</h4>
+        <div id="rankingSequencias"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modalAprovado" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:97;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(400px,90vw); text-align:center; padding:32px 28px 26px;">
+    <div style="font-size:44px; margin-bottom:6px;">🎉</div>
+    <h3 style="margin:0 0 10px; font-family:var(--display); font-weight:400; font-size:20px;">Você foi aprovado(a)!</h3>
+    <p id="aprovadoMensagem" style="font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 22px;"></p>
+    <div id="aprovadoBotoes" style="display:flex; flex-direction:column; gap:8px; align-items:stretch;"></div>
+  </div>
+</div>
+
+<div id="modalSelo" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:97;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(400px,90vw); text-align:center; padding:32px 28px 26px;">
+    <img src="selotrilha.png" alt="Selo Cabana School" style="width:110px; height:110px; margin:0 auto 16px; display:block;">
+    <h3 id="seloTitulo" style="margin:0 0 10px; font-family:var(--display); font-weight:400; font-size:20px;">Trilha concluída! 🎉</h3>
+    <p id="seloMensagem" style="font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 22px;"></p>
+    <button onclick="closeModal('modalSelo')" style="background:var(--green); color:#fff; padding:12px 26px; border-radius:100px; font-size:13.5px; font-weight:700; border:none; cursor:pointer;">Continuar</button>
+  </div>
+</div>
+
 <div id="modalCertificados" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:92;">
   <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(560px,92vw); max-height:82vh; display:flex; flex-direction:column; overflow:hidden;">
     <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
@@ -614,6 +691,19 @@
   </div>
 </div>
 <canvas id="certCanvas" style="display:none;"></canvas>
+
+<div id="modalLoja" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:92;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(560px,92vw); max-height:82vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
+      <h3 style="margin:0; font-family:var(--display); font-weight:400;">🎁 Trocar pontos</h3>
+      <button onclick="closeModal('modalLoja')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
+    </div>
+    <div style="padding:16px 24px; overflow-y:auto;">
+      <div id="lojaMeusPontos" style="font-size:13.5px; font-weight:700; margin-bottom:14px;"></div>
+      <div id="lojaItensLista"><p style="color:var(--ink-soft); font-size:13.5px;">Carregando…</p></div>
+    </div>
+  </div>
+</div>
 
 <div id="modalPesquisaMarco" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:95;">
   <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(420px,92vw); text-align:center; padding:32px 28px;">
@@ -1070,8 +1160,12 @@ function playerHTML(c){
     const capaStyle = c.capa
       ? `background-image:url('${c.capa}'); background-size:cover; background-position:center;`
       : `background:radial-gradient(circle at 30% 30%, rgba(79,156,64,0.4), transparent 60%), #171310;`;
+    // adiciona ?cpf=...&cursoId=... no link, pra o curso saber de quem é o resultado
+    // (necessário pro cabana-quiz-tracker.js gravar a prova certa no Firestore)
+    const separador = c.link.includes('?') ? '&' : '?';
+    const linkComParametros = `${c.link}${separador}cpf=${encodeURIComponent(window.currentCpf || '')}&cursoId=${encodeURIComponent(c.id)}`;
     return `
-      <a href="${c.link}" target="_blank" style="display:block; background:var(--ink); border-radius:26px; overflow:hidden; box-shadow:0 30px 60px -24px rgba(0,0,0,0.5); text-decoration:none; cursor:pointer;">
+      <a href="${linkComParametros}" target="_blank" style="display:block; background:var(--ink); border-radius:26px; overflow:hidden; box-shadow:0 30px 60px -24px rgba(0,0,0,0.5); text-decoration:none; cursor:pointer;">
         <div style="height:280px; display:flex; align-items:center; justify-content:center; position:relative; ${capaStyle}">
           ${c.capa ? '<div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 100%);"></div>' : ''}
           <div style="width:74px; height:74px; border-radius:50%; background:#fff; color:var(--ink); font-size:22px; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 30px -10px rgba(0,0,0,0.6); position:relative; z-index:1;">🔗</div>
@@ -1109,6 +1203,59 @@ function showScreen(name){
     document.body.style.overflow = '';
   }
 }
+// ===== carrossel de banners no topo da Home =====
+// (dados vêm do bloco module via window.__bannersAtivos; aqui só cuida do DOM/animação)
+let bannerAutoplayTimer = null;
+window.renderBanners = function(){
+  const section = document.getElementById('bannersSection');
+  const slidesEl = document.getElementById('bannerSlides');
+  const dotsEl = document.getElementById('bannerDots');
+  if (!section || !slidesEl || !dotsEl) return;
+  const banners = window.__bannersAtivos || [];
+  if (!banners.length) {
+    section.style.display = 'none';
+    if (bannerAutoplayTimer) clearInterval(bannerAutoplayTimer);
+    return;
+  }
+  section.style.display = 'block';
+  slidesEl.innerHTML = banners.map(b => {
+    const midia = b.VideoURL
+      ? `<video src="${b.VideoURL}" autoplay muted loop playsinline style="width:100%; height:100%; object-fit:cover; display:block;"></video>`
+      : `<div style="width:100%; height:100%; background-image:url('${(b.ImagemURL || '').replace(/'/g, "\\'")}'); background-size:cover; background-position:center; background-color:#171310;"></div>`;
+    const abre = b.LinkDestino ? ` onclick="window.open('${b.LinkDestino.replace(/'/g, "\\'")}', '_blank')" style="cursor:pointer;"` : '';
+    return `<div${abre} style="flex:0 0 100%; height:200px;">${midia}</div>`;
+  }).join('');
+  dotsEl.innerHTML = banners.length > 1
+    ? banners.map((_, i) => `<span data-dot="${i}" style="width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.45); display:inline-block;"></span>`).join('')
+    : '';
+  irParaBanner(Math.min(window.__bannerIndiceAtual || 0, banners.length - 1));
+  if (bannerAutoplayTimer) clearInterval(bannerAutoplayTimer);
+  if (banners.length > 1) {
+    bannerAutoplayTimer = setInterval(() => {
+      const total = (window.__bannersAtivos || []).length;
+      if (total) irParaBanner(((window.__bannerIndiceAtual || 0) + 1) % total);
+    }, 6000);
+  }
+};
+function irParaBanner(i){
+  window.__bannerIndiceAtual = i;
+  const slidesEl = document.getElementById('bannerSlides');
+  if (slidesEl) slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('#bannerDots span').forEach((d, idx) => {
+    d.style.background = idx === i ? '#fff' : 'rgba(255,255,255,0.45)';
+  });
+}
+
+// pros cursos com prova embutida no próprio arquivo (tipo 'link' + temProva): o botão do painel
+// "Seu progresso" não abre nenhuma tela de prova por aqui, só reabre o conteúdo — quem grava o
+// resultado é o próprio arquivo, via cabana-quiz-tracker.js, do mesmo jeito de sempre.
+function reabrirConteudoProva(cursoId){
+  const c = CURSOS.find(x=>x.id===cursoId);
+  if(!c || !c.link) return;
+  const separador = c.link.includes('?') ? '&' : '?';
+  const url = `${c.link}${separador}cpf=${encodeURIComponent(window.currentCpf || '')}&cursoId=${encodeURIComponent(c.id)}`;
+  window.open(url, '_blank');
+}
 function abrirCurso(cursoId){
   const c = CURSOS.find(x=>x.id===cursoId);
   if(!c) return;
@@ -1141,10 +1288,18 @@ function abrirCurso(cursoId){
         <div class="panel">
           <h3>Seu progresso</h3>
           ${c.vencido ? `<div style="background:#F3D9D0; color:#B4462B; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:10px; margin-bottom:12px;">⏳ Seu certificado venceu — refaça o curso pra renovar.</div>` : ''}
+          ${c.reprovado ? `<div style="background:#F3D9D0; color:#B4462B; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:10px; margin-bottom:12px;">❌ Você não atingiu a nota mínima (nota: ${c.ultimaNota != null ? c.ultimaNota + '%' : '—'}). Revise o conteúdo e tente de novo.</div>` : ''}
           <div class="progress-mini"><div class="bar"><div style="width:${c.progresso}%"></div></div><b>${c.progresso}%</b></div>
-          <button class="mark-btn${c.concluido ? ' done' : ''}" onclick="marcarConcluido('${c.id}', '${c.titulo.replace(/'/g,"\\'")}')">${c.concluido ? '✓ Concluído' : '✓ Marcar como concluído'}</button>
+          ${c.temProva
+            ? (c.tipo === 'link'
+                // prova embutida no próprio arquivo (cabana-quiz-tracker.js já grava o resultado sozinho
+                // quando o aluno termina lá dentro) — o botão aqui só reabre o conteúdo, nunca a prova do admin
+                ? `<button class="mark-btn${c.concluido ? ' done' : ''}" onclick="${c.concluido ? '' : `reabrirConteudoProva('${c.id}')`}" ${c.concluido ? 'disabled' : ''}>${c.concluido ? '✓ Aprovado' : (c.reprovado ? '↻ Tentar de novo' : '📝 Abrir e fazer a prova')}</button>`
+                : `<button class="mark-btn${c.concluido ? ' done' : ''}" onclick="${c.concluido ? '' : `iniciarProva('${c.id}')`}" ${c.concluido ? 'disabled' : ''}>${c.concluido ? '✓ Aprovado' : (c.reprovado ? '↻ Refazer prova' : '📝 Fazer prova')}</button>`)
+            : `<button class="mark-btn${c.concluido ? ' done' : ''}" onclick="marcarConcluido('${c.id}', '${c.titulo.replace(/'/g,"\\'")}')">${c.concluido ? '✓ Concluído' : '✓ Marcar como concluído'}</button>`
+          }
           ${(c.concluido && c.certificadoModelo) ? `<button class="mark-btn" style="background:var(--fries); margin-top:10px;" onclick="gerarCertificado('${c.id}')">🏆 Baixar certificado</button>` : ''}
-          <p class="autohint">O progresso também avança automaticamente conforme você acessa. O botão é só pra confirmar quando terminar.</p>
+          <p class="autohint">${c.temProva ? (c.tipo === 'link' ? 'A prova acontece dentro do próprio conteúdo. O resultado é gravado automaticamente quando você termina lá dentro.' : 'Esse curso exige prova. Você precisa acertar a nota mínima pra receber o certificado.') : 'O progresso também avança automaticamente conforme você acessa. O botão é só pra confirmar quando terminar.'}</p>
         </div>
         <div class="panel">
           <h3>Nesta trilha</h3>
@@ -1179,7 +1334,7 @@ function abrirCurso(cursoId){
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, increment, serverTimestamp, collection, getDocs, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, increment, serverTimestamp, collection, getDocs, onSnapshot, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // firebaseConfig real do projeto Cabana School (mesmo do index.html)
   const firebaseConfig = {
@@ -1202,10 +1357,90 @@ function abrirCurso(cursoId){
 
   // ===== progresso (coleção 'progresso', doc id = {cpf}_{cursoId}) =====
   let currentCpf = null;
+  let currentUid = null; // uid do Firebase Auth (diferente do CPF) — usado só como chave não-identificável do ranking público
   let cargoColaboradorAtual = '';
   let nivelColaboradorAtual = '';
   let lojaColaboradorAtual = '';
   let regionalColaboradorAtual = '';
+  let nomeColaboradorAtual = '';
+  let localColaboradorAtual = ''; // 'Loja' | 'Fábrica' | 'Escritório' — nem todo mundo trabalha numa loja
+
+  // ===== gamificação: pontos, sequência de dias e ranking público (sem expor CPF) =====
+  // PontosGanhos é recalculado do zero toda vez (soma dos cursos concluídos). PontosGastos só é
+  // alterado por resgate na lojinha — nunca mexemos nele aqui, pra não apagar resgates já feitos.
+  async function atualizarPontosStreakERanking(cpf, nome, loja, cargo, local){
+    if (!cpf || !currentUid) return;
+    try {
+      // busca sempre fresco (não confia em cache local), pra não reaplicar sequência/pontos com dado velho
+      let dadosAtuais = {};
+      try {
+        const snapAtual = await getDoc(doc(db, 'colaboradores', cpf));
+        if (snapAtual.exists()) dadosAtuais = snapAtual.data();
+      } catch (e) { /* segue com {} — na pior das hipóteses recomeça a sequência do zero */ }
+
+      // ---- streak (sequência de dias seguidos acessando) ----
+      const hojeStr = new Date().toISOString().slice(0, 10);
+      const ontemStr = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const ultimoDia = dadosAtuais.UltimoDiaAcesso || null;
+      let sequenciaAtual = dadosAtuais.SequenciaAtual || 0;
+      if (ultimoDia === hojeStr) {
+        // já contou hoje, não mexe
+      } else if (ultimoDia === ontemStr) {
+        sequenciaAtual = sequenciaAtual + 1;
+      } else {
+        sequenciaAtual = 1;
+      }
+      const melhorSequencia = Math.max(dadosAtuais.MelhorSequencia || 0, sequenciaAtual);
+      const streakMudou = ultimoDia !== hojeStr;
+      if (streakMudou) {
+        await setDoc(doc(db, 'colaboradores', cpf), {
+          UltimoDiaAcesso: hojeStr,
+          SequenciaAtual: sequenciaAtual,
+          MelhorSequencia: melhorSequencia,
+        }, { merge: true });
+      }
+
+      // ---- pontos + contagem de cursos concluídos, a partir do progresso da própria pessoa ----
+      const progSnap = await getDocs(query(collection(db, 'progresso'), where('Cpf', '==', cpf), where('Status', '==', 'concluido')));
+      const itens = progSnap.docs.map(d => d.data());
+      let cursosConcluidos = 0;
+      let pontosGanhos = 0;
+      const agora = new Date();
+      await Promise.all(itens.map(async (item) => {
+        let validadeMeses = null;
+        try {
+          const cSnap = await getDoc(doc(db, 'cursos', item.CursoId));
+          if (cSnap.exists()) validadeMeses = cSnap.data().ValidadeMeses || null;
+        } catch (e) { /* curso pode ter sido removido; conta mesmo assim */ }
+        const vencido = validadeMeses && item.ConcluidoEm && item.ConcluidoEm.toDate
+          ? mesesEntre(item.ConcluidoEm.toDate(), agora) >= validadeMeses
+          : false;
+        if (vencido) return; // certificado vencido não conta pontos até refazer (mesma regra do resto da plataforma)
+        cursosConcluidos++;
+        pontosGanhos += 100; // pontuação base por curso concluído
+        if ((item.Tentativas || 1) <= 1) pontosGanhos += 50; // bônus por ter passado sem precisar refazer
+      }));
+
+      await setDoc(doc(db, 'colaboradores', cpf), { PontosGanhos: pontosGanhos }, { merge: true });
+
+      // ---- ranking público: só os campos não-sensíveis, guardado pelo uid do Auth (nunca pelo CPF) ----
+      // Loja fica vazia pra quem não trabalha numa loja (Fábrica/Escritório) — Local é o fallback na hora de exibir.
+      await setDoc(doc(db, 'rankingPublico', currentUid), {
+        Nome: nome || '—',
+        Loja: loja || '',
+        Local: local || 'Loja',
+        Cargo: cargo || '—',
+        CursosConcluidos: cursosConcluidos,
+        SequenciaAtual: sequenciaAtual,
+        Pontos: pontosGanhos - (dadosAtuais.PontosGastos || 0),
+      }, { merge: true });
+
+      return { sequenciaAtual, melhorSequencia, pontosGanhos, cursosConcluidos };
+    } catch (err) {
+      console.error('Erro ao atualizar pontos/sequência/ranking:', err);
+      return null;
+    }
+  }
 
   // mapeia os campos reais gravados pelo admin.html (PascalCase) pro formato interno
   // que as funções de render deste arquivo já esperam (titulo, descricao, capa...)
@@ -1230,6 +1465,9 @@ function abrirCurso(cursoId){
       certificadoModelo: data.CertificadoModeloURL || '',
       validadeMeses: data.ValidadeMeses || null,
       obrigatorio: data.Obrigatorio === true,
+      temProva: data.TemProva === true,
+      notaAprovacao: data.NotaAprovacao || 70,
+      perguntas: Array.isArray(data.Perguntas) ? data.Perguntas : [],
       ordem: data.Ordem || null,
       emoji: (trilha && trilha.emoji) || '📚',
       cor: (trilha && trilha.cor) || '#4F9C40',
@@ -1379,6 +1617,26 @@ function abrirCurso(cursoId){
     }, (err) => console.error('Erro ao carregar biblioteca:', err));
   }
 
+  // ===== banners no topo da Home (novidades, campanhas, avisos) =====
+  function bannersValidosAgora(lista){
+    const agora = new Date();
+    return lista.filter(b => {
+      if (b.Ativo === false) return false;
+      if (b.DataInicio) { const ini = new Date(b.DataInicio + 'T00:00:00'); if (agora < ini) return false; }
+      if (b.DataFim) { const fim = new Date(b.DataFim + 'T23:59:59'); if (agora > fim) return false; }
+      return true;
+    }).sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
+  }
+
+  function iniciarBanners(){
+    onSnapshot(collection(db, 'banners'), (snap) => {
+      const todos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      window.__bannersAtivos = bannersValidosAgora(todos);
+      window.__bannerIndiceAtual = 0;
+      if (window.renderBanners) window.renderBanners();
+    }, (err) => console.error('Erro ao carregar banners:', err));
+  }
+
   async function carregarCursosEProgresso(cpf){
     // 1) cursos publicados, vindos da coleção 'cursos' (mesma coleção que o admin.html grava),
     //    via onSnapshot pra refletir uma publicação nova do admin sem precisar recarregar a página
@@ -1392,6 +1650,7 @@ function abrirCurso(cursoId){
           window.cursosCarregados = true;
           if (window.renderCards) window.renderCards();
           if (window.renderJornada) window.renderJornada();
+          verificarTrilhas(cpf, cargoColaboradorAtual, localColaboradorAtual);
         });
       },
       (err) => {
@@ -1419,12 +1678,113 @@ function abrirCurso(cursoId){
           : false;
         c.vencido = vencido;
         c.concluido = concluidoDeVerdade && !vencido;
-        c.progresso = c.concluido ? 100 : (status === 'em_andamento' || vencido ? 50 : 0);
+        c.reprovado = status === 'reprovado';
+        c.ultimaNota = prog ? prog.UltimaNota : null;
+        c.progresso = c.concluido ? 100 : (status === 'em_andamento' || status === 'reprovado' || vencido ? 50 : 0);
       });
     } catch (err) {
       console.error('Erro ao carregar progresso do colaborador:', err);
     }
   }
+
+  // ===== trilhas de aprendizagem: sequência de cursos definida pelo admin pra um cargo/local/grupo de cargos =====
+  function trilhaAplicavelA(t, cargo, local){
+    const passaCargo = !(t.CargosEspecificos === true && Array.isArray(t.Cargos) && t.Cargos.length)
+      || t.Cargos.includes(cargo);
+    const passaLocal = !(t.LocalEspecifico === true && Array.isArray(t.Locais) && t.Locais.length)
+      || t.Locais.includes(local);
+    return passaCargo && passaLocal;
+  }
+
+  async function verificarTrilhas(cpf, cargo, local){
+    if (!cpf) return;
+    try {
+      const snap = await getDocs(query(collection(db, 'trilhas'), where('Ativa', '==', true)));
+      const todas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const aplicaveis = todas.filter(t => trilhaAplicavelA(t, cargo, local));
+      window.MINHAS_TRILHAS = aplicaveis;
+      if (window.renderMinhaTrilha) window.renderMinhaTrilha();
+
+      // checa se alguma trilha acabou de ser 100% concluída, pra mostrar o selo (só uma vez por trilha)
+      if (!window.CURSOS || !window.CURSOS.length) return;
+      const colabRef = doc(db, 'colaboradores', cpf);
+      const colabSnap = await getDoc(colabRef);
+      const jaConquistadas = (colabSnap.exists() && Array.isArray(colabSnap.data().TrilhasConcluidas))
+        ? colabSnap.data().TrilhasConcluidas : [];
+      for (const t of aplicaveis) {
+        if (jaConquistadas.includes(t.id)) continue;
+        const cursosDaTrilha = (t.CursoIds || []).map(id => window.CURSOS.find(c => c.id === id)).filter(Boolean);
+        if (!cursosDaTrilha.length || cursosDaTrilha.length !== (t.CursoIds || []).length) continue; // algum curso não carregou ainda, espera a próxima checagem
+        if (cursosDaTrilha.every(c => c.concluido)) {
+          await updateDoc(colabRef, { TrilhasConcluidas: arrayUnion(t.id) });
+          if (window.mostrarSeloTrilha) window.mostrarSeloTrilha(t.Nome || 'sua trilha');
+          break; // uma celebração por vez, pra não empilhar modal
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao verificar trilhas de aprendizagem:', err);
+    }
+  }
+
+  window.renderMinhaTrilha = function(){
+    const section = document.getElementById('minhaTrilhaSection');
+    const lista = document.getElementById('minhaTrilhaLista');
+    if (!section || !lista) return;
+    const trilhas = window.MINHAS_TRILHAS || [];
+
+    const blocos = trilhas.map(t => {
+      const cursos = (t.CursoIds || []).map(id => window.CURSOS.find(c => c.id === id)).filter(Boolean);
+      if (!cursos.length) return '';
+      const concluidos = cursos.filter(c => c.concluido).length;
+      const total = cursos.length;
+      const pct = total ? Math.round((concluidos / total) * 100) : 0;
+      const proximo = cursos.find(c => !c.concluido);
+      const itens = cursos.map(c => `
+        <li style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px; background:${(proximo && c.id === proximo.id) ? 'var(--cream)' : 'transparent'}; cursor:pointer;" onclick="abrirCurso('${c.id}')">
+          <span>${c.concluido ? '✅' : ((proximo && c.id === proximo.id) ? '👉' : '⬜')}</span>
+          <span style="flex:1; font-size:13.5px;${c.concluido ? ' text-decoration:line-through; opacity:.6;' : ''}">${c.titulo}</span>
+        </li>`).join('');
+      return `
+        <div style="background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg); padding:20px 24px; box-shadow:var(--shadow);">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <b style="font-size:15px;">🧭 ${t.Nome || 'Trilha'}</b>
+            <span style="font-size:12.5px; font-weight:700; color:var(--green-dark); white-space:nowrap;">${concluidos}/${total} concluídos</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+            <div style="flex:1; height:8px; background:var(--line); border-radius:100px; overflow:hidden;">
+              <div style="height:100%; width:${pct}%; background:var(--green);"></div>
+            </div>
+            <b style="font-size:12px;">${pct}%</b>
+          </div>
+          <ul style="list-style:none; padding:0; margin:14px 0 0; display:flex; flex-direction:column; gap:6px;">${itens}</ul>
+        </div>`;
+    }).filter(Boolean);
+
+    if (!blocos.length) { section.style.display = 'none'; return; }
+    lista.innerHTML = blocos.join('');
+    section.style.display = 'block';
+  };
+
+  window.mostrarModalAprovado = function(nota, cursoId, temCertificado){
+    const msgEl = document.getElementById('aprovadoMensagem');
+    if (msgEl) msgEl.textContent = (nota != null) ? `Você tirou ${nota}% nessa prova.` : 'Você concluiu esse treinamento.';
+    const botoes = document.getElementById('aprovadoBotoes');
+    if (botoes) {
+      botoes.innerHTML = temCertificado
+        ? `<button onclick="gerarCertificado('${cursoId}')" style="background:var(--fries); color:#fff; padding:13px 22px; border-radius:100px; font-size:13.5px; font-weight:700; border:none; cursor:pointer;">🏆 Baixar certificado</button>
+           <button onclick="closeModal('modalAprovado')" style="background:none; border:none; color:var(--ink-soft); font-size:12.5px; font-weight:700; padding:6px; cursor:pointer;">Continuar sem baixar</button>`
+        : `<button onclick="closeModal('modalAprovado')" style="background:var(--green); color:#fff; padding:13px 22px; border-radius:100px; font-size:13.5px; font-weight:700; border:none; cursor:pointer;">Continuar</button>`;
+    }
+    if (window.openModal) window.openModal('modalAprovado');
+  };
+
+  window.mostrarSeloTrilha = function(nomeTrilha){
+    const tituloEl = document.getElementById('seloTitulo');
+    const msgEl = document.getElementById('seloMensagem');
+    if (tituloEl) tituloEl.textContent = 'Trilha concluída! 🎉';
+    if (msgEl) msgEl.textContent = `Você completou todos os treinamentos da trilha "${nomeTrilha}". Parabéns pelo empenho!`;
+    if (window.openModal) window.openModal('modalSelo');
+  };
 
   window.registrarInicio = async function(cursoId, cursoTitulo){
     if (!currentCpf || !cursoId) return;
@@ -1441,6 +1801,83 @@ function abrirCurso(cursoId){
       });
     } catch (err) {
       console.error('Erro ao registrar início do curso:', err);
+    }
+  };
+
+  let provaCursoAtual = null;
+
+  window.iniciarProva = function(cursoId){
+    const c = window.CURSOS && window.CURSOS.find(x => x.id === cursoId);
+    if (!c || !c.perguntas || !c.perguntas.length) { alert('Esse curso não tem perguntas cadastradas ainda.'); return; }
+    provaCursoAtual = c;
+    document.getElementById('provaModalTitulo').textContent = `📝 Prova — ${c.titulo}`;
+    document.getElementById('provaModalCorpo').innerHTML = `
+      <p style="font-size:13px; color:var(--ink-soft); margin:0 0 16px;">Nota mínima pra aprovar: <b>${c.notaAprovacao}%</b>. Responde com calma, dá pra tentar de novo se não passar.</p>
+      ${c.perguntas.map((p, i) => `
+        <div style="margin-bottom:18px;">
+          <b style="display:block; font-size:14px; margin-bottom:8px;">${i + 1}. ${p.Texto}</b>
+          ${p.Alternativas.map((alt, j) => `
+            <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; margin-bottom:6px; cursor:pointer; font-size:13.5px;">
+              <input type="radio" name="prova-pergunta-${i}" value="${j}">
+              ${alt}
+            </label>
+          `).join('')}
+        </div>
+      `).join('')}
+    `;
+    document.getElementById('modalProva').style.display = 'flex';
+  };
+
+  window.enviarProva = async function(){
+    const c = provaCursoAtual;
+    if (!c || !currentCpf) return;
+    const respostas = [];
+    for (let i = 0; i < c.perguntas.length; i++) {
+      const marcado = document.querySelector(`input[name="prova-pergunta-${i}"]:checked`);
+      if (!marcado) { alert('Responde todas as perguntas antes de enviar.'); return; }
+      respostas.push(Number(marcado.value));
+    }
+    let acertos = 0;
+    c.perguntas.forEach((p, i) => { if (respostas[i] === p.Correta) acertos++; });
+    const nota = Math.round((acertos / c.perguntas.length) * 100);
+    const aprovado = nota >= c.notaAprovacao;
+
+    try {
+      const ref = doc(db, 'progresso', `${currentCpf}_${c.id}`);
+      const existente = await getDoc(ref);
+      const tentativasAnteriores = (existente.exists() && existente.data().Tentativas) || 0;
+      await setDoc(ref, {
+        Cpf: currentCpf,
+        CursoId: c.id,
+        CursoTitulo: c.titulo,
+        Status: aprovado ? 'concluido' : 'reprovado',
+        IniciadoEm: (existente.exists() && existente.data().IniciadoEm) || serverTimestamp(),
+        ConcluidoEm: aprovado ? serverTimestamp() : (existente.exists() ? existente.data().ConcluidoEm || null : null),
+        UltimaNota: nota,
+        Tentativas: tentativasAnteriores + 1,
+      }, { merge: true });
+
+      closeModal('modalProva');
+      c.concluido = aprovado;
+      c.reprovado = !aprovado;
+      c.progresso = aprovado ? 100 : 50;
+      c.ultimaNota = nota;
+      if (window.renderCards) window.renderCards();
+      if (window.renderJornada) window.renderJornada();
+      if (window.abrirCurso) window.abrirCurso(c.id);
+      if (aprovado) {
+        atualizarPontosStreakERanking(currentCpf, nomeColaboradorAtual, lojaColaboradorAtual, cargoColaboradorAtual, localColaboradorAtual);
+        verificarTrilhas(currentCpf, cargoColaboradorAtual, localColaboradorAtual);
+      }
+
+      if (aprovado) {
+        if (window.mostrarModalAprovado) window.mostrarModalAprovado(nota, c.id, !!c.certificadoModelo);
+      } else {
+        alert(`Você tirou ${nota}%, abaixo dos ${c.notaAprovacao}% necessários. Revisa o conteúdo e tenta de novo quando quiser.`);
+      }
+    } catch (err) {
+      console.error('Erro ao enviar prova:', err);
+      alert('Não foi possível enviar a prova agora. Tenta de novo em alguns segundos.');
     }
   };
 
@@ -1463,6 +1900,9 @@ function abrirCurso(cursoId){
       if (window.renderCards) window.renderCards();
       if (window.renderJornada) window.renderJornada();
       if (c && window.abrirCurso) window.abrirCurso(cursoId); // reabre a tela do curso já com o botão atualizado
+      atualizarPontosStreakERanking(currentCpf, nomeColaboradorAtual, lojaColaboradorAtual, cargoColaboradorAtual, localColaboradorAtual);
+      verificarTrilhas(currentCpf, cargoColaboradorAtual, localColaboradorAtual);
+      if (window.mostrarModalAprovado) window.mostrarModalAprovado(null, cursoId, !!(c && c.certificadoModelo));
     } catch (err) {
       console.error('Erro ao marcar curso como concluído:', err);
       alert('Não foi possível salvar sua conclusão agora. Tenta de novo em alguns segundos.');
@@ -1473,6 +1913,152 @@ function abrirCurso(cursoId){
   function mesesEntre(dataInicio, dataFim){
     return (dataFim.getFullYear() - dataInicio.getFullYear()) * 12 + (dataFim.getMonth() - dataInicio.getMonth());
   }
+
+  // mostra a sequência de dias da própria pessoa (chamado depois do login terminar de calcular)
+  window.renderSequenciaDias = function(sequenciaAtual, melhorSequencia){
+    window.__minhaSequencia = sequenciaAtual;
+    window.__minhaMelhorSequencia = melhorSequencia;
+    const el = document.getElementById('rankingMeusPontos');
+    if (el && sequenciaAtual > 0) {
+      el.innerHTML = `<div class="rep-card" style="border-left:4px solid var(--orange, #D89840); padding:12px 14px;"><span style="font-size:13.5px;">🔥 Você está há <b>${sequenciaAtual} dia${sequenciaAtual === 1 ? '' : 's'}</b> seguido${sequenciaAtual === 1 ? '' : 's'} acessando${melhorSequencia > sequenciaAtual ? ` (seu recorde é ${melhorSequencia})` : ''}!</span></div>`;
+    }
+  };
+
+  window.abrirRanking = async function(){
+    const modal = document.getElementById('modalRanking');
+    if (modal) modal.style.display = 'flex';
+    const elColab = document.getElementById('rankingColaboradores');
+    elColab.innerHTML = '<small style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small>';
+    if (window.__minhaSequencia) window.renderSequenciaDias(window.__minhaSequencia, window.__minhaMelhorSequencia);
+
+    try {
+      // lê só a versão pública e mínima (nome, loja, cargo, contagem, sequência) — nunca o cadastro
+      // completo, então o CPF de ninguém passa pelo navegador de quem só está olhando o ranking
+      const rankSnap = await getDocs(collection(db, 'rankingPublico'));
+      const todos = rankSnap.docs.map(d => d.data());
+
+      const medalhas = ['🥇', '🥈', '🥉'];
+      const topColab = todos
+        .filter(c => (c.CursosConcluidos || 0) > 0)
+        .sort((a, b) => (b.CursosConcluidos || 0) - (a.CursosConcluidos || 0))
+        .slice(0, 10);
+
+      elColab.innerHTML = topColab.length
+        ? topColab.map((c, i) => `<div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line);">
+            <div style="font-size:${i < 3 ? 22 : 15}px; width:26px; text-align:center;">${medalhas[i] || (i + 1) + 'º'}</div>
+            <div style="flex:1;">
+              <b style="font-size:14px;">${c.Nome || '—'}</b><br>
+              <span style="font-size:12px; color:var(--ink-soft);">${[c.Cargo, (c.Loja || c.Local)].filter(Boolean).join(' · ')}</span>
+            </div>
+            <div style="font-size:13px; font-weight:700; color:var(--green-dark);">${c.CursosConcluidos} curso${c.CursosConcluidos === 1 ? '' : 's'}</div>
+          </div>`).join('')
+        : '<small style="color:var(--ink-soft); font-size:12.5px;">Ainda ninguém concluiu um curso. Seja a primeira pessoa! 🎉</small>';
+
+      // sequências em alta — um segundo ranking, mais leve, só pra divertir (quem não tem sequência não aparece, não é constrangedor)
+      const wrapSeq = document.getElementById('rankingSequenciasWrap');
+      const elSeq = document.getElementById('rankingSequencias');
+      const topSeq = todos
+        .filter(c => (c.SequenciaAtual || 0) >= 2)
+        .sort((a, b) => (b.SequenciaAtual || 0) - (a.SequenciaAtual || 0))
+        .slice(0, 5);
+      if (topSeq.length && wrapSeq && elSeq) {
+        wrapSeq.style.display = 'block';
+        elSeq.innerHTML = topSeq.map(c => `<div style="display:flex; align-items:center; gap:10px; padding:6px 0; font-size:13px;">
+            <span>🔥</span><b>${c.Nome || '—'}</b><span style="color:var(--ink-soft);">${c.SequenciaAtual} dias seguidos</span>
+          </div>`).join('');
+      } else if (wrapSeq) {
+        wrapSeq.style.display = 'none';
+      }
+    } catch (err) {
+      console.error('Erro ao carregar ranking:', err);
+      elColab.innerHTML = '<small style="color:#B4462B; font-size:12.5px;">Não foi possível carregar o ranking agora.</small>';
+    }
+  };
+
+  // ===== Loja de recompensas (troca de pontos) =====
+  function iniciarLojaVisibilidade(){
+    onSnapshot(doc(db, 'configuracoes', 'loja'), (snap) => {
+      window.__lojaAtiva = snap.exists() && snap.data().Ativa === true;
+      const btn = document.getElementById('menuLojaBtn');
+      if (btn) btn.style.display = window.__lojaAtiva ? 'block' : 'none';
+    }, (err) => console.error('Erro ao checar status da loja:', err));
+  }
+
+  window.abrirLojaRecompensas = async function(){
+    const modal = document.getElementById('modalLoja');
+    if (modal) modal.style.display = 'flex';
+    const elPontos = document.getElementById('lojaMeusPontos');
+    const elLista = document.getElementById('lojaItensLista');
+    elLista.innerHTML = '<p style="color:var(--ink-soft); font-size:13.5px;">Carregando…</p>';
+    if (!currentCpf) return;
+
+    try {
+      const [colabSnap, itensSnap] = await Promise.all([
+        getDoc(doc(db, 'colaboradores', currentCpf)),
+        getDocs(query(collection(db, 'itensLoja'), where('Ativo', '==', true))),
+      ]);
+      const dadosColab = colabSnap.exists() ? colabSnap.data() : {};
+      const saldo = (dadosColab.PontosGanhos || 0) - (dadosColab.PontosGastos || 0);
+      elPontos.textContent = `🏆 Você tem ${saldo} pontos pra trocar`;
+
+      const itens = itensSnap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(it => it.Estoque == null || it.Estoque > 0)
+        .sort((a, b) => (a.CustoPontos || 0) - (b.CustoPontos || 0));
+
+      elLista.innerHTML = itens.length
+        ? itens.map(it => {
+            const daPraTrocar = saldo >= (it.CustoPontos || 0);
+            return `<div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);">
+              <div style="flex:1;">
+                <b style="font-size:14px;">${it.Nome}</b><br>
+                ${it.Descricao ? `<span style="font-size:12px; color:var(--ink-soft);">${it.Descricao}</span><br>` : ''}
+                <span style="font-size:12.5px; font-weight:700; color:var(--green-dark);">${it.CustoPontos} pontos</span>
+              </div>
+              <button class="btn-primary" style="padding:8px 16px; font-size:12.5px; ${daPraTrocar ? '' : 'opacity:.4; cursor:not-allowed;'}" ${daPraTrocar ? `onclick="resgatarItemLoja('${it.id}')"` : 'disabled'}>Trocar</button>
+            </div>`;
+          }).join('')
+        : '<p style="color:var(--ink-soft); font-size:13.5px;">Ainda não tem nenhum item disponível pra trocar. Assim que tiver, aparece aqui.</p>';
+    } catch (err) {
+      console.error('Erro ao carregar loja de recompensas:', err);
+      elLista.innerHTML = '<p style="color:#B4462B; font-size:13.5px;">Não foi possível carregar a loja agora.</p>';
+    }
+  };
+
+  window.resgatarItemLoja = async function(itemId){
+    if (!currentCpf) return;
+    try {
+      const [colabSnap, itemSnap] = await Promise.all([
+        getDoc(doc(db, 'colaboradores', currentCpf)),
+        getDoc(doc(db, 'itensLoja', itemId)),
+      ]);
+      if (!itemSnap.exists()) { alert('Esse item não está mais disponível.'); return; }
+      const item = itemSnap.data();
+      const dadosColab = colabSnap.exists() ? colabSnap.data() : {};
+      const saldo = (dadosColab.PontosGanhos || 0) - (dadosColab.PontosGastos || 0);
+      if (saldo < (item.CustoPontos || 0)) { alert('Você não tem pontos suficientes pra esse item.'); return; }
+      if (!confirm(`Trocar ${item.CustoPontos} pontos por "${item.Nome}"? Isso não pode ser desfeito por você depois — se precisar cancelar, fala com o RH.`)) return;
+
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'colaboradores', currentCpf), { PontosGastos: increment(item.CustoPontos || 0) });
+      batch.set(doc(collection(db, 'resgates')), {
+        Cpf: currentCpf,
+        Nome: nomeColaboradorAtual,
+        Loja: lojaColaboradorAtual,
+        ItemId: itemId,
+        NomeItem: item.Nome,
+        CustoPontos: item.CustoPontos || 0,
+        Status: 'pendente',
+        CriadoEm: serverTimestamp(),
+      });
+      await batch.commit();
+      alert(`🎉 Troca feita! "${item.Nome}" já está registrado — o RH vai te procurar pra combinar a entrega.`);
+      window.abrirLojaRecompensas();
+    } catch (err) {
+      console.error('Erro ao resgatar item:', err);
+      alert('Não foi possível fazer a troca agora. Tenta de novo em alguns segundos.');
+    }
+  };
 
   window.abrirMeusCertificados = async function(){
     const modal = document.getElementById('modalCertificados');
@@ -1605,6 +2191,8 @@ function abrirCurso(cursoId){
     // então extraímos o CPF de volta a partir do e-mail interno ({cpf}@cabana.internal)
     const cpf = (user.email || '').split('@')[0];
     currentCpf = cpf;
+    currentUid = user.uid;
+    window.currentCpf = cpf; // exposto pro bloco de script comum (playerHTML precisa pra montar o link do curso)
 
     let dados = {};
     try {
@@ -1619,6 +2207,7 @@ function abrirCurso(cursoId){
     const loja = dados.Loja || '';
     const nivel = dados.Nivel || '';
     const cargo = dados.Cargo || '';
+    const local = dados.Local || 'Loja';
     let apelido = dados.Apelido || null;
 
     // precisa estar definido antes de carregar cursos, pra filtrar certo por "cargos específicos"
@@ -1630,6 +2219,8 @@ function abrirCurso(cursoId){
     carregarCursosEProgresso(cpf);
     carregarCategoriasBiblioteca();
     carregarBiblioteca();
+    iniciarBanners();
+    iniciarLojaVisibilidade();
     verificarPesquisasMarco(cpf, dados);
 
     // menu do avatar com nome, cargo e loja reais
@@ -1657,6 +2248,13 @@ function abrirCurso(cursoId){
     } catch (err) {
       console.error('Erro ao registrar acesso:', err);
     }
+
+    // gamificação: sequência de dias, pontos e ranking público — roda em segundo plano, não trava o login
+    nomeColaboradorAtual = nome;
+    localColaboradorAtual = local;
+    atualizarPontosStreakERanking(cpf, nome, loja, cargo, local).then((resultado) => {
+      if (resultado && window.renderSequenciaDias) window.renderSequenciaDias(resultado.sequenciaAtual, resultado.melhorSequencia);
+    });
 
     // primeiro acesso: se a senha ainda é a temporária, obriga trocar antes de qualquer outra coisa
     if (dados.PrecisaTrocarSenha) {
