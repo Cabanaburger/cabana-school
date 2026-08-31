@@ -1,0 +1,17 @@
+{
+  "name": "Cabana School",
+  "short_name": "Cabana School",
+  "description": "Plataforma de treinamentos da Cabana Burger",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FBF3D9",
+  "theme_color": "#4F9C40",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "icon192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon192maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon512maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
