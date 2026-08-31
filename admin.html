@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin · Cabana School</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon16.png">
+<link rel="apple-touch-icon" href="icon180.png">
+<meta name="theme-color" content="#4F9C40">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
@@ -195,7 +199,9 @@
     <div class="navgroup">
       <h6>Conteúdo</h6>
       <div class="navitem on" onclick="goTab('cursos', this)"><span class="ic">🎬</span> Cursos</div>
+      <div class="navitem" onclick="goTab('trilhas', this)"><span class="ic">🧭</span> Trilhas</div>
       <div class="navitem" onclick="goTab('biblioteca', this)"><span class="ic">📚</span> Biblioteca</div>
+      <div class="navitem" onclick="goTab('banners', this)"><span class="ic">📣</span> Banners</div>
     </div>
     <div class="navgroup">
       <h6>Acesso</h6>
@@ -204,6 +210,14 @@
     <div class="navgroup">
       <h6>Dados</h6>
       <div class="navitem" onclick="goTab('relatorios', this)"><span class="ic">📊</span> Relatórios &amp; adesão</div>
+    </div>
+    <div class="navgroup">
+      <h6>Engajamento</h6>
+      <div class="navitem" onclick="goTab('resgates', this)"><span class="ic">🎁</span> Resgates <span id="resgatesPendentesBadge" style="display:none; margin-left:auto; background:#B4462B; color:#fff; border-radius:999px; font-size:10.5px; font-weight:700; padding:1px 7px;"></span></div>
+    </div>
+    <div class="navgroup">
+      <h6>Plataforma</h6>
+      <div class="navitem" onclick="goTab('configuracoes', this)"><span class="ic">⚙️</span> Configurações</div>
     </div>
 
     <div class="side-foot">
@@ -246,6 +260,26 @@
           </thead>
           <tbody id="cursosTableBody">
             <tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando cursos…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== TRILHAS ===================== -->
+    <section class="tabpage" id="tab-trilhas">
+      <div class="topline">
+        <div>
+          <div class="crumb">Admin / Conteúdo</div>
+          <h1>Trilhas de aprendizagem</h1>
+        </div>
+        <button class="btn-primary" onclick="abrirNovaTrilha()">+ Nova trilha</button>
+      </div>
+      <p class="sub" style="margin-bottom:16px;">Monte uma sequência de cursos pra um cargo, local ou grupo de cargos seguir. O colaborador vê a trilha dele na página inicial, na ordem que você montar aqui, e ganha um selo quando termina tudo.</p>
+      <div class="panel-card">
+        <table>
+          <thead><tr><th>Trilha</th><th>Público</th><th>Cursos</th><th>Status</th><th></th></tr></thead>
+          <tbody id="trilhasTableBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
           </tbody>
         </table>
       </div>
@@ -431,6 +465,25 @@
       </div>
     </section>
 
+    <!-- ===================== RESGATES (lojinha de pontos) ===================== -->
+    <section class="tabpage" id="tab-resgates">
+      <div class="topline">
+        <div>
+          <div class="crumb">Admin / Engajamento</div>
+          <h1>Resgates</h1>
+        </div>
+      </div>
+      <p class="sub" id="resgatesLojaInativaAviso" style="display:none; margin-bottom:16px;">A lojinha de recompensas ainda está desativada — ative em Configurações pra colaboradores começarem a trocar pontos por itens. Pedidos só aparecem aqui depois disso.</p>
+      <div class="panel-card">
+        <table>
+          <thead><tr><th>Colaborador</th><th>Loja</th><th>Item</th><th>Pontos</th><th>Pedido em</th><th>Status</th><th></th></tr></thead>
+          <tbody id="resgatesTableBody">
+            <tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- ===================== RELATÓRIOS ===================== -->
     <section class="tabpage" id="tab-relatorios">
       <div class="topline">
@@ -456,6 +509,9 @@
 
       <!-- ===== VISÃO EXECUTIVA ===== -->
       <div id="relSub-executiva" class="rel-subview">
+        <div style="text-align:right; margin-bottom:10px;">
+          <button class="ghost-btn" onclick="exportarRelatorioExecutivoCSV()">⬇ Exportar</button>
+        </div>
         <div id="relAlertas" style="margin-bottom:20px;"></div>
 
         <div class="stat-row" id="relStatRow">
@@ -549,6 +605,9 @@
 
       <!-- ===== ACOMPANHAMENTO ===== -->
       <div id="relSub-acompanhamento" class="rel-subview" style="display:none;">
+        <div style="text-align:right; margin-bottom:10px;">
+          <button class="ghost-btn" onclick="exportarRelatorioAcompanhamentoCSV()">⬇ Exportar</button>
+        </div>
         <div class="rep-grid">
           <div class="rep-card">
             <h4>🚨 Nunca acessaram</h4>
@@ -559,6 +618,90 @@
             <div id="relVencidos"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- ===================== BANNERS ===================== -->
+    <section class="tabpage" id="tab-banners">
+      <div class="topline">
+        <div>
+          <div class="crumb">Admin / Conteúdo</div>
+          <h1>Banners da Home</h1>
+          <p class="sub">Aparecem em destaque no topo da tela dos colaboradores. Some sozinho fora do período definido — não precisa lembrar de tirar do ar.</p>
+        </div>
+        <button class="new-btn" onclick="abrirNovoBanner()">+ Novo banner</button>
+      </div>
+
+      <div class="panel-card">
+        <table>
+          <thead>
+            <tr><th>Banner</th><th>Período</th><th>Ordem</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="bannersTableBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando banners…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== CONFIGURAÇÕES ===================== -->
+    <section class="tabpage" id="tab-configuracoes">
+      <div class="topline">
+        <div>
+          <div class="crumb">Admin / Plataforma</div>
+          <h1>Configurações</h1>
+        </div>
+      </div>
+
+      <div class="panel-card" style="padding:22px; margin-bottom:20px;">
+        <h4 style="font-family:var(--display); font-weight:400; font-size:16px; margin:0 0 16px;">Identidade da empresa</h4>
+        <div class="field-row">
+          <div class="field"><label>Nome da empresa</label><input type="text" id="identNomeInput" placeholder="Cabana Burger"></div>
+          <div class="field"><label>Cor primária</label><input type="text" id="identCorInput" placeholder="#4F9C40"></div>
+        </div>
+        <div class="field">
+          <label>Logo (link da imagem)</label>
+          <input type="text" id="identLogoInput" placeholder="Cole o link da logo (ex: subida em assets/ no GitHub)">
+          <small class="hint">Fica salva aqui pra centralizar — plugar visualmente em cada tela (Home, admin, certificado) é um próximo passo separado.</small>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px; margin-top:14px;">
+          <button class="btn-primary" onclick="salvarIdentidade()">Salvar identidade</button>
+          <span id="identidadeStatus" style="font-size:12.5px; font-weight:700;"></span>
+        </div>
+      </div>
+
+      <div class="panel-card" style="padding:22px;">
+        <h4 style="font-family:var(--display); font-weight:400; font-size:16px; margin:0 0 6px;">Administradores</h4>
+        <p class="sub" style="margin:0 0 16px;">Quem tem Nível = Admin enxerga tudo e consegue gerenciar a plataforma.</p>
+        <table>
+          <thead><tr><th>Nome</th><th>CPF</th><th>Cargo</th><th></th></tr></thead>
+          <tbody id="adminsTableBody">
+            <tr><td colspan="4" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
+          </tbody>
+        </table>
+        <div class="field-row" style="margin-top:18px; align-items:flex-end;">
+          <div class="field"><label>CPF do colaborador</label><input type="text" id="novoAdminCpfInput" placeholder="Só números"></div>
+          <div class="field"><button class="btn-primary" onclick="tornarAdmin()">Tornar Admin</button></div>
+        </div>
+        <div id="novoAdminStatus" style="font-size:12.5px; font-weight:700; margin-top:8px;"></div>
+      </div>
+
+      <div class="panel-card" style="padding:22px; margin-top:20px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+          <h4 style="font-family:var(--display); font-weight:400; font-size:16px; margin:0;">🎁 Loja de recompensas</h4>
+          <div class="status-toggle" id="lojaAtivaToggle">
+            <button id="lojaAtivaBtnOn" onclick="alternarLojaAtiva(true)">Ativada</button>
+            <button id="lojaAtivaBtnOff" class="on" onclick="alternarLojaAtiva(false)">Desativada</button>
+          </div>
+        </div>
+        <p class="sub" style="margin:0 0 16px;">Colaboradores ganham pontos automaticamente ao concluir cursos (100 pontos, +50 de bônus se passar sem precisar refazer a prova). Enquanto a loja estiver desativada, os pontos continuam acumulando normalmente — só o botão de resgate não aparece pra ninguém. Ative quando tiver itens cadastrados pra oferecer.</p>
+        <table>
+          <thead><tr><th>Item</th><th>Custo (pontos)</th><th>Estoque</th><th>Status</th><th></th></tr></thead>
+          <tbody id="itensLojaTableBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
+          </tbody>
+        </table>
+        <button class="ghost-btn" style="margin-top:14px;" onclick="abrirNovoItemLoja()">+ Novo item</button>
       </div>
     </section>
 
@@ -587,12 +730,19 @@
           <button onclick="setTipoConteudo(this,'video')">🎬 Vídeo</button>
           <button onclick="setTipoConteudo(this,'audio')">🎧 Áudio</button>
           <button onclick="setTipoConteudo(this,'link')">🔗 Link externo</button>
+          <button onclick="setTipoConteudo(this,'html')">📄 Upload de curso (HTML)</button>
         </div>
       </div>
-      <div class="field">
+      <div class="field" id="linkFieldWrap">
         <label id="linkFieldLabel">Link do curso no Canva</label>
         <input type="text" id="linkFieldInput" placeholder="https://seu-link.my.canva.site/...">
         <small class="hint" id="linkFieldHint">Cole aqui o link de compartilhamento do Canva Site ou da apresentação. É o único lugar que você vai colar isso. A plataforma faz o resto.</small>
+      </div>
+      <div class="field" id="htmlUploadWrap" style="display:none;">
+        <label>Arquivo do curso (HTML)</label>
+        <input type="file" id="htmlUploadInput" accept=".html,.htm">
+        <small class="hint">Escolhe o arquivo pronto do curso (o mesmo HTML de sempre). A plataforma sobe ele sozinha e preenche o link — não precisa abrir GitHub nem Netlify.</small>
+        <div id="htmlUploadStatus" style="margin-top:8px; font-size:12.5px; font-weight:700;"></div>
       </div>
       <div class="field">
         <label>Capa do curso (opcional)</label>
@@ -616,6 +766,26 @@
         <label>Ordem sugerida (opcional)</label>
         <input type="number" id="cursoOrdemInput" min="1" placeholder="Ex: 1, 2, 3...">
         <small class="hint">Só usada entre os cursos obrigatórios, pra sugerir por qual começar (1º, 2º...). Não trava nada — é só uma recomendação.</small>
+      </div>
+      <div class="field">
+        <label>Este curso tem prova?</label>
+        <div class="status-toggle" id="cursoProvaToggle">
+          <button class="on" onclick="setTemProva(this,false)">Não</button>
+          <button onclick="setTemProva(this,true)">Sim</button>
+        </div>
+        <small class="hint">Se marcar "Sim", o colaborador só recebe o certificado se acertar a nota mínima. Se reprovar, o curso volta a ficar pendente e é liberado pra refazer.</small>
+      </div>
+      <div id="provaBlock" style="display:none;">
+        <div class="field">
+          <label>Nota mínima pra aprovar (%)</label>
+          <input type="number" id="provaNotaMinimaInput" min="1" max="100" value="70" style="width:120px;">
+        </div>
+        <small class="hint" id="provaEmbutidaHint" style="display:none; margin:-8px 0 14px; color:var(--ink-soft);">Como o curso é um arquivo HTML com prova própria embutida, as perguntas ficam dentro do arquivo — não precisa cadastrar nada aqui além da nota mínima.</small>
+        <div class="field" id="provaPerguntasField">
+          <label>Perguntas</label>
+          <div id="provaPerguntasContainer"></div>
+          <button type="button" class="ghost-btn" onclick="adicionarPergunta()" style="margin-top:8px;">+ Adicionar pergunta</button>
+        </div>
       </div>
       <div class="field">
         <label>Validade do certificado</label>
@@ -676,6 +846,71 @@
   </div>
 </div>
 
+<!-- MODAL: trilha de aprendizagem -->
+<div class="overlay" id="modalTrilha" style="display:none;">
+  <div class="modal" style="width:640px; max-height:86vh; overflow:auto;">
+    <div class="modal-head"><h3 id="modalTrilhaTitulo">Nova trilha</h3><button onclick="closeModal('modalTrilha')">✕</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nome da trilha</label>
+        <input type="text" id="trilhaNomeInput" placeholder="Ex: Onboarding — Time de loja">
+      </div>
+
+      <div class="field">
+        <label>Cursos, na ordem que devem ser feitos</label>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <select id="trilhaAdicionarCursoSelect" style="flex:1;"></select>
+          <button type="button" class="ghost-btn" onclick="adicionarCursoNaTrilha()">+ Adicionar</button>
+        </div>
+        <div id="trilhaCursosLista" style="display:flex; flex-direction:column; gap:6px;"></div>
+        <small class="hint">Só cursos publicados aparecem aqui. Use as setas pra reordenar — a ordem é a que o colaborador vê como recomendada.</small>
+      </div>
+
+      <div class="field">
+        <label>Quem segue essa trilha — por cargo</label>
+        <div class="status-toggle" id="trilhaVisibToggle">
+          <button type="button" class="on" onclick="setVisibTrilhaCargo(this,false)">Não restringir por cargo</button>
+          <button type="button" onclick="setVisibTrilhaCargo(this,true)">Cargo(s) específico(s)</button>
+        </div>
+        <div class="visib-chips" id="trilhaVisibChips" style="display:none;"></div>
+        <div id="trilhaPublicoSalvoBlock" style="display:none; margin-top:10px; gap:8px; align-items:center;">
+          <select id="trilhaPublicoSalvoSelect" onchange="aplicarPublicoSalvo(this.value, 'trilhaVisibChips')" style="flex:1;">
+            <option value="">Carregar um público salvo…</option>
+          </select>
+          <button type="button" class="ghost-btn" onclick="salvarPublicoAtual('trilhaVisibChips')">💾 Salvar este público</button>
+        </div>
+        <small class="hint">Toque nos cargos que devem seguir essa trilha (dá pra carregar um grupo de cargos salvo, tipo "Liderança de loja").</small>
+      </div>
+
+      <div class="field">
+        <label>Quem segue essa trilha — por local</label>
+        <div class="status-toggle" id="trilhaVisibLocalToggle">
+          <button type="button" class="on" onclick="setVisibTrilhaLocal(this,false)">Não restringir por local</button>
+          <button type="button" onclick="setVisibTrilhaLocal(this,true)">Local(is) específico(s)</button>
+        </div>
+        <div class="visib-chips" id="trilhaVisibLocalChips" style="display:none;">
+          <span class="visib-chip">Loja</span>
+          <span class="visib-chip">Fábrica</span>
+          <span class="visib-chip">Escritório</span>
+        </div>
+        <small class="hint">Se marcar cargo E local juntos, só entra na trilha quem bater as duas condições ao mesmo tempo.</small>
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+        <div class="status-toggle" id="trilhaAtivaToggle" data-valor="1">
+          <button type="button" class="on" onclick="setObrigatorio(this,true)">Ativa</button>
+          <button type="button" onclick="setObrigatorio(this,false)">Inativa (não aparece pra ninguém)</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalTrilha')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarTrilha()">Salvar trilha</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: nova categoria -->
 <div class="overlay" id="modalLoja" style="display:none;">
   <div class="modal" style="width:400px;">
@@ -688,6 +923,64 @@
     <div class="modal-foot">
       <button class="btn-secondary" onclick="closeModal('modalLoja')">Cancelar</button>
       <button class="btn-primary" onclick="salvarLoja()">Criar loja →</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modalBanner" style="display:none;">
+  <div class="modal" style="width:440px;">
+    <div class="modal-head"><h3 id="modalBannerTitulo">Novo banner</h3><button onclick="closeModal('modalBanner')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Título (uso interno)</label><input type="text" id="bannerTituloInput" placeholder="Ex: Campanha de outubro"></div>
+      <div class="field"><label>Imagem (link)</label><input type="text" id="bannerImagemInput" placeholder="Cole o link da imagem"></div>
+      <div class="field"><label>Vídeo (link, opcional)</label><input type="text" id="bannerVideoInput" placeholder="Cole o link do vídeo, se for o caso"></div>
+      <div class="field"><label>Ao clicar, abrir (opcional)</label><input type="text" id="bannerLinkInput" placeholder="https://..."></div>
+      <div class="field-row">
+        <div class="field"><label>Início (opcional)</label><input type="date" id="bannerInicioInput"></div>
+        <div class="field"><label>Fim (opcional)</label><input type="date" id="bannerFimInput"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Ordem</label><input type="number" id="bannerOrdemInput" min="0" placeholder="0"></div>
+        <div class="field">
+          <label>Status</label>
+          <div class="status-toggle" id="bannerAtivoToggle" data-valor="1">
+            <button class="on" onclick="setObrigatorio(this, true)">Ativo</button>
+            <button onclick="setObrigatorio(this, false)">Desativado</button>
+          </div>
+        </div>
+      </div>
+      <small class="hint">Sem datas, o banner fica no ar até você desativar ou apagar manualmente.</small>
+      <div id="bannerSalvarErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600; margin-top:4px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalBanner')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarBanner()">Salvar banner →</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modalItemLoja" style="display:none;">
+  <div class="modal" style="width:420px;">
+    <div class="modal-head"><h3 id="modalItemLojaTitulo">Novo item</h3><button onclick="closeModal('modalItemLoja')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Nome do item</label><input type="text" id="itemLojaNomeInput" placeholder="Ex: Vale-lanche, folga extra, brinde..."></div>
+      <div class="field"><label>Descrição (opcional)</label><textarea id="itemLojaDescInput" placeholder="Detalhes de como funciona o resgate"></textarea></div>
+      <div class="field-row">
+        <div class="field"><label>Custo em pontos</label><input type="number" id="itemLojaCustoInput" min="1" placeholder="Ex: 300"></div>
+        <div class="field"><label>Estoque (opcional)</label><input type="number" id="itemLojaEstoqueInput" min="0" placeholder="Deixe em branco pra ilimitado"></div>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <div class="status-toggle" id="itemLojaAtivoToggle" data-valor="1">
+          <button class="on" onclick="setObrigatorio(this, true)">Ativo</button>
+          <button onclick="setObrigatorio(this, false)">Desativado</button>
+        </div>
+      </div>
+      <div id="itemLojaSalvarErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600; margin-top:4px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalItemLoja')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarItemLoja()">Salvar item →</button>
     </div>
   </div>
 </div>
@@ -818,6 +1111,16 @@
           <select id="colabNivelInput"><option>Colaborador</option><option>Admin</option></select>
         </div>
       </div>
+      <div class="field"><label>Diretoria</label><input type="text" id="colabDiretoriaInput" placeholder="Ex: Operações, Financeiro..."></div>
+      <div class="field-row">
+        <div class="field"><label>Gestor (nome)</label><input type="text" id="colabGestorNomeInput" placeholder="Nome do gestor direto"></div>
+        <div class="field"><label>Cargo do gestor</label><input type="text" id="colabGestorCargoInput" placeholder="Ex: Gerente Regional"></div>
+      </div>
+      <div class="field">
+        <label>CPF do gestor</label>
+        <input type="text" id="colabGestorCpfInput" placeholder="000.000.000-00">
+        <small class="hint">Usado pra agrupar "todos os liderados de fulano" no relatório por gestor (ver seção de e-mail semanal).</small>
+      </div>
       <div class="field" id="senhaSection" style="display:none; border-top:1px solid var(--line); padding-top:16px; margin-top:6px;">
         <label>Senha</label>
         <div id="senhaResetBox">
@@ -862,6 +1165,49 @@ function setObrigatorio(btn, valor){
   btn.classList.add('on');
   btn.parentElement.dataset.valor = valor ? '1' : '0';
 }
+let provaPerguntaContador = 0;
+function setTemProva(btn, valor){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  btn.parentElement.dataset.valor = valor ? '1' : '0';
+  document.getElementById('provaBlock').style.display = valor ? 'block' : 'none';
+}
+function adicionarPergunta(dados){
+  provaPerguntaContador++;
+  const idx = provaPerguntaContador;
+  const container = document.getElementById('provaPerguntasContainer');
+  const numero = container.children.length + 1;
+  const texto = dados ? dados.Texto : '';
+  const alternativas = dados && Array.isArray(dados.Alternativas) ? dados.Alternativas : ['', '', '', ''];
+  const correta = dados && typeof dados.Correta === 'number' ? dados.Correta : 0;
+
+  const div = document.createElement('div');
+  div.className = 'prova-pergunta';
+  div.dataset.idx = idx;
+  div.style = 'border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:10px; background:var(--cream);';
+  div.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <b style="font-size:13px;">Pergunta ${numero}</b>
+      <button type="button" onclick="this.closest('.prova-pergunta').remove(); renumerarPerguntas();" style="background:none; color:#B4462B; font-weight:700; font-size:12px;">Remover</button>
+    </div>
+    <textarea class="pergunta-texto" placeholder="Digite a pergunta" style="width:100%; margin-bottom:8px; min-height:50px;">${texto}</textarea>
+    <div class="pergunta-alternativas">
+      ${alternativas.map((alt, i) => `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <input type="radio" name="correta-${idx}" value="${i}" ${i === correta ? 'checked' : ''}>
+          <input type="text" class="alt-texto" placeholder="Alternativa ${i + 1}" value="${alt.replace(/"/g, '&quot;')}" style="flex:1;">
+        </div>
+      `).join('')}
+    </div>
+    <small class="hint">Marca a bolinha da alternativa correta.</small>
+  `;
+  container.appendChild(div);
+}
+function renumerarPerguntas(){
+  document.querySelectorAll('#provaPerguntasContainer .prova-pergunta b').forEach((b, i) => {
+    b.textContent = `Pergunta ${i + 1}`;
+  });
+}
 function setVisibLocal(btn, show){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
@@ -871,6 +1217,18 @@ function setPdfVisibLocal(btn, show){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   document.getElementById('pdfVisibLocalBlock').style.display = show ? 'block' : 'none';
+}
+function setVisibTrilhaCargo(btn, show){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('trilhaVisibChips').style.display = show ? 'flex' : 'none';
+  const bloco = document.getElementById('trilhaPublicoSalvoBlock');
+  if (bloco) bloco.style.display = show ? 'flex' : 'none';
+}
+function setVisibTrilhaLocal(btn, show){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('trilhaVisibLocalChips').style.display = show ? 'flex' : 'none';
 }
 function setSelo(btn, valor){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
@@ -915,6 +1273,19 @@ function setCatCor(btn){
 function setTipoConteudo(btn, tipo){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
+  const linkWrap = document.getElementById('linkFieldWrap');
+  const htmlWrap = document.getElementById('htmlUploadWrap');
+  const perguntasField = document.getElementById('provaPerguntasField');
+  const embutidaHint = document.getElementById('provaEmbutidaHint');
+  if (perguntasField) perguntasField.style.display = (tipo === 'html') ? 'none' : '';
+  if (embutidaHint) embutidaHint.style.display = (tipo === 'html') ? 'block' : 'none';
+  if (tipo === 'html') {
+    linkWrap.style.display = 'none';
+    htmlWrap.style.display = '';
+    return;
+  }
+  linkWrap.style.display = '';
+  htmlWrap.style.display = 'none';
   const label = document.getElementById('linkFieldLabel');
   const input = document.getElementById('linkFieldInput');
   const hint = document.getElementById('linkFieldHint');
@@ -937,7 +1308,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, collection, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, collection, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp, increment, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
   // firebaseConfig real do projeto Cabana School (mesmo do index.html / home.html)
   const firebaseConfig = {
@@ -952,6 +1324,32 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+  const storage = getStorage(app);
+
+  // upload direto de curso HTML pro Firebase Storage (substitui subir no GitHub/Netlify na mão)
+  document.getElementById('htmlUploadInput')?.addEventListener('change', async (e) => {
+    const arquivo = e.target.files[0];
+    const statusEl = document.getElementById('htmlUploadStatus');
+    if (!arquivo) return;
+    statusEl.style.color = 'var(--ink-soft)';
+    statusEl.textContent = `Enviando ${arquivo.name}…`;
+    try {
+      const nomeSeguro = arquivo.name
+        .normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '')
+        .replace(/[^a-zA-Z0-9.\-]/g, '-');
+      const caminho = `cursos-html/${Date.now()}-${nomeSeguro}`;
+      const ref = storageRef(storage, caminho);
+      await uploadBytes(ref, arquivo, { contentType: 'text/html' });
+      const url = await getDownloadURL(ref);
+      document.getElementById('linkFieldInput').value = url;
+      statusEl.style.color = 'var(--green-dark)';
+      statusEl.textContent = '✓ Enviado — link preenchido sozinho, pode salvar o curso.';
+    } catch (erro) {
+      console.error('upload de curso HTML', erro);
+      statusEl.style.color = '#B4462B';
+      statusEl.textContent = `Não consegui enviar (${erro.message || erro}). Confirma que o plano Blaze está ativo e tenta de novo.`;
+    }
+  });
 
   // app "secundário": usado só pra criar/checar contas de colaboradores sem afetar a sessão da admin logada
   const secondaryApp = initializeApp(firebaseConfig, 'secondary');
@@ -991,9 +1389,13 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     iniciarCategoriasBiblioteca();
     iniciarPublicos();
     iniciarCursos();
+    iniciarTrilhas();
     iniciarColaboradores();
     iniciarRelatorios();
     iniciarBiblioteca();
+    iniciarBanners();
+    iniciarIdentidade();
+    iniciarLojaRecompensas();
   });
 
   /* ===================== CURSOS ===================== */
@@ -1188,6 +1590,18 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         `<span class="visib-chip${selecionadosAntes.includes(nome) ? ' on' : ''}">${nome}</span>`
       ).join('');
       visibChips.querySelectorAll('.visib-chip').forEach(chip => {
+        chip.addEventListener('click', () => chip.classList.toggle('on'));
+      });
+    }
+
+    // chips de "quem segue essa trilha" por cargo
+    const trilhaVisibChips = document.getElementById('trilhaVisibChips');
+    if (trilhaVisibChips) {
+      const selecionadosAntes = [...trilhaVisibChips.querySelectorAll('.visib-chip.on')].map(c => c.textContent.trim());
+      trilhaVisibChips.innerHTML = cargos.map(nome =>
+        `<span class="visib-chip${selecionadosAntes.includes(nome) ? ' on' : ''}">${nome}</span>`
+      ).join('');
+      trilhaVisibChips.querySelectorAll('.visib-chip').forEach(chip => {
         chip.addEventListener('click', () => chip.classList.toggle('on'));
       });
     }
@@ -1399,7 +1813,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   function renderPublicoSelects(){
     const opcoes = '<option value="">Carregar um público salvo…</option>' +
       publicosCache.map(p => `<option value="${p.nome}">${p.nome} (${p.cargos.length})</option>`).join('');
-    ['cursoPublicoSalvoSelect', 'pdfPublicoSalvoSelect'].forEach(id => {
+    ['cursoPublicoSalvoSelect', 'pdfPublicoSalvoSelect', 'trilhaPublicoSalvoSelect'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = opcoes;
     });
@@ -1494,8 +1908,203 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       renderCursos();
       if (window.renderRelatorios) window.renderRelatorios();
       renderCursosStats();
+      if (window.renderTrilhaCursosSelect) window.renderTrilhaCursosSelect();
     }, (err) => console.error('Erro ao carregar cursos:', err));
   }
+
+  /* ===================== TRILHAS DE APRENDIZAGEM ===================== */
+  let trilhasCache = [];
+  let trilhaEditandoId = null;
+  let trilhaCursosSelecionados = []; // [{id, titulo}] só enquanto o modal está aberto
+
+  function iniciarTrilhas(){
+    onSnapshot(collection(db, 'trilhas'), (snapshot) => {
+      trilhasCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderTrilhas();
+    }, (err) => console.error('Erro ao carregar trilhas:', err));
+  }
+
+  function renderTrilhas(){
+    const body = document.getElementById('trilhasTableBody');
+    if (!body) return;
+    if (!trilhasCache.length) {
+      body.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhuma trilha criada ainda.</td></tr>`;
+      return;
+    }
+    body.innerHTML = trilhasCache.map(t => {
+      const partes = [];
+      if (t.CargosEspecificos && Array.isArray(t.Cargos) && t.Cargos.length) partes.push(t.Cargos.join(', '));
+      if (t.LocalEspecifico && Array.isArray(t.Locais) && t.Locais.length) partes.push(t.Locais.join(', '));
+      const publico = partes.length ? partes.join(' · ') : 'Todos';
+      const qtdCursos = Array.isArray(t.CursoIds) ? t.CursoIds.length : 0;
+      return `<tr>
+        <td>${t.Nome || '—'}</td>
+        <td>${publico}</td>
+        <td>${qtdCursos} curso${qtdCursos === 1 ? '' : 's'}</td>
+        <td>${t.Ativa ? '<span style="color:var(--green-dark); font-weight:700;">Ativa</span>' : '<span style="color:var(--ink-soft);">Inativa</span>'}</td>
+        <td style="text-align:right; white-space:nowrap;">
+          <button type="button" class="ghost-btn" onclick="editarTrilha('${t.id}')">Editar</button>
+          <button type="button" class="ghost-btn" style="color:#B4462B;" onclick="removerTrilha('${t.id}','${(t.Nome || '').replace(/'/g, "\\'")}')">Excluir</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.renderTrilhaCursosSelect = function(){
+    const sel = document.getElementById('trilhaAdicionarCursoSelect');
+    if (!sel) return;
+    const publicados = cursosCache.filter(c => c.Status === 'publicado').sort((a, b) => (a.Titulo || '').localeCompare(b.Titulo || ''));
+    sel.innerHTML = '<option value="">Escolher curso pra adicionar…</option>' +
+      publicados.map(c => `<option value="${c.id}">${c.Titulo || 'Sem título'}</option>`).join('');
+  };
+
+  function renderTrilhaCursosLista(){
+    const el = document.getElementById('trilhaCursosLista');
+    if (!el) return;
+    if (!trilhaCursosSelecionados.length) {
+      el.innerHTML = `<p style="font-size:12.5px; color:var(--ink-soft); margin:4px 0;">Nenhum curso adicionado ainda.</p>`;
+      return;
+    }
+    el.innerHTML = trilhaCursosSelecionados.map((c, i) => `
+      <div style="display:flex; align-items:center; gap:8px; background:var(--cream); border-radius:10px; padding:6px 10px; font-size:13px;">
+        <span style="font-weight:700; opacity:.5; width:22px;">${i + 1}º</span>
+        <span style="flex:1;">${c.titulo}</span>
+        <button type="button" onclick="moverCursoTrilha(${i},-1)" ${i === 0 ? 'disabled' : ''} style="background:none; padding:2px 6px;">↑</button>
+        <button type="button" onclick="moverCursoTrilha(${i},1)" ${i === trilhaCursosSelecionados.length - 1 ? 'disabled' : ''} style="background:none; padding:2px 6px;">↓</button>
+        <button type="button" onclick="removerCursoDaTrilha(${i})" style="background:none; color:#B4462B; padding:2px 6px;">✕</button>
+      </div>
+    `).join('');
+  }
+
+  window.adicionarCursoNaTrilha = function(){
+    const sel = document.getElementById('trilhaAdicionarCursoSelect');
+    const id = sel.value;
+    if (!id) return;
+    if (trilhaCursosSelecionados.some(c => c.id === id)) { alert('Esse curso já está na trilha.'); return; }
+    const curso = cursosCache.find(c => c.id === id);
+    trilhaCursosSelecionados.push({ id, titulo: curso ? curso.Titulo : 'Sem título' });
+    sel.value = '';
+    renderTrilhaCursosLista();
+  };
+
+  window.moverCursoTrilha = function(index, direcao){
+    const novoIndex = index + direcao;
+    if (novoIndex < 0 || novoIndex >= trilhaCursosSelecionados.length) return;
+    const [item] = trilhaCursosSelecionados.splice(index, 1);
+    trilhaCursosSelecionados.splice(novoIndex, 0, item);
+    renderTrilhaCursosLista();
+  };
+
+  window.removerCursoDaTrilha = function(index){
+    trilhaCursosSelecionados.splice(index, 1);
+    renderTrilhaCursosLista();
+  };
+
+  window.abrirNovaTrilha = function(){
+    trilhaEditandoId = null;
+    trilhaCursosSelecionados = [];
+    document.getElementById('modalTrilhaTitulo').textContent = 'Nova trilha';
+    document.getElementById('trilhaNomeInput').value = '';
+    window.renderTrilhaCursosSelect();
+    renderTrilhaCursosLista();
+
+    document.querySelectorAll('#trilhaVisibToggle button').forEach((b, i) => b.classList.toggle('on', i === 0));
+    document.getElementById('trilhaVisibChips').style.display = 'none';
+    document.getElementById('trilhaPublicoSalvoBlock').style.display = 'none';
+    document.querySelectorAll('#trilhaVisibChips .visib-chip').forEach(ch => ch.classList.remove('on'));
+
+    document.querySelectorAll('#trilhaVisibLocalToggle button').forEach((b, i) => b.classList.toggle('on', i === 0));
+    document.getElementById('trilhaVisibLocalChips').style.display = 'none';
+    document.querySelectorAll('#trilhaVisibLocalChips .visib-chip').forEach(ch => ch.classList.remove('on'));
+
+    document.querySelectorAll('#trilhaAtivaToggle button').forEach((b, i) => b.classList.toggle('on', i === 0));
+    document.getElementById('trilhaAtivaToggle').dataset.valor = '1';
+
+    openModal('modalTrilha');
+  };
+
+  window.editarTrilha = function(id){
+    const t = trilhasCache.find(x => x.id === id);
+    if (!t) return;
+    trilhaEditandoId = id;
+    trilhaCursosSelecionados = (Array.isArray(t.CursoIds) ? t.CursoIds : []).map(cid => {
+      const curso = cursosCache.find(c => c.id === cid);
+      return { id: cid, titulo: curso ? curso.Titulo : '(curso removido)' };
+    });
+    document.getElementById('modalTrilhaTitulo').textContent = 'Editar trilha';
+    document.getElementById('trilhaNomeInput').value = t.Nome || '';
+    window.renderTrilhaCursosSelect();
+    renderTrilhaCursosLista();
+
+    const cargoOn = !!t.CargosEspecificos;
+    document.querySelectorAll('#trilhaVisibToggle button').forEach((b, i) => b.classList.toggle('on', cargoOn ? i === 1 : i === 0));
+    document.getElementById('trilhaVisibChips').style.display = cargoOn ? 'flex' : 'none';
+    document.getElementById('trilhaPublicoSalvoBlock').style.display = cargoOn ? 'flex' : 'none';
+    document.querySelectorAll('#trilhaVisibChips .visib-chip').forEach(ch => {
+      ch.classList.toggle('on', Array.isArray(t.Cargos) && t.Cargos.includes(ch.textContent.trim()));
+    });
+
+    const localOn = !!t.LocalEspecifico;
+    document.querySelectorAll('#trilhaVisibLocalToggle button').forEach((b, i) => b.classList.toggle('on', localOn ? i === 1 : i === 0));
+    document.getElementById('trilhaVisibLocalChips').style.display = localOn ? 'flex' : 'none';
+    document.querySelectorAll('#trilhaVisibLocalChips .visib-chip').forEach(ch => {
+      ch.classList.toggle('on', Array.isArray(t.Locais) && t.Locais.includes(ch.textContent.trim()));
+    });
+
+    document.querySelectorAll('#trilhaAtivaToggle button').forEach((b, i) => b.classList.toggle('on', t.Ativa !== false ? i === 0 : i === 1));
+    document.getElementById('trilhaAtivaToggle').dataset.valor = (t.Ativa !== false) ? '1' : '0';
+
+    openModal('modalTrilha');
+  };
+
+  window.salvarTrilha = async function(){
+    const nome = document.getElementById('trilhaNomeInput').value.trim();
+    if (!nome) { alert('Dá um nome pra trilha antes de salvar.'); return; }
+    if (!trilhaCursosSelecionados.length) { alert('Adiciona pelo menos um curso na trilha.'); return; }
+
+    const cargosEspecificos = document.querySelectorAll('#trilhaVisibToggle button')[1].classList.contains('on');
+    const cargos = cargosEspecificos ? [...document.querySelectorAll('#trilhaVisibChips .visib-chip.on')].map(ch => ch.textContent.trim()) : [];
+    const localEspecifico = document.querySelectorAll('#trilhaVisibLocalToggle button')[1].classList.contains('on');
+    const locais = localEspecifico ? [...document.querySelectorAll('#trilhaVisibLocalChips .visib-chip.on')].map(ch => ch.textContent.trim()) : [];
+    const ativa = document.getElementById('trilhaAtivaToggle').dataset.valor === '1';
+
+    if (cargosEspecificos && !cargos.length) { alert('Marca pelo menos um cargo, ou desativa a restrição por cargo.'); return; }
+    if (localEspecifico && !locais.length) { alert('Marca pelo menos um local, ou desativa a restrição por local.'); return; }
+
+    const dados = {
+      Nome: nome,
+      CursoIds: trilhaCursosSelecionados.map(c => c.id),
+      CargosEspecificos: cargosEspecificos,
+      Cargos: cargos,
+      LocalEspecifico: localEspecifico,
+      Locais: locais,
+      Ativa: ativa,
+      AtualizadoEm: serverTimestamp(),
+    };
+
+    try {
+      if (trilhaEditandoId) {
+        await updateDoc(doc(db, 'trilhas', trilhaEditandoId), dados);
+      } else {
+        dados.CriadoEm = serverTimestamp();
+        await addDoc(collection(db, 'trilhas'), dados);
+      }
+      closeModal('modalTrilha');
+    } catch (err) {
+      console.error('Erro ao salvar trilha:', err);
+      alert('Não foi possível salvar a trilha agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  window.removerTrilha = async function(id, nome){
+    if (!confirm(`Excluir a trilha "${nome}"? Os cursos continuam existindo, só a trilha em si é removida — colaboradores que já tinham concluído continuam com o selo.`)) return;
+    try {
+      await deleteDoc(doc(db, 'trilhas', id));
+    } catch (err) {
+      console.error('Erro ao remover trilha:', err);
+      alert('Não foi possível remover agora. Tenta de novo em alguns segundos.');
+    }
+  };
 
   function statusPill(status){
     if (status === 'publicado') return '<span class="pill pub">Publicado</span>';
@@ -1569,6 +2178,11 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.querySelectorAll('#cursoObrigatorioToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
     document.getElementById('cursoObrigatorioToggle').dataset.valor = '0';
     document.getElementById('cursoOrdemInput').value = '';
+    document.querySelectorAll('#cursoProvaToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
+    document.getElementById('cursoProvaToggle').dataset.valor = '0';
+    document.getElementById('provaBlock').style.display = 'none';
+    document.getElementById('provaNotaMinimaInput').value = '70';
+    document.getElementById('provaPerguntasContainer').innerHTML = '';
     document.getElementById('cursoSalvarErro').style.display = 'none';
     document.querySelectorAll('#tipoConteudoToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
     setTipoConteudo(document.querySelector('#tipoConteudoToggle button'), 'canva');
@@ -1603,7 +2217,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       [...catSelect.options].forEach((opt, i) => { if (opt.textContent === c.Categoria) catSelect.selectedIndex = i; });
     }
     if (c.TipoConteudo) {
-      const btnMap = { canva: 0, video: 1, audio: 2, link: 3 };
+      const btnMap = { canva: 0, video: 1, audio: 2, link: 3, html: 4 };
       const idx = btnMap[c.TipoConteudo] ?? 0;
       const btns = document.querySelectorAll('#tipoConteudoToggle button');
       btns.forEach(b => b.classList.remove('on'));
@@ -1649,6 +2263,17 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     obrigBtns[c.Obrigatorio ? 1 : 0].classList.add('on');
     obrigToggle.dataset.valor = c.Obrigatorio ? '1' : '0';
     document.getElementById('cursoOrdemInput').value = c.Ordem || '';
+    const provaToggle = document.getElementById('cursoProvaToggle');
+    const provaBtns = provaToggle.querySelectorAll('button');
+    provaBtns.forEach(b => b.classList.remove('on'));
+    provaBtns[c.TemProva ? 1 : 0].classList.add('on');
+    provaToggle.dataset.valor = c.TemProva ? '1' : '0';
+    document.getElementById('provaBlock').style.display = c.TemProva ? 'block' : 'none';
+    document.getElementById('provaNotaMinimaInput').value = c.NotaAprovacao || 70;
+    document.getElementById('provaPerguntasContainer').innerHTML = '';
+    if (Array.isArray(c.Perguntas)) {
+      c.Perguntas.forEach(p => adicionarPergunta(p));
+    }
     if (c.CertificadoModeloURL) document.getElementById('cursoCertInput').value = c.CertificadoModeloURL;
     if (c.ValidadeMeses) document.getElementById('cursoValidadeInput').value = String(c.ValidadeMeses);
     document.getElementById('btnSalvarRascunho').onclick = () => salvarCurso('rascunho');
@@ -1675,7 +2300,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 
     try {
       const tipoBtn = document.querySelector('#tipoConteudoToggle button.on');
-      const tipoMap = ['canva','video','audio','link'];
+      const tipoMap = ['canva','video','audio','link','html'];
       const tipoIdx = tipoBtn ? [...tipoBtn.parentElement.children].indexOf(tipoBtn) : 0;
       const seloBtn = document.querySelector('#seloToggle button.on');
       const seloMap = ['nenhum','novo','destaque'];
@@ -1692,6 +2317,31 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         ? [...document.querySelectorAll('#visibRegionaisChips .visib-chip.on')].map(ch => ch.textContent.trim())
         : [];
 
+      const temProva = document.getElementById('cursoProvaToggle').dataset.valor === '1';
+      // curso HTML tem a prova embutida no próprio arquivo (ver cabana-quiz-tracker.js) —
+      // não faz sentido pedir perguntas dinâmicas do admin nesse caso, só a nota mínima.
+      const provaEmbutidaNoArquivo = temProva && tipoMap[tipoIdx] === 'html';
+      const perguntas = [];
+      if (temProva && !provaEmbutidaNoArquivo) {
+        const blocos = document.querySelectorAll('#provaPerguntasContainer .prova-pergunta');
+        for (const bloco of blocos) {
+          const idx = bloco.dataset.idx;
+          const textoPergunta = bloco.querySelector('.pergunta-texto').value.trim();
+          const alternativas = [...bloco.querySelectorAll('.alt-texto')].map(inp => inp.value.trim());
+          const radioMarcado = bloco.querySelector(`input[name="correta-${idx}"]:checked`);
+          const correta = radioMarcado ? Number(radioMarcado.value) : 0;
+          if (!textoPergunta || alternativas.some(a => !a)) {
+            alert('Preenche o texto e as 4 alternativas de todas as perguntas antes de salvar (ou remove a pergunta incompleta).');
+            return;
+          }
+          perguntas.push({ Texto: textoPergunta, Alternativas: alternativas, Correta: correta });
+        }
+        if (!perguntas.length) {
+          alert('Adiciona pelo menos uma pergunta, ou desliga "Este curso tem prova?".');
+          return;
+        }
+      }
+
       const dadosCurso = {
         Titulo: titulo,
         Descricao: document.getElementById('cursoDescInput').value.trim(),
@@ -1704,6 +2354,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         ValidadeMeses: document.getElementById('cursoValidadeInput').value ? Number(document.getElementById('cursoValidadeInput').value) : null,
         Obrigatorio: document.getElementById('cursoObrigatorioToggle').dataset.valor === '1',
         Ordem: document.getElementById('cursoOrdemInput').value ? Number(document.getElementById('cursoOrdemInput').value) : null,
+        TemProva: temProva,
+        NotaAprovacao: temProva ? (Number(document.getElementById('provaNotaMinimaInput').value) || 70) : null,
+        Perguntas: perguntas,
         CargosEspecificos: cargosEspecificos,
         Cargos: cargos,
         LocalEspecifico: localEspecifico,
@@ -1774,8 +2427,378 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       renderColaboradores();
       if (window.renderRelatorios) window.renderRelatorios();
       renderCursosStats();
+      if (window.renderAdmins) window.renderAdmins();
     }, (err) => console.error('Erro ao carregar colaboradores:', err));
   }
+
+  /* ===================== BANNERS (Home) ===================== */
+  let bannersCache = [];
+  let bannerEditandoId = null;
+
+  function iniciarBanners(){
+    onSnapshot(collection(db, 'banners'), (snapshot) => {
+      bannersCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      bannersCache.sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
+      renderBanners();
+    }, (err) => console.error('Erro ao carregar banners:', err));
+  }
+
+  function statusBannerAgora(b){
+    if (b.Ativo === false) return { texto: 'Desativado', cor: 'var(--ink-soft)' };
+    const hoje = new Date();
+    const ini = b.DataInicio ? new Date(b.DataInicio + 'T00:00:00') : null;
+    const fim = b.DataFim ? new Date(b.DataFim + 'T23:59:59') : null;
+    if (ini && hoje < ini) return { texto: 'Agendado', cor: '#8A5A1E' };
+    if (fim && hoje > fim) return { texto: 'Expirado', cor: 'var(--ink-soft)' };
+    return { texto: 'No ar', cor: 'var(--green-dark)' };
+  }
+
+  function renderBanners(){
+    const tbody = document.getElementById('bannersTableBody');
+    if (!tbody) return;
+    if (!bannersCache.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum banner cadastrado ainda.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = bannersCache.map(b => {
+      const st = statusBannerAgora(b);
+      const periodo = (b.DataInicio || b.DataFim) ? `${b.DataInicio || '—'} até ${b.DataFim || '—'}` : 'Sem prazo';
+      return `<tr>
+        <td><b>${b.Titulo || '(sem título)'}</b></td>
+        <td>${periodo}</td>
+        <td>${b.Ordem != null ? b.Ordem : '—'}</td>
+        <td><span style="color:${st.cor}; font-weight:700; font-size:12.5px;">${st.texto}</span></td>
+        <td style="text-align:right; white-space:nowrap;">
+          <button class="btn-secondary" style="padding:7px 14px; font-size:12px;" onclick="editarBanner('${b.id}')">Editar</button>
+          <button class="btn-secondary" style="padding:7px 14px; font-size:12px; color:#B4462B;" onclick="removerBanner('${b.id}')">Remover</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.abrirNovoBanner = function(){
+    bannerEditandoId = null;
+    document.getElementById('modalBannerTitulo').textContent = 'Novo banner';
+    document.getElementById('bannerTituloInput').value = '';
+    document.getElementById('bannerImagemInput').value = '';
+    document.getElementById('bannerVideoInput').value = '';
+    document.getElementById('bannerLinkInput').value = '';
+    document.getElementById('bannerInicioInput').value = '';
+    document.getElementById('bannerFimInput').value = '';
+    document.getElementById('bannerOrdemInput').value = '';
+    const toggle = document.getElementById('bannerAtivoToggle');
+    toggle.dataset.valor = '1';
+    toggle.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on', i===0));
+    document.getElementById('bannerSalvarErro').style.display = 'none';
+    openModal('modalBanner');
+  };
+
+  window.editarBanner = function(id){
+    const b = bannersCache.find(x => x.id === id);
+    if (!b) return;
+    bannerEditandoId = id;
+    document.getElementById('modalBannerTitulo').textContent = 'Editar banner';
+    document.getElementById('bannerTituloInput').value = b.Titulo || '';
+    document.getElementById('bannerImagemInput').value = b.ImagemURL || '';
+    document.getElementById('bannerVideoInput').value = b.VideoURL || '';
+    document.getElementById('bannerLinkInput').value = b.LinkDestino || '';
+    document.getElementById('bannerInicioInput').value = b.DataInicio || '';
+    document.getElementById('bannerFimInput').value = b.DataFim || '';
+    document.getElementById('bannerOrdemInput').value = b.Ordem != null ? b.Ordem : '';
+    const ativo = b.Ativo !== false;
+    const toggle = document.getElementById('bannerAtivoToggle');
+    toggle.dataset.valor = ativo ? '1' : '0';
+    toggle.querySelectorAll('button').forEach((btn,i)=>btn.classList.toggle('on', ativo ? i===0 : i===1));
+    document.getElementById('bannerSalvarErro').style.display = 'none';
+    openModal('modalBanner');
+  };
+
+  window.salvarBanner = async function(){
+    const titulo = document.getElementById('bannerTituloInput').value.trim();
+    const erroEl = document.getElementById('bannerSalvarErro');
+    erroEl.style.display = 'none';
+    if (!titulo) {
+      erroEl.textContent = 'Dá um título pro banner antes de salvar.';
+      erroEl.style.display = 'block';
+      return;
+    }
+    const dados = {
+      Titulo: titulo,
+      ImagemURL: document.getElementById('bannerImagemInput').value.trim(),
+      VideoURL: document.getElementById('bannerVideoInput').value.trim(),
+      LinkDestino: document.getElementById('bannerLinkInput').value.trim(),
+      DataInicio: document.getElementById('bannerInicioInput').value || null,
+      DataFim: document.getElementById('bannerFimInput').value || null,
+      Ordem: document.getElementById('bannerOrdemInput').value ? Number(document.getElementById('bannerOrdemInput').value) : 0,
+      Ativo: document.getElementById('bannerAtivoToggle').dataset.valor === '1',
+    };
+    try {
+      if (bannerEditandoId) await updateDoc(doc(db, 'banners', bannerEditandoId), dados);
+      else await addDoc(collection(db, 'banners'), dados);
+      closeModal('modalBanner');
+    } catch (erro) {
+      console.error('salvar banner', erro);
+      erroEl.textContent = 'Não foi possível salvar. Tenta de novo em alguns segundos.';
+      erroEl.style.display = 'block';
+    }
+  };
+
+  window.removerBanner = async function(id){
+    const b = bannersCache.find(x => x.id === id);
+    if (!confirm(`Remover o banner "${b ? b.Titulo : ''}"? Ele some da Home na hora.`)) return;
+    try { await deleteDoc(doc(db, 'banners', id)); }
+    catch (erro) { console.error('remover banner', erro); alert('Não foi possível remover. Tenta de novo.'); }
+  };
+
+  /* ===================== LOJA DE RECOMPENSAS (pontos) ===================== */
+  let itensLojaCache = [];
+  let itemLojaEditandoId = null;
+  let lojaAtivaAtual = false;
+  let resgatesCache = [];
+
+  function iniciarLojaRecompensas(){
+    onSnapshot(doc(db, 'configuracoes', 'loja'), (snap) => {
+      lojaAtivaAtual = snap.exists() && snap.data().Ativa === true;
+      const toggle = document.getElementById('lojaAtivaToggle');
+      if (toggle) toggle.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', lojaAtivaAtual ? i === 0 : i === 1));
+      const avisoResgates = document.getElementById('resgatesLojaInativaAviso');
+      if (avisoResgates) avisoResgates.style.display = lojaAtivaAtual ? 'none' : 'block';
+    }, (err) => console.error('Erro ao carregar status da loja:', err));
+
+    onSnapshot(collection(db, 'itensLoja'), (snapshot) => {
+      itensLojaCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      itensLojaCache.sort((a, b) => (a.Nome || '').localeCompare(b.Nome || ''));
+      renderItensLoja();
+    }, (err) => console.error('Erro ao carregar itens da loja:', err));
+
+    onSnapshot(collection(db, 'resgates'), (snapshot) => {
+      resgatesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      resgatesCache.sort((a, b) => {
+        const da = a.CriadoEm && a.CriadoEm.toDate ? a.CriadoEm.toDate() : new Date(0);
+        const db_ = b.CriadoEm && b.CriadoEm.toDate ? b.CriadoEm.toDate() : new Date(0);
+        return db_ - da;
+      });
+      renderResgates();
+    }, (err) => console.error('Erro ao carregar resgates:', err));
+  }
+
+  window.alternarLojaAtiva = async function(ativa){
+    try { await setDoc(doc(db, 'configuracoes', 'loja'), { Ativa: ativa }, { merge: true }); }
+    catch (erro) { console.error('alternar loja ativa', erro); alert('Não foi possível salvar agora. Tenta de novo.'); }
+  };
+
+  function renderItensLoja(){
+    const tbody = document.getElementById('itensLojaTableBody');
+    if (!tbody) return;
+    if (!itensLojaCache.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum item cadastrado ainda — crie o primeiro pra poder ativar a loja.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = itensLojaCache.map(it => `<tr>
+        <td><b>${it.Nome || '(sem nome)'}</b></td>
+        <td>${it.CustoPontos || 0}</td>
+        <td>${it.Estoque == null ? 'Ilimitado' : it.Estoque}</td>
+        <td><span style="color:${it.Ativo === false ? 'var(--ink-soft)' : 'var(--green-dark)'}; font-weight:700; font-size:12.5px;">${it.Ativo === false ? 'Desativado' : 'Ativo'}</span></td>
+        <td style="text-align:right; white-space:nowrap;">
+          <button class="btn-secondary" style="padding:7px 14px; font-size:12px;" onclick="editarItemLoja('${it.id}')">Editar</button>
+          <button class="btn-secondary" style="padding:7px 14px; font-size:12px; color:#B4462B;" onclick="removerItemLoja('${it.id}')">Remover</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  window.abrirNovoItemLoja = function(){
+    itemLojaEditandoId = null;
+    document.getElementById('modalItemLojaTitulo').textContent = 'Novo item';
+    document.getElementById('itemLojaNomeInput').value = '';
+    document.getElementById('itemLojaDescInput').value = '';
+    document.getElementById('itemLojaCustoInput').value = '';
+    document.getElementById('itemLojaEstoqueInput').value = '';
+    const toggle = document.getElementById('itemLojaAtivoToggle');
+    toggle.dataset.valor = '1';
+    toggle.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on', i===0));
+    document.getElementById('itemLojaSalvarErro').style.display = 'none';
+    openModal('modalItemLoja');
+  };
+
+  window.editarItemLoja = function(id){
+    const it = itensLojaCache.find(x => x.id === id);
+    if (!it) return;
+    itemLojaEditandoId = id;
+    document.getElementById('modalItemLojaTitulo').textContent = 'Editar item';
+    document.getElementById('itemLojaNomeInput').value = it.Nome || '';
+    document.getElementById('itemLojaDescInput').value = it.Descricao || '';
+    document.getElementById('itemLojaCustoInput').value = it.CustoPontos || '';
+    document.getElementById('itemLojaEstoqueInput').value = it.Estoque != null ? it.Estoque : '';
+    const ativo = it.Ativo !== false;
+    const toggle = document.getElementById('itemLojaAtivoToggle');
+    toggle.dataset.valor = ativo ? '1' : '0';
+    toggle.querySelectorAll('button').forEach((btn,i)=>btn.classList.toggle('on', ativo ? i===0 : i===1));
+    document.getElementById('itemLojaSalvarErro').style.display = 'none';
+    openModal('modalItemLoja');
+  };
+
+  window.salvarItemLoja = async function(){
+    const nome = document.getElementById('itemLojaNomeInput').value.trim();
+    const custo = Number(document.getElementById('itemLojaCustoInput').value);
+    const erroEl = document.getElementById('itemLojaSalvarErro');
+    erroEl.style.display = 'none';
+    if (!nome) { erroEl.textContent = 'Dá um nome pro item antes de salvar.'; erroEl.style.display = 'block'; return; }
+    if (!custo || custo <= 0) { erroEl.textContent = 'Define quantos pontos esse item custa.'; erroEl.style.display = 'block'; return; }
+    const estoqueRaw = document.getElementById('itemLojaEstoqueInput').value;
+    const dados = {
+      Nome: nome,
+      Descricao: document.getElementById('itemLojaDescInput').value.trim(),
+      CustoPontos: custo,
+      Estoque: estoqueRaw === '' ? null : Number(estoqueRaw),
+      Ativo: document.getElementById('itemLojaAtivoToggle').dataset.valor === '1',
+    };
+    try {
+      if (itemLojaEditandoId) await updateDoc(doc(db, 'itensLoja', itemLojaEditandoId), dados);
+      else await addDoc(collection(db, 'itensLoja'), dados);
+      closeModal('modalItemLoja');
+    } catch (erro) {
+      console.error('salvar item da loja', erro);
+      erroEl.textContent = 'Não foi possível salvar. Tenta de novo em alguns segundos.';
+      erroEl.style.display = 'block';
+    }
+  };
+
+  window.removerItemLoja = async function(id){
+    const it = itensLojaCache.find(x => x.id === id);
+    if (!confirm(`Remover o item "${it ? it.Nome : ''}"? Ele some da loja na hora.`)) return;
+    try { await deleteDoc(doc(db, 'itensLoja', id)); }
+    catch (erro) { console.error('remover item da loja', erro); alert('Não foi possível remover. Tenta de novo.'); }
+  };
+
+  function renderResgates(){
+    const tbody = document.getElementById('resgatesTableBody');
+    const badge = document.getElementById('resgatesPendentesBadge');
+    const pendentes = resgatesCache.filter(r => r.Status === 'pendente');
+    if (badge) {
+      if (pendentes.length) { badge.textContent = pendentes.length; badge.style.display = 'inline-block'; }
+      else badge.style.display = 'none';
+    }
+    if (!tbody) return;
+    if (!resgatesCache.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum resgate ainda.</td></tr>';
+      return;
+    }
+    const statusTexto = { pendente: ['Pendente', '#D89840'], entregue: ['Entregue', 'var(--green-dark)'], cancelado: ['Cancelado', 'var(--ink-soft)'] };
+    tbody.innerHTML = resgatesCache.map(r => {
+      const [txt, cor] = statusTexto[r.Status] || ['—', 'var(--ink-soft)'];
+      const dataTexto = r.CriadoEm && r.CriadoEm.toDate ? r.CriadoEm.toDate().toLocaleDateString('pt-BR') : '—';
+      const acoes = r.Status === 'pendente'
+        ? `<button class="btn-secondary" style="padding:7px 14px; font-size:12px;" onclick="marcarResgateEntregue('${r.id}')">Marcar entregue</button>
+           <button class="btn-secondary" style="padding:7px 14px; font-size:12px; color:#B4462B;" onclick="cancelarResgate('${r.id}')">Cancelar (devolve pontos)</button>`
+        : '';
+      return `<tr>
+        <td>${r.Nome || r.Cpf || '—'}</td>
+        <td>${r.Loja || '—'}</td>
+        <td>${r.NomeItem || '—'}</td>
+        <td>${r.CustoPontos || 0}</td>
+        <td>${dataTexto}</td>
+        <td><span style="color:${cor}; font-weight:700; font-size:12.5px;">${txt}</span></td>
+        <td style="text-align:right; white-space:nowrap;">${acoes}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.marcarResgateEntregue = async function(id){
+    try { await updateDoc(doc(db, 'resgates', id), { Status: 'entregue', EntregueEm: serverTimestamp() }); }
+    catch (erro) { console.error('marcar resgate entregue', erro); alert('Não foi possível salvar agora. Tenta de novo.'); }
+  };
+
+  window.cancelarResgate = async function(id){
+    const r = resgatesCache.find(x => x.id === id);
+    if (!r) return;
+    if (!confirm(`Cancelar o resgate de "${r.NomeItem}" de ${r.Nome || r.Cpf}? Os ${r.CustoPontos} pontos voltam pra ela.`)) return;
+    try {
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'resgates', id), { Status: 'cancelado' });
+      batch.update(doc(db, 'colaboradores', r.Cpf), { PontosGastos: increment(-(r.CustoPontos || 0)) });
+      await batch.commit();
+    } catch (erro) { console.error('cancelar resgate', erro); alert('Não foi possível cancelar agora. Tenta de novo.'); }
+  };
+
+  /* ===================== CONFIGURAÇÕES: identidade + admins ===================== */
+  function iniciarIdentidade(){
+    onSnapshot(doc(db, 'configuracoes', 'identidade'), (snap) => {
+      const dados = snap.exists() ? snap.data() : {};
+      const nomeInput = document.getElementById('identNomeInput');
+      const corInput = document.getElementById('identCorInput');
+      const logoInput = document.getElementById('identLogoInput');
+      if (nomeInput && document.activeElement !== nomeInput) nomeInput.value = dados.Nome || '';
+      if (corInput && document.activeElement !== corInput) corInput.value = dados.CorPrimaria || '';
+      if (logoInput && document.activeElement !== logoInput) logoInput.value = dados.LogoURL || '';
+    }, (err) => console.error('Erro ao carregar identidade:', err));
+  }
+
+  window.salvarIdentidade = async function(){
+    const statusEl = document.getElementById('identidadeStatus');
+    try {
+      await setDoc(doc(db, 'configuracoes', 'identidade'), {
+        Nome: document.getElementById('identNomeInput').value.trim(),
+        CorPrimaria: document.getElementById('identCorInput').value.trim(),
+        LogoURL: document.getElementById('identLogoInput').value.trim(),
+      }, { merge: true });
+      statusEl.style.color = 'var(--green-dark)';
+      statusEl.textContent = '✓ Salvo.';
+      setTimeout(() => { statusEl.textContent = ''; }, 2500);
+    } catch (erro) {
+      console.error('salvar identidade', erro);
+      statusEl.style.color = '#B4462B';
+      statusEl.textContent = 'Não consegui salvar. Tenta de novo.';
+    }
+  };
+
+  window.renderAdmins = function(){
+    const tbody = document.getElementById('adminsTableBody');
+    if (!tbody) return;
+    const admins = colaboradoresCache.filter(c => c.Nivel === 'Admin');
+    if (!admins.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum admin cadastrado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = admins.map(a => `<tr>
+      <td><b>${a.Nome || '(sem nome)'}</b></td>
+      <td class="cpf-mask">${mascaraCpf(a.cpf)}</td>
+      <td>${a.Cargo || '—'}</td>
+      <td style="text-align:right;"><button class="btn-secondary" style="padding:7px 14px; font-size:12px;" onclick="removerAdmin('${a.cpf}')">Remover admin</button></td>
+    </tr>`).join('');
+  };
+
+  window.tornarAdmin = async function(){
+    const cpfDigitado = soDigitos(document.getElementById('novoAdminCpfInput').value);
+    const statusEl = document.getElementById('novoAdminStatus');
+    if (!cpfDigitado) {
+      statusEl.style.color = '#B4462B';
+      statusEl.textContent = 'Digita o CPF do colaborador.';
+      return;
+    }
+    const colab = colaboradoresCache.find(c => c.cpf === cpfDigitado);
+    if (!colab) {
+      statusEl.style.color = '#B4462B';
+      statusEl.textContent = 'Não encontrei nenhum colaborador com esse CPF.';
+      return;
+    }
+    try {
+      await updateDoc(doc(db, 'colaboradores', cpfDigitado), { Nivel: 'Admin' });
+      document.getElementById('novoAdminCpfInput').value = '';
+      statusEl.style.color = 'var(--green-dark)';
+      statusEl.textContent = `✓ ${colab.Nome || cpfDigitado} agora é Admin.`;
+    } catch (erro) {
+      console.error('tornar admin', erro);
+      statusEl.style.color = '#B4462B';
+      statusEl.textContent = 'Não consegui salvar. Tenta de novo.';
+    }
+  };
+
+  window.removerAdmin = async function(cpf){
+    const colab = colaboradoresCache.find(c => c.cpf === cpf);
+    if (!confirm(`Remover o acesso de Admin de ${colab ? colab.Nome : cpf}?`)) return;
+    try { await updateDoc(doc(db, 'colaboradores', cpf), { Nivel: 'Colaborador' }); }
+    catch (erro) { console.error('remover admin', erro); alert('Não consegui salvar. Tenta de novo.'); }
+  };
 
   function soDigitos(v){ return (v || '').replace(/\D/g, ''); }
 
@@ -1855,6 +2878,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('colabCargoInput').selectedIndex = 0;
     document.getElementById('colabNivelInput').selectedIndex = 0;
     document.getElementById('colabLocalInput').selectedIndex = 0;
+    document.getElementById('colabDiretoriaInput').value = '';
+    document.getElementById('colabGestorNomeInput').value = '';
+    document.getElementById('colabGestorCargoInput').value = '';
+    document.getElementById('colabGestorCpfInput').value = '';
     renderRegionalSelect();
     document.getElementById('colabRegionalSelect').value = '';
     atualizarLojasDaRegional();
@@ -1884,6 +2911,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     [...cargoSelect.options].forEach((opt,i)=>{ if(opt.textContent === c.Cargo) cargoSelect.selectedIndex = i; });
     document.getElementById('colabNivelInput').value = c.Nivel === 'Admin' ? 'Admin' : 'Colaborador';
     document.getElementById('colabLocalInput').value = c.Local || 'Loja';
+    document.getElementById('colabDiretoriaInput').value = c.Diretoria || '';
+    document.getElementById('colabGestorNomeInput').value = c.Gestor || '';
+    document.getElementById('colabGestorCargoInput').value = c.CargoGestor || '';
+    document.getElementById('colabGestorCpfInput').value = c.CpfGestor || '';
     atualizarCampoLoja();
     renderRegionalSelect();
     const regionalSelect = document.getElementById('colabRegionalSelect');
@@ -1957,6 +2988,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         Local: localEscolhido,
         Regional: localEscolhido === 'Loja' ? document.getElementById('colabRegionalSelect').value.trim() : '',
         Status: 'ativo',
+        Diretoria: document.getElementById('colabDiretoriaInput').value.trim(),
+        Gestor: document.getElementById('colabGestorNomeInput').value.trim(),
+        CargoGestor: document.getElementById('colabGestorCargoInput').value.trim(),
+        CpfGestor: soDigitos(document.getElementById('colabGestorCpfInput').value),
       };
       if (admissaoValor) dados.Admissao = Timestamp.fromDate(new Date(admissaoValor + 'T12:00:00'));
       await setDoc(doc(db, 'colaboradores', cpf), dados, { merge: true });
@@ -2013,8 +3048,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 
   window.baixarModeloExcel = function(){
     const ws = XLSX.utils.aoa_to_sheet([
-      ['Nome', 'CPF', 'Loja', 'Cargo', 'Nivel'],
-      ['Ex: João da Silva', '12345678900', 'Cabana Botafogo', 'Atendente de Salão', 'Colaborador'],
+      ['Nivel', 'Nome', 'CPF', 'Data de admissão', 'Cargo', 'Gestor', 'Cargo do gestor', 'CPF do gestor', 'Loja', 'Regional', 'Diretoria'],
+      ['Colaborador', 'Ex: João da Silva', '12345678900', '2024-03-01', 'Atendente de Salão', 'Maria Souza', 'Gerente de Loja', '98765432100', 'Cabana Botafogo', 'Regional Rio', 'Operações'],
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Colaboradores');
@@ -2136,6 +3171,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
           nivel: pegar(linha, ['nivel', 'nível', 'nivel de acesso']) === 'Admin' ? 'Admin' : 'Colaborador',
           local: pegar(linha, ['local', 'tipo de local', 'tipo']) || 'Loja',
           regional: pegar(linha, ['regional']),
+          diretoria: pegar(linha, ['diretoria']),
+          gestor: pegar(linha, ['gestor']),
+          cargoGestor: pegar(linha, ['cargo do gestor', 'cargo gestor']),
+          cpfGestor: soDigitos(pegar(linha, ['cpf do gestor', 'cpf gestor'])),
         });
       }
 
@@ -2149,7 +3188,27 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       });
       const seriamDesativados = colaboradoresCache.filter(c => !cpfsNaPlanilha.has(c.cpf) && c.Status !== 'inativo');
 
+      // a Loja escrita na planilha precisa bater exatamente com o nome oficial cadastrado (aba Colaboradores
+      // > Lojas) — senão a pessoa fica com uma loja "solta", que não aparece nos filtros por loja/regional
+      // em nenhum lugar da plataforma. Isso não bloqueia a sincronização, só avisa antes de aplicar.
+      const nomesLojasOficiais = new Set(lojasCache.map(l => l.nome.trim().toLowerCase()));
+      const lojasNaoReconhecidas = {}; // nome escrito na planilha -> [nomes das pessoas]
+      linhasValidas.forEach(l => {
+        if (l.local !== 'Loja' || !l.loja) return;
+        if (!nomesLojasOficiais.has(l.loja.trim().toLowerCase())) {
+          if (!lojasNaoReconhecidas[l.loja]) lojasNaoReconhecidas[l.loja] = [];
+          lojasNaoReconhecidas[l.loja].push(l.nome);
+        }
+      });
+      const nomesLojasNaoReconhecidas = Object.keys(lojasNaoReconhecidas);
+
       let resumo = `Essa planilha tem ${linhasValidas.length} colaborador(es) válido(s).\n\n`;
+      if (nomesLojasNaoReconhecidas.length) {
+        resumo += `⚠️ ${nomesLojasNaoReconhecidas.length} nome(s) de loja na planilha NÃO batem com nenhuma loja cadastrada (confere acento/abreviação — "Botafogo" ≠ "Loja Botafogo"):\n`
+          + nomesLojasNaoReconhecidas.slice(0, 8).map(nome => `"${nome}" (${lojasNaoReconhecidas[nome].slice(0, 3).join(', ')}${lojasNaoReconhecidas[nome].length > 3 ? '...' : ''})`).join('\n')
+          + (nomesLojasNaoReconhecidas.length > 8 ? `\n...e mais ${nomesLojasNaoReconhecidas.length - 8}` : '')
+          + '\n\nEssas pessoas ficam salvas mesmo assim, mas não vão aparecer nos filtros por loja até alguém corrigir o nome (na planilha ou no cadastro).\n\n';
+      }
       if (mudancasCargo.length) {
         resumo += `⚠️ ${mudancasCargo.length} pessoa(s) vão ter o CARGO alterado:\n` + mudancasCargo.slice(0, 10).join('\n') + (mudancasCargo.length > 10 ? `\n...e mais ${mudancasCargo.length - 10}` : '') + '\n\n';
       }
@@ -2160,7 +3219,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       }
       resumo += 'Confirma que quer aplicar essas mudanças?';
 
-      if ((mudancasCargo.length || seriamDesativados.length) && !confirm(resumo)) {
+      if ((mudancasCargo.length || seriamDesativados.length || nomesLojasNaoReconhecidas.length) && !confirm(resumo)) {
         resultadoEl.textContent = 'Sincronização cancelada — nada foi alterado.';
         resultadoEl.style.color = 'var(--ink-soft)';
         resultadoEl.style.display = 'block';
@@ -2181,6 +3240,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
           Local: l.local,
           Regional: l.regional,
           Status: 'ativo',
+          Diretoria: l.diretoria,
+          Gestor: l.gestor,
+          CargoGestor: l.cargoGestor,
+          CpfGestor: l.cpfGestor,
         }, { merge: true });
 
         if (jaExistia) atualizados++; else adicionados++;
@@ -2422,11 +3485,34 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     }
     ultimoRankingCache = linhasColab.map(l => ({ nome: l.nome, loja: l.loja, qtd: l.concluidos, pct: l.pct, ultimoAcesso: l.ultimoAcesso, pendentes: l.titulosPendentes.join('; ') }));
 
+    // progresso real por pessoa+curso (pra mostrar Aprovado/Reprovado/Em andamento/tentativas no relatório detalhado,
+    // e não só o binário Concluído/Pendente que só diz se ela já passou alguma vez)
+    const progressoPorChave = {};
+    progressoCache.forEach(p => {
+      if (!p.Cpf || !p.CursoId) return;
+      progressoPorChave[`${p.Cpf}_${p.CursoId}`] = p;
+    });
+
     // uma linha por colaborador + curso, pra filtrar no Excel por curso específico e status
     ultimoDetalhadoCache = [];
     ativosFiltrados.forEach(c => {
-      const concluidosSet = concluidosPorCpf[c.cpf] || new Set();
       cursosPublicados.filter(cu => cursoAplicavelA(cu, c)).forEach(curso => {
+        const p = progressoPorChave[`${c.cpf}_${curso.id}`];
+        let status;
+        if (!p) {
+          status = 'Não iniciado';
+        } else if (p.Status === 'em_andamento') {
+          status = 'Em andamento';
+        } else if (p.Status === 'reprovado') {
+          status = 'Reprovado — pode refazer';
+        } else if (p.Status === 'concluido') {
+          const vencido = curso.ValidadeMeses && p.ConcluidoEm && p.ConcluidoEm.toDate
+            ? mesesEntre(p.ConcluidoEm.toDate(), agora) >= curso.ValidadeMeses
+            : false;
+          status = vencido ? 'Vencido — reciclagem pendente' : 'Aprovado';
+        } else {
+          status = 'Não iniciado';
+        }
         ultimoDetalhadoCache.push({
           nome: c.Nome || '—',
           cargo: c.Cargo || '—',
@@ -2434,7 +3520,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
           regional: c.Regional || '—',
           curso: curso.Titulo || '—',
           obrigatorio: curso.Obrigatorio ? 'Sim' : 'Não',
-          status: concluidosSet.has(curso.id) ? 'Concluído' : 'Pendente',
+          status,
+          tentativas: p && p.Tentativas ? p.Tentativas : (p ? 1 : 0),
+          ultimaNota: p && p.UltimaNota != null ? p.UltimaNota : '',
         });
       });
     });
@@ -2514,6 +3602,18 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       'Sem dados suficientes ainda.', 3
     );
 
+    ultimoExecutivoCache = {
+      totalAtivos, comConclusao, adesaoGeral,
+      totalIniciados, totalConcluidos, taxaConclusao,
+      tempoMedio, qtdColaboradoresComTempo: temposAcesso.length,
+      cursoMaisTitulo: cursoMais ? cursoMais.Titulo : null, cursoMaisQtd: cursoMais ? (concluidosPorCurso[cursoMais.id] || 0) : 0,
+      cursoMenosTitulo: cursoMenos ? cursoMenos.Titulo : null, cursoMenosQtd: cursoMenos ? (concluidosPorCurso[cursoMenos.id] || 0) : 0,
+      evolucaoMensal: ultimosMeses.map(m => ({ label: m.label, qtd: conclusoesPorMes[m.chave] || 0 })),
+      topColaboradores: linhasColab.slice(0, 5).map(l => ({ nome: l.nome, concluidos: l.concluidos })),
+      topLojas: topGrupo(gruposLoja),
+      topRegionais: topGrupo(gruposRegional),
+    };
+
     // ================= ACOMPANHAMENTO =================
     const nuncaAcessaram = ativos.filter(c => !c.Acessos || c.Acessos === 0);
     document.getElementById('relNuncaAcessaram').innerHTML = renderListaCard(
@@ -2522,6 +3622,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     );
 
     const vencidos = [];
+    const vencidosDados = [];
     progressoCache.forEach(p => {
       if (p.Status !== 'concluido' || !p.ConcluidoEm || !p.ConcluidoEm.toDate) return;
       const curso = cursosCache.find(c => c.id === p.CursoId);
@@ -2529,9 +3630,15 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       if (mesesEntre(p.ConcluidoEm.toDate(), agora) >= curso.ValidadeMeses) {
         const colab = colaboradoresCache.find(c => c.cpf === p.Cpf);
         vencidos.push(linhaSimples(`${colab ? colab.Nome : p.Cpf} — ${curso.Titulo}`, `Concluído em ${formatarData(p.ConcluidoEm).split(',')[0]}, validade de ${curso.ValidadeMeses} meses`));
+        vencidosDados.push({ nome: colab ? colab.Nome : p.Cpf, loja: colab ? colab.Loja : '', curso: curso.Titulo, concluidoEm: formatarData(p.ConcluidoEm), validadeMeses: curso.ValidadeMeses });
       }
     });
     document.getElementById('relVencidos').innerHTML = renderListaCard(vencidos, 'Nenhum certificado vencido no momento.', 10);
+
+    ultimoAcompanhamentoCache = {
+      nuncaAcessaram: nuncaAcessaram.map(c => ({ nome: c.Nome || c.cpf, loja: c.Loja || '', cargo: c.Cargo || '' })),
+      vencidos: vencidosDados,
+    };
 
     // ================= ALERTAS INTELIGENTES =================
     const alertas = [];
@@ -2569,11 +3676,15 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   let ultimoDetalhadoCache = [];
   let ultimoCursosCache = [];
   let ultimoOrganizacionalCache = null;
+  let ultimoExecutivoCache = null;
+  let ultimoAcompanhamentoCache = null;
 
   function baixarXLSX(linhas, nomeArquivo, nomeAba){
     const ws = XLSX.utils.aoa_to_sheet(linhas);
     // largura das colunas, calculada pelo conteúdo, pra não vir tudo espremido
-    ws['!cols'] = linhas[0].map((_, i) => {
+    // (usa a maior linha, não só a primeira — relatórios com seções e títulos de 1 coluna também encaixam certo)
+    const maxCols = linhas.reduce((max, linha) => Math.max(max, linha.length), 0);
+    ws['!cols'] = Array.from({ length: maxCols }, (_, i) => {
       const maior = linhas.reduce((max, linha) => Math.max(max, String(linha[i] ?? '').length), 10);
       return { wch: Math.min(50, maior + 2) };
     });
@@ -2599,9 +3710,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       alert('Ainda não há dados pra exportar.');
       return;
     }
-    const linhas = [['Colaborador', 'Cargo', 'Loja', 'Regional', 'Curso', 'Obrigatório', 'Status']];
+    const linhas = [['Colaborador', 'Cargo', 'Loja', 'Regional', 'Curso', 'Obrigatório', 'Status', 'Tentativas', 'Última nota']];
     ultimoDetalhadoCache.forEach(l => {
-      linhas.push([l.nome, l.cargo, l.loja, l.regional, l.curso, l.obrigatorio, l.status]);
+      linhas.push([l.nome, l.cargo, l.loja, l.regional, l.curso, l.obrigatorio, l.status, l.tentativas, l.ultimaNota]);
     });
     baixarXLSX(linhas, `relatorio-detalhado-por-curso-${new Date().toISOString().slice(0,10)}.xlsx`, 'Detalhado por curso');
   };
@@ -2632,6 +3743,54 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       });
     });
     baixarXLSX(linhas, `relatorio-organizacional-${new Date().toISOString().slice(0,10)}.xlsx`, 'Organizacional');
+  };
+
+  window.exportarRelatorioExecutivoCSV = function(){
+    if (!ultimoExecutivoCache) { alert('Ainda não há dados pra exportar.'); return; }
+    const e = ultimoExecutivoCache;
+    const linhas = [
+      ['Visão Executiva — resumo'],
+      [],
+      ['Métrica', 'Valor', 'Detalhe'],
+      ['Adesão geral', e.totalAtivos ? `${e.adesaoGeral}%` : '—', e.totalAtivos ? `${e.comConclusao} de ${e.totalAtivos} concluíram ao menos 1 curso` : 'sem colaboradores ativos ainda'],
+      ['Taxa de conclusão', e.totalIniciados ? `${e.taxaConclusao}%` : '—', e.totalIniciados ? `${e.totalConcluidos} de ${e.totalIniciados} cursos iniciados foram concluídos` : 'ninguém iniciou um curso ainda'],
+      ['Total de cursos concluídos', e.totalConcluidos, 'somando todos os colaboradores'],
+      ['Tempo médio até 1º acesso', e.tempoMedio !== null ? `${Math.round(e.tempoMedio)} dias` : '—', e.tempoMedio !== null ? `baseado em ${e.qtdColaboradoresComTempo} colaborador(es)` : 'ainda sem dados suficientes'],
+      ['Curso mais realizado', e.cursoMaisTitulo || '—', e.cursoMaisQtd],
+      ['Curso menos realizado', e.cursoMenosTitulo || '—', e.cursoMenosQtd],
+      [],
+      ['Evolução mensal de conclusões'],
+      ['Mês', 'Conclusões'],
+      ...e.evolucaoMensal.map(m => [m.label, m.qtd]),
+      [],
+      ['Top 5 colaboradores'],
+      ['Colaborador', 'Cursos concluídos'],
+      ...(e.topColaboradores.length ? e.topColaboradores.map(c => [c.nome, c.concluidos]) : [['Sem dados ainda.', '']]),
+      [],
+      ['Top 3 lojas (% de adesão)'],
+      ['Loja', '% adesão', 'Colaboradores'],
+      ...(e.topLojas.length ? e.topLojas.map(l => [l.nome, `${l.pct}%`, l.total]) : [['Sem dados suficientes ainda.', '', '']]),
+      [],
+      ['Top 3 regionais (% de adesão)'],
+      ['Regional', '% adesão', 'Colaboradores'],
+      ...(e.topRegionais.length ? e.topRegionais.map(r => [r.nome, `${r.pct}%`, r.total]) : [['Sem dados suficientes ainda.', '', '']]),
+    ];
+    baixarXLSX(linhas, `relatorio-visao-executiva-${new Date().toISOString().slice(0,10)}.xlsx`, 'Visão Executiva');
+  };
+
+  window.exportarRelatorioAcompanhamentoCSV = function(){
+    if (!ultimoAcompanhamentoCache) { alert('Ainda não há dados pra exportar.'); return; }
+    const a = ultimoAcompanhamentoCache;
+    const linhas = [
+      ['Nunca acessaram a plataforma'],
+      ['Nome', 'Loja', 'Cargo'],
+      ...(a.nuncaAcessaram.length ? a.nuncaAcessaram.map(c => [c.nome, c.loja, c.cargo]) : [['Todo mundo já acessou pelo menos uma vez.', '', '']]),
+      [],
+      ['Certificados vencidos'],
+      ['Colaborador', 'Loja', 'Curso', 'Concluído em', 'Validade (meses)'],
+      ...(a.vencidos.length ? a.vencidos.map(v => [v.nome, v.loja, v.curso, v.concluidoEm, v.validadeMeses]) : [['Nenhum certificado vencido no momento.', '', '', '', '']]),
+    ];
+    baixarXLSX(linhas, `relatorio-acompanhamento-${new Date().toISOString().slice(0,10)}.xlsx`, 'Acompanhamento');
   };
 /* ===================== BIBLIOTECA ===================== */
 let bibliotecaCache = [];
