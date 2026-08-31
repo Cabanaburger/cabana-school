@@ -994,7 +994,21 @@ function renderJornada(){
   const pct = total ? Math.round((concluidos/total)*100) : 0;
 
   const jornadaSpan = document.querySelector('.progress-card .progress-head span');
-  if (jornadaSpan) jornadaSpan.textContent = `${concluidos} de ${total} treinamento${total===1?'':'s'} concluído${total===1?'':'s'}`;
+  if (jornadaSpan) {
+    // mensagem de ritmo muda de tom conforme o % concluído — mesma ideia do card de nível, só que
+    // olhando pro total de treinamentos em vez de olhando pro próximo degrau de nível
+    let fraseRitmo;
+    if (total === 0) fraseRitmo = null;
+    else if (pct >= 100) fraseRitmo = 'Tudo em dia! 🎉';
+    else if (pct >= 80) fraseRitmo = 'Quase lá! 💪';
+    else if (pct >= 50) fraseRitmo = 'Bom ritmo! 🚀';
+    else if (pct > 0) fraseRitmo = 'Vamos lá! 🌱';
+    else fraseRitmo = 'Bora começar! 🔥';
+    const textoBase = `${concluidos} de ${total} treinamento${total===1?'':'s'} concluído${total===1?'':'s'}`;
+    jornadaSpan.innerHTML = fraseRitmo
+      ? `<b style="color:var(--fries); display:block; font-size:13.5px;">${fraseRitmo}</b>${textoBase}`
+      : textoBase;
+  }
 
   const ringLabel = document.querySelector('.progress-card .ring-label');
   if (ringLabel) ringLabel.textContent = `${pct}%`;
