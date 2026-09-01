@@ -1132,6 +1132,7 @@ var I18N = {
   tipo_link: { pt: '🔗 Link externo', es: '🔗 Enlace externo' },
   tipo_pdf: { pt: '📄 Apostila (PDF)', es: '📄 Material (PDF)' },
   tipo_canva: { pt: '🎨 Aula (Canva)', es: '🎨 Clase (Canva)' },
+  tipo_html: { pt: '📄 Curso', es: '📄 Curso' },
   seu_progresso: { pt: 'Seu progresso', es: 'Tu progreso' },
   cert_vencido_aviso: { pt: '⏳ Seu certificado venceu — refaça o curso pra renovar.', es: '⏳ Tu certificado venció — rehaz el curso para renovarlo.' },
   reprovado_aviso1: { pt: '❌ Você não atingiu a nota mínima (nota:', es: '❌ No alcanzaste la nota mínima (nota:' },
@@ -1588,7 +1589,10 @@ function playerHTML(c){
         <div style="font-size:11.5px; color:var(--ink-soft); margin-top:10px;">${t('player_audio_caption')}</div>
       </div>`;
   }
-  if(c.tipo === 'link'){
+  if(c.tipo === 'link' || c.tipo === 'html'){
+    // tipo 'html' (upload direto pro Storage) é tratado igual a 'link' aqui: os dois abrem o
+    // conteúdo numa aba nova e precisam do ?cpf=...&cursoId=... pro cabana-quiz-tracker.js
+    // conseguir gravar a prova embutida no arquivo certo, pra pessoa certa.
     const capaStyle = c.capa
       ? `background-image:url('${c.capa}'); background-size:cover; background-position:center;`
       : `background:radial-gradient(circle at 30% 30%, rgba(79,156,64,0.4), transparent 60%), #171310;`;
@@ -1695,7 +1699,7 @@ function abrirCurso(cursoId){
   if(!cursoScreen) return;
   if (!c.concluido && window.registrarInicio) window.registrarInicio(c.id, c.titulo);
   const concluidoPalavraC = IDIOMA === 'es' ? 'completado' : 'concluído';
-  const tipoLabel = c.tipo==='video'?t('tipo_video'):c.tipo==='audio'?t('tipo_audio'):c.tipo==='link'?t('tipo_link'):c.tipo==='pdf'?t('tipo_pdf'):t('tipo_canva');
+  const tipoLabel = c.tipo==='video'?t('tipo_video'):c.tipo==='audio'?t('tipo_audio'):c.tipo==='link'?t('tipo_link'):c.tipo==='pdf'?t('tipo_pdf'):c.tipo==='html'?t('tipo_html'):t('tipo_canva');
   cursoScreen.innerHTML = `
     <div class="topbar">
       <div class="brand"><img src="${document.querySelector('.brand img').src}" alt=""> Cabana School</div>
@@ -1725,7 +1729,7 @@ function abrirCurso(cursoId){
           ${c.reprovado ? `<div style="background:#F3D9D0; color:#B4462B; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:10px; margin-bottom:12px;">${t('reprovado_aviso1')} ${c.ultimaNota != null ? c.ultimaNota + '%' : '—'}${t('reprovado_aviso2')}</div>` : ''}
           <div class="progress-mini"><div class="bar"><div style="width:${c.progresso}%"></div></div><b>${c.progresso}%</b></div>
           ${c.temProva
-            ? (c.tipo === 'link'
+            ? ((c.tipo === 'link' || c.tipo === 'html')
                 // prova embutida no próprio arquivo (cabana-quiz-tracker.js já grava o resultado sozinho
                 // quando o aluno termina lá dentro) — o botão aqui só reabre o conteúdo, nunca a prova do admin
                 ? `<button class="mark-btn${c.concluido ? ' done' : ''}" onclick="${c.concluido ? '' : `reabrirConteudoProva('${c.id}')`}" ${c.concluido ? 'disabled' : ''}>${c.concluido ? t('btn_aprovado') : (c.reprovado ? t('btn_tentar_de_novo') : t('btn_abrir_fazer_prova'))}</button>`
@@ -1733,7 +1737,7 @@ function abrirCurso(cursoId){
             : `<button class="mark-btn${c.concluido ? ' done' : ''}" onclick="marcarConcluido('${c.id}', '${c.titulo.replace(/'/g,"\\'")}')">${c.concluido ? t('btn_concluido') : t('btn_marcar_concluido')}</button>`
           }
           ${(c.concluido && c.certificadoModelo) ? `<button class="mark-btn" style="background:var(--fries); margin-top:10px;" onclick="gerarCertificado('${c.id}')">${t('baixar_certificado')}</button>` : ''}
-          <p class="autohint">${c.temProva ? (c.tipo === 'link' ? t('autohint_prova_link') : t('autohint_prova')) : t('autohint_sem_prova')}</p>
+          <p class="autohint">${c.temProva ? ((c.tipo === 'link' || c.tipo === 'html') ? t('autohint_prova_link') : t('autohint_prova')) : t('autohint_sem_prova')}</p>
         </div>
         <div class="panel">
           <h3>${t('nesta_trilha')}</h3>
