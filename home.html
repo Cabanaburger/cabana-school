@@ -1637,6 +1637,7 @@ function showScreen(name){
   } else {
     overlay.classList.remove('on');
     document.body.style.overflow = '';
+    window.__cursoAbertoId = null; // saiu da tela do curso, não precisa mais reabrir ele ao voltar da aba
   }
 }
 // ===== carrossel de banners no topo da Home =====
@@ -1697,6 +1698,7 @@ function abrirCurso(cursoId){
   if(!c) return;
   const cursoScreen = document.getElementById('screen-curso');
   if(!cursoScreen) return;
+  window.__cursoAbertoId = cursoId; // lembrado pra poder atualizar esta tela sozinha quando a aba voltar a ficar visível
   if (!c.concluido && window.registrarInicio) window.registrarInicio(c.id, c.titulo);
   const concluidoPalavraC = IDIOMA === 'es' ? 'completado' : 'concluído';
   const tipoLabel = c.tipo==='video'?t('tipo_video'):c.tipo==='audio'?t('tipo_audio'):c.tipo==='link'?t('tipo_link'):c.tipo==='pdf'?t('tipo_pdf'):c.tipo==='html'?t('tipo_html'):t('tipo_canva');
@@ -2147,6 +2149,33 @@ function abrirCurso(cursoId){
       console.error('Erro ao carregar progresso do colaborador:', err);
     }
   }
+
+  // Cursos com prova embutida no próprio arquivo (tipo 'link'/'html') gravam o resultado numa aba
+  // separada, aberta pelo próprio navegador do aluno — esta aba da Home não tem um listener ao vivo
+  // em cima de 'progresso' (só um fetch inicial), então "Aprovado"/"Baixar certificado" não apareciam
+  // sozinhos aqui até a pessoa recarregar a página manualmente. Corrigido: sempre que esta aba volta a
+  // ficar visível (por exemplo, ao fechar a aba do curso e voltar), refaz o fetch de progresso e
+  // atualiza a tela — incluindo a tela do curso, se for a que estava aberta — sem precisar de reload.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden || !currentCpf) return;
+    const cursoAbertoAntes = window.__cursoAbertoId ? window.CURSOS.find(x => x.id === window.__cursoAbertoId) : null;
+    const jaEstavaConcluidoAntes = cursoAbertoAntes ? !!cursoAbertoAntes.concluido : null;
+    aplicarProgressoEmCursos(currentCpf).then(() => {
+      if (window.renderCards) window.renderCards();
+      if (window.renderJornada) window.renderJornada();
+      const telaCurso = document.getElementById('screen-curso');
+      if (window.__cursoAbertoId && telaCurso && telaCurso.classList.contains('on') && window.abrirCurso) {
+        window.abrirCurso(window.__cursoAbertoId);
+        // se o curso que estava aberto acabou de virar "aprovado" (não estava concluído antes deste
+        // refresh), comemora igual já acontece pra prova da própria plataforma — com o botão de
+        // certificado direto no popup, se o curso tiver um modelo cadastrado.
+        const cursoAgora = window.CURSOS.find(x => x.id === window.__cursoAbertoId);
+        if (cursoAgora && cursoAgora.concluido && jaEstavaConcluidoAntes === false && window.mostrarModalAprovado) {
+          window.mostrarModalAprovado(cursoAgora.ultimaNota, cursoAgora.id, !!cursoAgora.certificadoModelo);
+        }
+      }
+    });
+  });
 
   // ===== trilhas de aprendizagem: sequência de cursos definida pelo admin pra um cargo/local/grupo de cargos =====
   function trilhaAplicavelA(t, cargo, local){
