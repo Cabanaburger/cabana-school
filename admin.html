@@ -1171,12 +1171,12 @@
         <label>Senha</label>
         <div id="senhaResetBox">
           <button type="button" class="btn-secondary" style="width:100%;" onclick="resetSenhaColab()">🔑 Gerar nova senha temporária</button>
-          <small class="hint" id="senhaResetHint" style="display:block; margin-top:6px;">Só é possível gerar uma nova senha se a pessoa ainda não tiver criado a senha pessoal dela, ou se a conta tiver sido apagada no Firebase Console.</small>
+          <small class="hint" id="senhaResetHint" style="display:block; margin-top:6px;">Reseta a senha dessa pessoa pros últimos 6 dígitos do CPF dela. No próximo acesso, ela é obrigada a trocar por uma senha pessoal.</small>
         </div>
         <div id="senhaResetResult" style="display:none; background:var(--cream); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-top:4px;">
           <div style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">Nova senha temporária:</div>
           <div style="font-family:var(--display); font-size:20px; font-weight:400; letter-spacing:1px; margin-bottom:10px;" id="senhaTempValue">0000</div>
-          <small class="hint" style="color:#B8622C;">⚠️ Esta é uma senha <b>temporária</b>, visível só agora. O colaborador será obrigado a criar uma senha nova e pessoal no próximo acesso — a partir daí, ninguém no painel Admin consegue ver ou recuperar a senha dele, nem mesmo você. Se ele esquecer de novo, apague a conta dele em Authentication → Users no Firebase Console e clique em "Gerar nova senha temporária" de novo.</small>
+          <small class="hint" style="color:#B8622C;">⚠️ Esta é uma senha <b>temporária</b>, visível só agora. O colaborador será obrigado a criar uma senha nova e pessoal no próximo acesso — a partir daí, ninguém no painel Admin consegue ver ou recuperar a senha dele, nem mesmo você. Se ele esquecer de novo, é só clicar em "Gerar nova senha temporária" aqui de novo.</small>
         </div>
       </div>
       <div id="colabSalvarErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600; margin-top:4px;"></div>
@@ -1356,6 +1356,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getFirestore, collection, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp, increment, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
   // firebaseConfig real do projeto Cabana School (mesmo do index.html / home.html)
   const firebaseConfig = {
@@ -1371,6 +1372,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   const auth = getAuth(app);
   const db = getFirestore(app);
   const storage = getStorage(app);
+  const functions = getFunctions(app);
 
   // upload direto de curso HTML pro Firebase Storage (substitui subir no GitHub/Netlify na mão)
   document.getElementById('htmlUploadInput')?.addEventListener('change', async (e) => {
@@ -2996,7 +2998,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('senhaResetBox').style.display = 'block';
     document.getElementById('senhaResetResult').style.display = 'none';
     const hint = document.getElementById('senhaResetHint');
-    hint.textContent = 'Só é possível gerar uma nova senha se a pessoa ainda não tiver criado a senha pessoal dela, ou se a conta tiver sido apagada no Firebase Console.';
+    hint.textContent = 'Reseta a senha dessa pessoa pros últimos 6 dígitos do CPF dela. No próximo acesso, ela é obrigada a trocar por uma senha pessoal.';
     hint.style.color = '';
     openModal('modalColab');
   };
@@ -3043,7 +3045,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('senhaResetBox').style.display = 'block';
     document.getElementById('senhaResetResult').style.display = 'none';
     const hint = document.getElementById('senhaResetHint');
-    hint.textContent = 'Só é possível gerar uma nova senha se a pessoa ainda não tiver criado a senha pessoal dela, ou se a conta tiver sido apagada no Firebase Console.';
+    hint.textContent = 'Reseta a senha dessa pessoa pros últimos 6 dígitos do CPF dela. No próximo acesso, ela é obrigada a trocar por uma senha pessoal.';
     hint.style.color = '';
     openModal('modalColab');
   };
@@ -3132,20 +3134,31 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   window.resetSenhaColab = async function(){
     const cpf = soDigitos(document.getElementById('colabCpfInput').value);
     if (cpf.length !== 11) return;
-    const box = document.getElementById('senhaResetBox');
     const hint = document.getElementById('senhaResetHint');
+    const btn = document.querySelector('#senhaResetBox button');
+    if (btn) { btn.disabled = true; btn.textContent = 'Gerando…'; }
+    hint.style.color = '';
     try {
       const resultado = await criarContaSeNaoExistir(cpf);
       if (resultado.criada) {
+        // pessoa nunca tinha logado (ou a conta não existia mais) — conta criada agora, com senha padrão
         await setDoc(doc(db, 'colaboradores', cpf), { PrecisaTrocarSenha: true }, { merge: true });
         mostrarSenhaTemp(resultado.senha);
       } else {
-        hint.textContent = 'Essa pessoa já tem uma senha pessoal ativa. Pra gerar uma nova, primeiro apague a conta dela em Firebase Console → Authentication → Users (procure por ' + cpf + '@cabana.internal), depois clique aqui de novo.';
-        hint.style.color = '#B4462B';
+        // já existe conta com senha pessoal — reseta pra senha padrão via Cloud Function
+        // (é o único jeito seguro de trocar a senha de outra pessoa; o navegador nunca pode
+        // fazer isso sozinho, por isso essa chamada depende da função resetSenhaColaborador
+        // estar publicada no projeto — ver contrato de integração, seção "Reset de senha").
+        const chamarReset = httpsCallable(functions, 'resetSenhaColaborador');
+        const resposta = await chamarReset({ cpf });
+        mostrarSenhaTemp(resposta.data.senha);
       }
     } catch (err) {
       console.error('Erro ao gerar senha:', err);
-      alert('Não foi possível gerar a senha. Tenta de novo em alguns segundos.');
+      hint.textContent = 'Não foi possível gerar a senha (' + (err.message || err) + '). Confere se a função "resetSenhaColaborador" está publicada no Firebase e tenta de novo.';
+      hint.style.color = '#B4462B';
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🔑 Gerar nova senha temporária'; }
     }
   };
 
