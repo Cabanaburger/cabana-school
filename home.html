@@ -504,7 +504,7 @@
   }#screen-curso .panel h3 { font-family:var(--display); font-weight:400; font-size:16px; margin:0 0 12px; }#screen-curso .panel ul { margin:0; padding-left:18px; font-size:13.5px; line-height:1.8; color:var(--ink-soft); }#screen-curso .progress-mini { display:flex; align-items:center; gap:10px; margin-bottom:14px; }#screen-curso .bar { flex:1; height:8px; background:var(--line); border-radius:100px; overflow:hidden; }#screen-curso .bar div { height:100%; width:60%; background:var(--green); }#screen-curso .mark-btn {
     width:100%; padding:12px; border-radius:100px; background:var(--green); color:#fff;
     font-weight:700; font-size:13.5px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-  }#screen-curso .mark-btn.done { background:var(--ink-soft); }#screen-curso .autohint { font-size:11.5px; color:var(--ink-soft); text-align:center; margin-top:10px; line-height:1.5; }#screen-curso .content-block { max-width:700px; margin:40px auto 0; }#screen-curso .content-block h2 { font-family:var(--display); font-weight:400; font-size:22px; }#screen-curso .obj-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:18px 0 30px; }#screen-curso .obj-card { background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-md); padding:16px; font-size:13.5px; color:var(--ink-soft); }#screen-curso .obj-card b { display:block; color:var(--ink); font-family:var(--display); font-weight:400; font-size:14.5px; margin-bottom:6px; }#screen-curso .downloads { display:flex; flex-direction:column; gap:10px; }#screen-curso .dl-item { display:flex; align-items:center; justify-content:between; gap:14px; background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }#screen-curso .dl-item span { flex:1; font-size:13.5px; font-weight:600; }#screen-curso .dl-item a { font-size:12.5px; font-weight:700; color:var(--green-dark); }
+  }#screen-curso .mark-btn.done { background:var(--ink-soft); }#screen-curso .mark-btn:disabled { opacity:0.5; cursor:not-allowed; }#screen-curso .autohint { font-size:11.5px; color:var(--ink-soft); text-align:center; margin-top:10px; line-height:1.5; }#screen-curso .content-block { max-width:700px; margin:40px auto 0; }#screen-curso .content-block h2 { font-family:var(--display); font-weight:400; font-size:22px; }#screen-curso .obj-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:18px 0 30px; }#screen-curso .obj-card { background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-md); padding:16px; font-size:13.5px; color:var(--ink-soft); }#screen-curso .obj-card b { display:block; color:var(--ink); font-family:var(--display); font-weight:400; font-size:14.5px; margin-bottom:6px; }#screen-curso .downloads { display:flex; flex-direction:column; gap:10px; }#screen-curso .dl-item { display:flex; align-items:center; justify-content:between; gap:14px; background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }#screen-curso .dl-item span { flex:1; font-size:13.5px; font-weight:600; }#screen-curso .dl-item a { font-size:12.5px; font-weight:700; color:var(--green-dark); }
 
   
 @media (max-width:860px){#screen-curso .layout { grid-template-columns:1fr; margin-top:20px; }#screen-curso .banner { padding:36px 20px 40px; }#screen-curso .topbar { padding:14px 20px; }#screen-curso .cover-art { height:300px; }#screen-curso .cover-mascot { width:110px; }
@@ -1147,6 +1147,10 @@ var I18N = {
   autohint_prova_link: { pt: 'A prova acontece dentro do próprio conteúdo. O resultado é gravado automaticamente quando você termina lá dentro.', es: 'El examen ocurre dentro del propio contenido. El resultado se guarda automáticamente cuando terminas ahí dentro.' },
   autohint_prova: { pt: 'Esse curso exige prova. Você precisa acertar a nota mínima pra receber o certificado.', es: 'Este curso exige examen. Necesitas alcanzar la nota mínima para recibir el certificado.' },
   autohint_sem_prova: { pt: 'O progresso também avança automaticamente conforme você acessa. O botão é só pra confirmar quando terminar.', es: 'El progreso también avanza automáticamente a medida que accedes. El botón es solo para confirmar cuando termines.' },
+  autohint_gate_video: { pt: 'Assista o vídeo até o final pra liberar o botão de conclusão.', es: 'Mira el video hasta el final para liberar el botón de conclusión.' },
+  autohint_gate_audio: { pt: 'Ouça o áudio até o final pra liberar o botão de conclusão.', es: 'Escucha el audio hasta el final para liberar el botón de conclusión.' },
+  autohint_gate_externo: { pt: 'Abra o conteúdo ao lado e dedique um tempo de verdade a ele — o botão libera alguns segundos depois de abrir.', es: 'Abre el contenido al lado y dedícale un tiempo de verdad — el botón se libera unos segundos después de abrirlo.' },
+  autohint_gate_aguardando: { pt: 'Conteúdo aberto — o botão libera em alguns segundos.', es: 'Contenido abierto — el botón se libera en unos segundos.' },
   nesta_trilha: { pt: 'Nesta trilha', es: 'En esta ruta' },
   voce_esta_aqui: { pt: '(você está aqui)', es: '(estás aquí)' },
 
@@ -1736,10 +1740,19 @@ function abrirCurso(cursoId){
                 // quando o aluno termina lá dentro) — o botão aqui só reabre o conteúdo, nunca a prova do admin
                 ? `<button class="mark-btn${c.concluido ? ' done' : ''}" onclick="${c.concluido ? '' : `reabrirConteudoProva('${c.id}')`}" ${c.concluido ? 'disabled' : ''}>${c.concluido ? t('btn_aprovado') : (c.reprovado ? t('btn_tentar_de_novo') : t('btn_abrir_fazer_prova'))}</button>`
                 : `<button class="mark-btn${c.concluido ? ' done' : ''}" onclick="${c.concluido ? '' : `iniciarProva('${c.id}')`}" ${c.concluido ? 'disabled' : ''}>${c.concluido ? t('btn_aprovado') : (c.reprovado ? t('btn_refazer_prova') : t('btn_fazer_prova'))}</button>`)
-            : `<button class="mark-btn${c.concluido ? ' done' : ''}" onclick="marcarConcluido('${c.id}', '${c.titulo.replace(/'/g,"\\'")}')">${c.concluido ? t('btn_concluido') : t('btn_marcar_concluido')}</button>`
+            : (c.concluido
+                ? `<button class="mark-btn done" onclick="marcarConcluido('${c.id}', '${c.titulo.replace(/'/g,"\\'")}')">${t('btn_concluido')}</button>`
+                // sem prova e ainda não concluído: o botão nasce travado — só libera de verdade
+                // quando a pessoa interage com o conteúdo (ver configurarGateConclusao, chamada
+                // logo depois deste HTML ser inserido na tela). Ninguém marca conclusão só de clicar.
+                : `<button class="mark-btn" id="btnMarcarConcluido" disabled onclick="marcarConcluido('${c.id}', '${c.titulo.replace(/'/g,"\\'")}')">${t('btn_marcar_concluido')}</button>`)
           }
           ${(c.concluido && c.certificadoModelo) ? `<button class="mark-btn" style="background:var(--fries); margin-top:10px;" onclick="gerarCertificado('${c.id}')">${t('baixar_certificado')}</button>` : ''}
-          <p class="autohint">${c.temProva ? ((c.tipo === 'link' || c.tipo === 'html') ? t('autohint_prova_link') : t('autohint_prova')) : t('autohint_sem_prova')}</p>
+          <p class="autohint" id="autohintConclusao">${c.temProva
+            ? ((c.tipo === 'link' || c.tipo === 'html') ? t('autohint_prova_link') : t('autohint_prova'))
+            : (c.concluido
+                ? t('autohint_sem_prova')
+                : (c.tipo === 'video' ? t('autohint_gate_video') : c.tipo === 'audio' ? t('autohint_gate_audio') : t('autohint_gate_externo')))}</p>
         </div>
         <div class="panel">
           <h3>${t('nesta_trilha')}</h3>
@@ -1752,7 +1765,40 @@ function abrirCurso(cursoId){
     <li style="padding:8px 0; border-bottom:1px solid var(--line); cursor:pointer; font-size:13.5px;" onclick="abrirCurso('${r.id}')">
       ${r.concluido ? '✅' : (r.titulo===c.titulo ? '👉' : '⬜')} ${r.titulo}${r.titulo===c.titulo ? ` <small style="color:var(--ink-soft);">${t('voce_esta_aqui')}</small>` : ''}
     </li>`).join('');
+  configurarGateConclusao(c);
   showScreen('curso');
+}
+// Trava o botão "Marcar como concluído" (cursos sem prova) até a pessoa realmente interagir com o
+// conteúdo, em vez de deixar concluir só de abrir a tela e clicar. Não mexe em nada de curso com
+// prova (esses já são travados por outro caminho, via nota mínima) nem em curso já concluído.
+function configurarGateConclusao(c){
+  const btn = document.getElementById('btnMarcarConcluido');
+  if (!btn) return; // não existe pra esse curso (tem prova, ou já está concluído) — nada a fazer
+  const hint = document.getElementById('autohintConclusao');
+  function liberar(){
+    btn.disabled = false;
+    if (hint) hint.textContent = t('autohint_sem_prova');
+  }
+  if (c.tipo === 'video' || c.tipo === 'audio'){
+    const media = document.querySelector(`#screen-curso ${c.tipo}`);
+    if (!media) { liberar(); return; } // não achou o player por algum motivo — não trava o botão à toa
+    media.addEventListener('ended', liberar);
+    media.addEventListener('timeupdate', function(){
+      if (media.duration && media.currentTime >= media.duration - 1) liberar();
+    });
+  } else {
+    // pdf, link/canva sem prova: o conteúdo abre numa aba separada — não tem como saber se a
+    // pessoa realmente leu/assistiu lá dentro. O gate possível aqui é mais fraco de propósito
+    // (precisa abrir o conteúdo pelo menos uma vez e esperar alguns segundos antes de poder
+    // marcar como concluído) — não impede alguém decidido a burlar, mas evita o clique direto
+    // sem nem abrir nada, que era o problema real reportado.
+    const link = document.querySelector('#screen-curso a[target="_blank"]');
+    if (!link) { liberar(); return; }
+    link.addEventListener('click', function(){
+      if (hint) hint.textContent = t('autohint_gate_aguardando');
+      setTimeout(liberar, 15000);
+    }, { once: true });
+  }
 }
 </script><div class="overlay" id="modalSenha" style="display:none;">
   <div class="modal" style="width:420px;">
