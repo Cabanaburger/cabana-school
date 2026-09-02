@@ -516,11 +516,12 @@
           <div class="crumb">Admin / Dados</div>
           <h1>Relatórios &amp; adesão</h1>
         </div>
-        <div style="display:flex; gap:10px;">
-          <button class="ghost-btn" onclick="exportarRelatorioCSV()">⬇ Exportar resumo</button>
-          <button class="ghost-btn" onclick="exportarRelatorioDetalhadoCSV()">⬇ Exportar detalhado (por curso)</button>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button class="btn-primary" onclick="exportarRelatorioDetalhadoCSV()">⬇ Exportar por curso (1 linha por colaborador+curso)</button>
+          <button class="ghost-btn" onclick="exportarRelatorioCSV()">⬇ Exportar resumo (1 linha por colaborador)</button>
         </div>
       </div>
+      <p class="sub" style="margin:-6px 0 18px;">Pra analisar curso a curso, use o <b>Exportar por curso</b> — vem com 3 abas no mesmo arquivo (Todos, Pendências, Concluídos) e uma coluna de Status com Aprovado/Reprovado/Vencido/Em andamento/Não iniciado, já com filtro ligado no cabeçalho. O <b>Exportar resumo</b> é só pra uma visão rápida por pessoa (não separa curso por curso).</p>
 
       <div class="panel-tabs" style="margin-bottom:20px;">
         <div class="lefttabs" id="relSubTabs">
@@ -590,14 +591,15 @@
 
       <!-- ===== POR CURSO ===== -->
       <div id="relSub-cursos" class="rel-subview" style="display:none;">
-        <div style="text-align:right; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
+          <p class="sub" style="margin:0;">Aprovação × reprovação por curso, pra todo mundo (não só a sua equipe — pra ver a equipe de quem você é gestor direto, use "Minha equipe" na Home). <b>Reprovados (agora)</b> = quem está reprovado neste momento e ainda não refez com sucesso. <b>Aprovados de 1ª</b> = passou sem precisar refazer.</p>
           <button class="ghost-btn" onclick="exportarRelatorioCursosCSV()">⬇ Exportar</button>
         </div>
         <div class="panel-card">
           <table>
-            <thead><tr><th>Curso</th><th>Categoria</th><th>Tipo</th><th>Iniciados</th><th>Concluídos</th><th>Taxa de conclusão</th></tr></thead>
+            <thead><tr><th>Curso</th><th>Categoria</th><th>Tipo</th><th>Iniciados</th><th>Aprovados</th><th>Taxa de conclusão</th><th>Reprovados (agora)</th><th>Aprovados de 1ª</th></tr></thead>
             <tbody id="relCursoBody">
-              <tr><td colspan="6" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
+              <tr><td colspan="8" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -3491,7 +3493,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     const concluidosPorCurso = {}; // cursoId -> contagem
     const iniciadosPorCurso = {};  // cursoId -> contagem
     const conclusoesPorMes = {};   // 'AAAA-MM' -> contagem
-    let totalIniciados = 0, totalConcluidos = 0;
+    const reprovadosPorCurso = {}; // cursoId -> contagem (Status==='reprovado' agora, ainda não refez com sucesso)
+    const aprovadosPrimeiraPorCurso = {}; // cursoId -> contagem (concluído com Tentativas<=1)
+    let totalIniciados = 0, totalConcluidos = 0, totalReprovados = 0;
 
     progressoCache.forEach(p => {
       if (!p.Cpf || !p.CursoId) return;
@@ -3499,6 +3503,11 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       iniciadosPorCpf[p.Cpf].add(p.CursoId);
       iniciadosPorCurso[p.CursoId] = (iniciadosPorCurso[p.CursoId] || 0) + 1;
       totalIniciados++;
+
+      if (p.Status === 'reprovado') {
+        reprovadosPorCurso[p.CursoId] = (reprovadosPorCurso[p.CursoId] || 0) + 1;
+        totalReprovados++;
+      }
 
       if (p.Status === 'concluido') {
         const cursoRef = cursosCache.find(c => c.id === p.CursoId);
@@ -3511,6 +3520,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         concluidosPorCpf[p.Cpf].add(p.CursoId);
         concluidosPorCurso[p.CursoId] = (concluidosPorCurso[p.CursoId] || 0) + 1;
         totalConcluidos++;
+        if (!p.Tentativas || p.Tentativas <= 1) aprovadosPrimeiraPorCurso[p.CursoId] = (aprovadosPrimeiraPorCurso[p.CursoId] || 0) + 1;
 
         if (p.ConcluidoEm && p.ConcluidoEm.toDate) {
           const d = p.ConcluidoEm.toDate();
@@ -3669,16 +3679,22 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     const linhasCurso = cursosPublicados.map(c => {
       const iniciados = iniciadosPorCurso[c.id] || 0;
       const concluidos = concluidosPorCurso[c.id] || 0;
+      const reprovados = reprovadosPorCurso[c.id] || 0;
+      const aprovadosPrimeira = aprovadosPrimeiraPorCurso[c.id] || 0;
       const taxa = iniciados ? Math.round((concluidos / iniciados) * 100) : null;
-      return { titulo: c.Titulo, categoria: c.Categoria || '—', tipo: c.TipoConteudo || '—', iniciados, concluidos, taxa };
+      // taxa de reprovação = de quem já tentou pelo menos uma vez (reprovado agora + já aprovado),
+      // quantos estão reprovados neste momento — não conta quem nem tentou ainda
+      const tentaram = concluidos + reprovados;
+      const taxaReprovacao = tentaram ? Math.round((reprovados / tentaram) * 100) : null;
+      return { titulo: c.Titulo, categoria: c.Categoria || '—', tipo: c.TipoConteudo || '—', iniciados, concluidos, taxa, reprovados, aprovadosPrimeira, taxaReprovacao };
     }).sort((a, b) => b.concluidos - a.concluidos);
     ultimoCursosCache = linhasCurso;
 
     const cursoBody = document.getElementById('relCursoBody');
     if (cursoBody) {
       cursoBody.innerHTML = linhasCurso.length
-        ? linhasCurso.map(l => `<tr><td>${l.titulo}</td><td>${l.categoria}</td><td>${l.tipo}</td><td>${l.iniciados}</td><td>${l.concluidos}</td><td>${l.taxa === null ? '—' : l.taxa + '%'}</td></tr>`).join('')
-        : `<tr><td colspan="6" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum curso publicado ainda.</td></tr>`;
+        ? linhasCurso.map(l => `<tr><td>${l.titulo}</td><td>${l.categoria}</td><td>${l.tipo}</td><td>${l.iniciados}</td><td>${l.concluidos}</td><td>${l.taxa === null ? '—' : l.taxa + '%'}</td><td>${l.reprovados ? `<span style="color:#B4462B; font-weight:700;">${l.reprovados}</span>` : '0'}${l.taxaReprovacao !== null ? ` <span style="color:var(--ink-soft); font-size:12px;">(${l.taxaReprovacao}%)</span>` : ''}</td><td>${l.aprovadosPrimeira}</td></tr>`).join('')
+        : `<tr><td colspan="8" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum curso publicado ainda.</td></tr>`;
     }
 
     // ================= ORGANIZACIONAL =================
@@ -3811,17 +3827,36 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   let ultimoExecutivoCache = null;
   let ultimoAcompanhamentoCache = null;
 
-  function baixarXLSX(linhas, nomeArquivo, nomeAba){
+  // monta uma aba de planilha a partir de uma matriz de linhas (primeira linha = cabeçalho),
+  // com largura de coluna calculada pelo conteúdo e autofiltro no cabeçalho (pra poder filtrar
+  // por Status, Curso, etc. direto no Excel, sem precisar de planilhas separadas por recorte).
+  function montarAba(linhas){
     const ws = XLSX.utils.aoa_to_sheet(linhas);
-    // largura das colunas, calculada pelo conteúdo, pra não vir tudo espremido
-    // (usa a maior linha, não só a primeira — relatórios com seções e títulos de 1 coluna também encaixam certo)
     const maxCols = linhas.reduce((max, linha) => Math.max(max, linha.length), 0);
     ws['!cols'] = Array.from({ length: maxCols }, (_, i) => {
       const maior = linhas.reduce((max, linha) => Math.max(max, String(linha[i] ?? '').length), 10);
       return { wch: Math.min(50, maior + 2) };
     });
+    if (linhas.length > 1 && maxCols > 0) {
+      const ultimaColuna = XLSX.utils.encode_col(maxCols - 1);
+      ws['!autofilter'] = { ref: `A1:${ultimaColuna}${linhas.length}` };
+    }
+    return ws;
+  }
+
+  function baixarXLSX(linhas, nomeArquivo, nomeAba){
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, nomeAba || 'Relatório');
+    XLSX.utils.book_append_sheet(wb, montarAba(linhas), nomeAba || 'Relatório');
+    XLSX.writeFile(wb, nomeArquivo);
+  }
+
+  // mesma ideia, mas com várias abas — usado no relatório detalhado, pra já separar
+  // "Todos", "Pendências" e "Concluídos" no mesmo arquivo, sem a Nayuri ter que filtrar na mão.
+  function baixarXLSXMultiAba(abas, nomeArquivo){
+    const wb = XLSX.utils.book_new();
+    abas.forEach(aba => {
+      XLSX.utils.book_append_sheet(wb, montarAba(aba.linhas), aba.nome.slice(0, 31));
+    });
     XLSX.writeFile(wb, nomeArquivo);
   }
 
@@ -3842,18 +3877,26 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       alert('Ainda não há dados pra exportar.');
       return;
     }
-    const linhas = [['Colaborador', 'Cargo', 'Loja', 'Regional', 'Curso', 'Obrigatório', 'Status', 'Tentativas', 'Última nota']];
-    ultimoDetalhadoCache.forEach(l => {
-      linhas.push([l.nome, l.cargo, l.loja, l.regional, l.curso, l.obrigatorio, l.status, l.tentativas, l.ultimaNota]);
-    });
-    baixarXLSX(linhas, `relatorio-detalhado-por-curso-${new Date().toISOString().slice(0,10)}.xlsx`, 'Detalhado por curso');
+    const cabecalho = ['Colaborador', 'Cargo', 'Loja', 'Regional', 'Curso', 'Obrigatório', 'Status', 'Tentativas', 'Última nota'];
+    const linhaDe = l => [l.nome, l.cargo, l.loja, l.regional, l.curso, l.obrigatorio, l.status, l.tentativas, l.ultimaNota];
+    // uma linha por colaborador+curso (é o "certo" que a Nayuri pediu — nada de concatenar
+    // vários cursos numa célula só). Status já vem calculado (Aprovado / Reprovado — pode
+    // refazer / Vencido — reciclagem pendente / Em andamento / Não iniciado).
+    const todos = ultimoDetalhadoCache;
+    const pendentes = ultimoDetalhadoCache.filter(l => l.status !== 'Aprovado');
+    const concluidos = ultimoDetalhadoCache.filter(l => l.status === 'Aprovado');
+    baixarXLSXMultiAba([
+      { nome: 'Todos', linhas: [cabecalho, ...todos.map(linhaDe)] },
+      { nome: 'Pendências', linhas: [cabecalho, ...pendentes.map(linhaDe)] },
+      { nome: 'Concluídos', linhas: [cabecalho, ...concluidos.map(linhaDe)] },
+    ], `relatorio-detalhado-por-curso-${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
   window.exportarRelatorioCursosCSV = function(){
     if (!ultimoCursosCache.length) { alert('Ainda não há cursos publicados pra exportar.'); return; }
-    const linhas = [['Curso', 'Categoria', 'Tipo', 'Iniciados', 'Concluídos', 'Taxa de conclusão']];
+    const linhas = [['Curso', 'Categoria', 'Tipo', 'Iniciados', 'Aprovados', 'Taxa de conclusão', 'Reprovados (agora)', 'Taxa de reprovação', 'Aprovados de 1ª']];
     ultimoCursosCache.forEach(l => {
-      linhas.push([l.titulo, l.categoria, l.tipo, l.iniciados, l.concluidos, l.taxa === null ? '—' : l.taxa + '%']);
+      linhas.push([l.titulo, l.categoria, l.tipo, l.iniciados, l.concluidos, l.taxa === null ? '—' : l.taxa + '%', l.reprovados, l.taxaReprovacao === null ? '—' : l.taxaReprovacao + '%', l.aprovadosPrimeira]);
     });
     baixarXLSX(linhas, `relatorio-cursos-${new Date().toISOString().slice(0,10)}.xlsx`, 'Cursos');
   };
