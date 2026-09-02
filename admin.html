@@ -345,8 +345,10 @@
       </div>
       <div class="field">
         <label>Link do material (PDF)</label>
-        <input type="text" id="pdfLinkInput" placeholder="Cole o link do PDF (ex: subido na pasta assets/ do GitHub)">
-        <small class="hint">Suba o PDF em assets/ no seu repositório e cole aqui o link "raw".</small>
+        <input type="text" id="pdfLinkInput" placeholder="Cole o link do PDF, se já tiver um em algum lugar">
+        <input type="file" id="pdfUploadInput" accept="application/pdf" style="margin-top:8px;">
+        <small class="hint">Ou escolhe o arquivo PDF aqui — a plataforma sobe ele sozinha e preenche o link acima, sem precisar de GitHub.</small>
+        <div id="pdfUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
       </div>
       <div class="field">
         <label>Quem pode ver este material</label>
@@ -688,8 +690,10 @@
         </div>
         <div class="field">
           <label>Logo (link da imagem)</label>
-          <input type="text" id="identLogoInput" placeholder="Cole o link da logo (ex: subida em assets/ no GitHub)">
-          <small class="hint">Fica salva aqui pra centralizar — plugar visualmente em cada tela (Home, admin, certificado) é um próximo passo separado.</small>
+          <input type="text" id="identLogoInput" placeholder="Cole o link da logo, se já tiver um em algum lugar">
+          <input type="file" id="identLogoUploadInput" accept="image/*" style="margin-top:8px;">
+          <small class="hint">Ou escolhe o arquivo da logo aqui — sobe sozinho, sem precisar de GitHub. Fica salva aqui pra centralizar — plugar visualmente em cada tela (Home, admin, certificado) é um próximo passo separado.</small>
+          <div id="identLogoUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
         </div>
         <div style="display:flex; align-items:center; gap:12px; margin-top:14px;">
           <button class="btn-primary" onclick="salvarIdentidade()">Salvar identidade</button>
@@ -772,13 +776,17 @@
       </div>
       <div class="field">
         <label>Capa do curso (opcional)</label>
-        <input type="text" id="cursoCapaInput" placeholder="Cole o link da imagem (ex: subida na pasta assets/ do GitHub)">
-        <small class="hint">Se não preencher, o card usa a cor + emoji da categoria. Suba a imagem em assets/ no seu repositório e cole o link "raw" aqui.</small>
+        <input type="text" id="cursoCapaInput" placeholder="Cole o link da imagem, se já tiver um em algum lugar">
+        <input type="file" id="cursoCapaUploadInput" accept="image/*" style="margin-top:8px;">
+        <small class="hint">Ou escolhe a imagem aqui — a plataforma sobe ela sozinha e preenche o link acima, sem precisar de GitHub. Se não preencher nada, o card usa a cor + emoji da categoria.</small>
+        <div id="cursoCapaUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
       </div>
       <div class="field">
         <label>Modelo de certificado (opcional)</label>
-        <input type="text" id="cursoCertInput" placeholder="Cole o link da imagem do certificado deste curso">
-        <small class="hint">Usada pra gerar o certificado automático quando o colaborador conclui o curso.</small>
+        <input type="text" id="cursoCertInput" placeholder="Cole o link da imagem do certificado, se já tiver um em algum lugar">
+        <input type="file" id="cursoCertUploadInput" accept="image/*" style="margin-top:8px;">
+        <small class="hint">Ou escolhe a imagem do modelo de certificado aqui — sobe sozinha, sem precisar de GitHub. Usada pra gerar o certificado automático quando o colaborador conclui o curso.</small>
+        <div id="cursoCertUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
       </div>
       <div class="field">
         <label>Este curso é obrigatório?</label>
@@ -958,8 +966,20 @@
     <div class="modal-head"><h3 id="modalBannerTitulo">Novo banner</h3><button onclick="closeModal('modalBanner')">✕</button></div>
     <div class="modal-body">
       <div class="field"><label>Título (uso interno)</label><input type="text" id="bannerTituloInput" placeholder="Ex: Campanha de outubro"></div>
-      <div class="field"><label>Imagem (link)</label><input type="text" id="bannerImagemInput" placeholder="Cole o link da imagem"></div>
-      <div class="field"><label>Vídeo (link, opcional)</label><input type="text" id="bannerVideoInput" placeholder="Cole o link do vídeo, se for o caso"></div>
+      <div class="field">
+        <label>Imagem</label>
+        <input type="text" id="bannerImagemInput" placeholder="Cole o link da imagem, se já tiver um">
+        <input type="file" id="bannerImagemUploadInput" accept="image/*" style="margin-top:8px;">
+        <small class="hint">Ou escolhe o arquivo aqui — sobe sozinho, sem precisar de GitHub.</small>
+        <div id="bannerImagemUploadStatus" style="margin-top:4px; font-size:12px; font-weight:700;"></div>
+      </div>
+      <div class="field">
+        <label>Vídeo (opcional)</label>
+        <input type="text" id="bannerVideoInput" placeholder="Cole o link do vídeo, se for o caso">
+        <input type="file" id="bannerVideoUploadInput" accept="video/*" style="margin-top:8px;">
+        <small class="hint">Ou escolhe o arquivo de vídeo aqui — sobe sozinho, sem precisar de GitHub.</small>
+        <div id="bannerVideoUploadStatus" style="margin-top:4px; font-size:12px; font-weight:700;"></div>
+      </div>
       <div class="field"><label>Ao clicar, abrir (opcional)</label><input type="text" id="bannerLinkInput" placeholder="https://..."></div>
       <div class="field-row">
         <div class="field"><label>Início (opcional)</label><input type="date" id="bannerInicioInput"></div>
@@ -1376,6 +1396,42 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       statusEl.textContent = `Não consegui enviar (${erro.message || erro}). Confirma que o plano Blaze está ativo e tenta de novo.`;
     }
   });
+
+  // Upload genérico de arquivo pro Firebase Storage — usado em todo campo "Cole o link" que
+  // ganhou a opção de enviar o arquivo direto (capa de curso, certificado, PDF da biblioteca,
+  // logo, banners), pra nada mais depender de subir arquivo manualmente no GitHub. Preenche
+  // sozinho o campo de texto do link ao lado com a URL pública gerada pelo Storage.
+  function ligarUploadDeArquivo(fileInputId, textInputId, statusId, pastaStorage){
+    const fileInput = document.getElementById(fileInputId);
+    if (!fileInput) return;
+    fileInput.addEventListener('change', async (e) => {
+      const arquivo = e.target.files[0];
+      const statusEl = document.getElementById(statusId);
+      const textInput = document.getElementById(textInputId);
+      if (!arquivo) return;
+      if (statusEl) { statusEl.style.color = 'var(--ink-soft)'; statusEl.textContent = `Enviando ${arquivo.name}…`; }
+      try {
+        const nomeSeguro = arquivo.name
+          .normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '')
+          .replace(/[^a-zA-Z0-9.\-]/g, '-');
+        const caminho = `${pastaStorage}/${Date.now()}-${nomeSeguro}`;
+        const ref = storageRef(storage, caminho);
+        await uploadBytes(ref, arquivo, { contentType: arquivo.type || 'application/octet-stream' });
+        const url = await getDownloadURL(ref);
+        if (textInput) textInput.value = url;
+        if (statusEl) { statusEl.style.color = 'var(--green-dark)'; statusEl.textContent = '✓ Enviado — link preenchido sozinho.'; }
+      } catch (erro) {
+        console.error(`upload em ${pastaStorage}`, erro);
+        if (statusEl) { statusEl.style.color = '#B4462B'; statusEl.textContent = `Não consegui enviar (${erro.message || erro}). Confirma que o plano Blaze está ativo e tenta de novo.`; }
+      }
+    });
+  }
+  ligarUploadDeArquivo('cursoCapaUploadInput', 'cursoCapaInput', 'cursoCapaUploadStatus', 'capas-cursos');
+  ligarUploadDeArquivo('cursoCertUploadInput', 'cursoCertInput', 'cursoCertUploadStatus', 'certificados');
+  ligarUploadDeArquivo('pdfUploadInput', 'pdfLinkInput', 'pdfUploadStatus', 'biblioteca');
+  ligarUploadDeArquivo('identLogoUploadInput', 'identLogoInput', 'identLogoUploadStatus', 'identidade');
+  ligarUploadDeArquivo('bannerImagemUploadInput', 'bannerImagemInput', 'bannerImagemUploadStatus', 'banners');
+  ligarUploadDeArquivo('bannerVideoUploadInput', 'bannerVideoInput', 'bannerVideoUploadStatus', 'banners');
 
   // app "secundário": usado só pra criar/checar contas de colaboradores sem afetar a sessão da admin logada
   const secondaryApp = initializeApp(firebaseConfig, 'secondary');
