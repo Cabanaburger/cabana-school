@@ -771,7 +771,7 @@
       <div class="field" id="htmlUploadWrap" style="display:none;">
         <label>Arquivo do curso (HTML)</label>
         <input type="file" id="htmlUploadInput" accept=".html,.htm">
-        <small class="hint">Escolhe o arquivo pronto do curso (o mesmo HTML de sempre). A plataforma sobe ele sozinha e preenche o link — não precisa abrir GitHub nem Netlify.</small>
+        <small class="hint">Escolhe o arquivo pronto do curso (o mesmo HTML de sempre). A plataforma sobe ele sozinha, aplica a trava de rolagem automaticamente (se o arquivo tiver seções pra travar e ainda não tiver prova própria) e preenche o link e a nota mínima sozinha — não precisa abrir GitHub, marcar nada, nem preencher "Este curso tem prova?" você mesma.</small>
         <div id="htmlUploadStatus" style="margin-top:8px; font-size:12.5px; font-weight:700;"></div>
       </div>
       <div class="field">
@@ -1391,6 +1391,89 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   const storage = getStorage(app);
   const functions = getFunctions(app);
 
+  // ---------- trava de rolagem automática (injetada no próprio upload, sem ferramenta separada) ----------
+  // Mesma lógica do injetor-trava-rolagem.html (ferramenta avulsa criada antes disso existir aqui
+  // dentro) — mas rodando direto no momento do upload do curso HTML, pra Nayuri não precisar abrir
+  // nenhum arquivo à parte. Ver "Trava de rolagem + cliques obrigatórios" no contrato de integração.
+  const CABANA_GATE_SRC = 'https://cabanaburger.github.io/cabana-school/assets/cabana-scroll-gate.js';
+  const CABANA_TRACKER_SRC = 'https://cabanaburger.github.io/cabana-school/assets/cabana-quiz-tracker.js';
+  const CABANA_GATE_BARRA_HTML = `
+<style>/* injetado automaticamente ao subir o curso */ body{ padding-bottom:120px !important; }</style>
+<div id="cabanaGateBarra" style="position:fixed;left:0;right:0;bottom:0;background:#FFFDF7;border-top:1px solid rgba(30,26,20,0.14);box-shadow:0 -8px 24px rgba(0,0,0,0.10);padding:14px 18px;z-index:999999;font-family:-apple-system,'Avenir Next',sans-serif;text-align:center;">
+  <p id="cabanaGateProgresso" style="margin:0 0 8px;font-size:13px;font-weight:700;color:#1E1A14;"></p>
+  <button id="btnConcluirTreinamento" disabled style="background:#4F9C40;color:#fff;border:none;border-radius:100px;padding:12px 30px;font-size:14px;font-weight:700;cursor:pointer;">Concluir treinamento</button>
+</div>
+`;
+
+  function cabanaTituloDaSecao(conteudo){
+    const m = conteudo.match(/<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/i);
+    if (!m) return '';
+    return m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  }
+
+  // Aplica a trava de rolagem automaticamente num HTML de curso. Retorna { html, status, secoes }.
+  // status: 'injetado' | 'ja-integrado' | 'tem-prova' | 'sem-secoes'
+  function aplicarTravaRolagemAutomatica(htmlOriginal){
+    if (/CabanaGate\.iniciar/.test(htmlOriginal)) {
+      return { status: 'ja-integrado', html: htmlOriginal };
+    }
+    const temProvaJa = /cabana-quiz-tracker\.js/i.test(htmlOriginal) || /CabanaSchool\.reportResult/i.test(htmlOriginal);
+    if (temProvaJa) {
+      return { status: 'tem-prova', html: htmlOriginal };
+    }
+
+    let html = htmlOriginal;
+    let secoesUsadas = [];
+    let reaproveitouMarcadores = false;
+
+    const marcadoresExistentes = Array.from(html.matchAll(/data-end="([^"]+)"/g)).map(m => m[1]);
+    if (marcadoresExistentes.length){
+      reaproveitouMarcadores = true;
+      secoesUsadas = marcadoresExistentes;
+    } else {
+      let partes = [];
+      let contador = 0;
+      const aberturaRegex = /<section\b[^>]*>/gi;
+      let m;
+      while ((m = aberturaRegex.exec(html)) !== null) {
+        const fimAbertura = aberturaRegex.lastIndex;
+        const fechamentoIdx = html.indexOf('</section>', fimAbertura);
+        if (fechamentoIdx === -1) continue;
+        contador++;
+        const idMatch = m[0].match(/\bid="([^"]+)"/);
+        const idSecao = idMatch ? idMatch[1] : ('auto-secao-' + contador);
+        const conteudoSecao = html.slice(fimAbertura, fechamentoIdx);
+        const titulo = cabanaTituloDaSecao(conteudoSecao) || ('Seção ' + contador);
+        secoesUsadas.push(idSecao);
+        partes.push({ pos: fechamentoIdx, marcador: `<div class="section-end" data-end="${idSecao}" data-cabana-titulo="${titulo.replace(/"/g,'&quot;')}"></div>` });
+        aberturaRegex.lastIndex = fechamentoIdx;
+      }
+      if (!partes.length) {
+        return { status: 'sem-secoes', html: htmlOriginal };
+      }
+      let novoHtml = html;
+      for (let i = partes.length - 1; i >= 0; i--) {
+        const p = partes[i];
+        novoHtml = novoHtml.slice(0, p.pos) + p.marcador + novoHtml.slice(p.pos);
+      }
+      html = novoHtml;
+    }
+
+    const jaTemBotao = /id="btnConcluirTreinamento"/.test(html);
+    let blocoFinal = '';
+    if (!jaTemBotao) blocoFinal += CABANA_GATE_BARRA_HTML;
+    if (!/cabana-scroll-gate\.js/i.test(html)) {
+      blocoFinal += `\n<script src="${CABANA_GATE_SRC}"><\/script>\n`;
+    }
+    blocoFinal += `<script type="module" src="${CABANA_TRACKER_SRC}"><\/script>\n`;
+    blocoFinal += `<script>\n  window.addEventListener('DOMContentLoaded', function(){ if (window.CabanaGate) CabanaGate.iniciar({ botao: 'btnConcluirTreinamento', elementoDica: 'cabanaGateProgresso' }); });\n<\/script>\n`;
+
+    const idxBody = html.lastIndexOf('</body>');
+    html = idxBody === -1 ? (html + blocoFinal) : (html.slice(0, idxBody) + blocoFinal + html.slice(idxBody));
+
+    return { status: 'injetado', html, secoesUsadas, reaproveitouMarcadores };
+  }
+
   // upload direto de curso HTML pro Firebase Storage (substitui subir no GitHub/Netlify na mão)
   document.getElementById('htmlUploadInput')?.addEventListener('change', async (e) => {
     const arquivo = e.target.files[0];
@@ -1399,16 +1482,49 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     statusEl.style.color = 'var(--ink-soft)';
     statusEl.textContent = `Enviando ${arquivo.name}…`;
     try {
+      let arquivoParaEnviar = arquivo;
+      let avisoTrava = '';
+      // sempre tenta aplicar a trava de rolagem — sem checkbox, sem pergunta. A função só muda
+      // alguma coisa quando faz sentido (curso com seções e sem prova própria já embutida); nos
+      // outros casos, sobe o arquivo exatamente como está.
+      const textoOriginal = await arquivo.text();
+      const resultado = aplicarTravaRolagemAutomatica(textoOriginal);
+      if (resultado.status === 'injetado' || resultado.status === 'ja-integrado') {
+        if (resultado.status === 'injetado') {
+          arquivoParaEnviar = new File([resultado.html], arquivo.name, { type: 'text/html' });
+          avisoTrava = resultado.reaproveitouMarcadores
+            ? ` Reaproveitei os ${resultado.secoesUsadas.length} marcador(es) de seção que o arquivo já tinha.`
+            : ` Trava de rolagem aplicada sozinha em ${resultado.secoesUsadas.length} seção(ões) encontradas no arquivo.`;
+        }
+        // curso agora se reporta sozinho (seja pela trava que acabamos de aplicar, seja porque já
+        // tinha sido aplicada antes) — marca "tem prova" e nota mínima 100 automaticamente, pra
+        // Nayuri não precisar mexer nisso: sem essa marcação, a Home mostraria também o botão
+        // "Marcar como concluído" fraco (15s) por cima da trava forte, o que anularia ela.
+        const botaoSim = document.querySelectorAll('#cursoProvaToggle button')[1];
+        if (botaoSim) setTemProva(botaoSim, true);
+        const notaInput = document.getElementById('provaNotaMinimaInput');
+        if (notaInput) notaInput.value = 100;
+        avisoTrava += ' Marquei "Este curso tem prova?" = Sim e a nota mínima em 100 sozinho — não precisa mexer nisso.';
+      } else if (resultado.status === 'tem-prova') {
+        // já reporta por conta própria com uma prova de verdade (nota própria, não 1/1) — só
+        // garante que "tem prova" está marcado; a nota mínima ela mesma sabe qual precisa ser,
+        // pra bater com o corte que já está embutido no arquivo.
+        const botaoSim = document.querySelectorAll('#cursoProvaToggle button')[1];
+        if (botaoSim) setTemProva(botaoSim, true);
+        avisoTrava = ' Esse arquivo já reporta pra Cabana School por conta própria (prova embutida) — marquei "tem prova" sozinho, mas confira se a nota mínima bate com o corte usado dentro do arquivo.';
+      } else if (resultado.status === 'sem-secoes') {
+        avisoTrava = ' Não encontrei nenhuma seção nesse arquivo pra travar — enviado sem alterações, como conclusão manual comum.';
+      }
       const nomeSeguro = arquivo.name
         .normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '')
         .replace(/[^a-zA-Z0-9.\-]/g, '-');
       const caminho = `cursos-html/${Date.now()}-${nomeSeguro}`;
       const ref = storageRef(storage, caminho);
-      await uploadBytes(ref, arquivo, { contentType: 'text/html' });
+      await uploadBytes(ref, arquivoParaEnviar, { contentType: 'text/html' });
       const url = await getDownloadURL(ref);
       document.getElementById('linkFieldInput').value = url;
       statusEl.style.color = 'var(--green-dark)';
-      statusEl.textContent = '✓ Enviado — link preenchido sozinho, pode salvar o curso.';
+      statusEl.textContent = '✓ Enviado — link preenchido sozinho, pode salvar o curso.' + avisoTrava;
     } catch (erro) {
       console.error('upload de curso HTML', erro);
       statusEl.style.color = '#B4462B';
