@@ -727,9 +727,9 @@
         </div>
         <p class="sub" style="margin:0 0 16px;">Colaboradores ganham pontos automaticamente ao concluir cursos (100 pontos, +50 de bônus se passar sem precisar refazer a prova). Enquanto a loja estiver desativada, os pontos continuam acumulando normalmente — só o botão de resgate não aparece pra ninguém. Ative quando tiver itens cadastrados pra oferecer.</p>
         <table>
-          <thead><tr><th>Item</th><th>Custo (pontos)</th><th>Estoque</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Item</th><th>Categoria</th><th>Custo (pontos)</th><th>Estoque</th><th>Status</th><th></th></tr></thead>
           <tbody id="itensLojaTableBody">
-            <tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
+            <tr><td colspan="6" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
           </tbody>
         </table>
         <button class="ghost-btn" style="margin-top:14px;" onclick="abrirNovoItemLoja()">+ Novo item</button>
@@ -1011,6 +1011,23 @@
     <div class="modal-body">
       <div class="field"><label>Nome do item</label><input type="text" id="itemLojaNomeInput" placeholder="Ex: Vale-lanche, folga extra, brinde..."></div>
       <div class="field"><label>Descrição (opcional)</label><textarea id="itemLojaDescInput" placeholder="Detalhes de como funciona o resgate"></textarea></div>
+      <div class="field">
+        <label>Categoria</label>
+        <select id="itemLojaCategoriaInput">
+          <option value="">Sem categoria</option>
+          <option value="comida">🍔 Comida</option>
+          <option value="produtos">🎁 Produtos</option>
+          <option value="folgas">🏖️ Folgas</option>
+        </select>
+        <small class="hint">Define em qual aba da lojinha o item aparece pro colaborador. "Sem categoria" ainda aparece em "Todos".</small>
+      </div>
+      <div class="field">
+        <label>Foto do item (opcional)</label>
+        <input type="text" id="itemLojaFotoInput" placeholder="Cole o link da imagem, se já tiver um em algum lugar">
+        <input type="file" id="itemLojaFotoUploadInput" accept="image/*" style="margin-top:8px;">
+        <small class="hint">Ou escolhe a foto aqui — sobe sozinha e preenche o link acima. Itens com foto ficam bem mais chamativos na loja do colaborador; sem foto, aparece só um emoji de presente no lugar.</small>
+        <div id="itemLojaFotoUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
+      </div>
       <div class="field-row">
         <div class="field"><label>Custo em pontos</label><input type="number" id="itemLojaCustoInput" min="1" placeholder="Ex: 300"></div>
         <div class="field"><label>Estoque (opcional)</label><input type="number" id="itemLojaEstoqueInput" min="0" placeholder="Deixe em branco pra ilimitado"></div>
@@ -1434,6 +1451,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   ligarUploadDeArquivo('identLogoUploadInput', 'identLogoInput', 'identLogoUploadStatus', 'identidade');
   ligarUploadDeArquivo('bannerImagemUploadInput', 'bannerImagemInput', 'bannerImagemUploadStatus', 'banners');
   ligarUploadDeArquivo('bannerVideoUploadInput', 'bannerVideoInput', 'bannerVideoUploadStatus', 'banners');
+  ligarUploadDeArquivo('itemLojaFotoUploadInput', 'itemLojaFotoInput', 'itemLojaFotoUploadStatus', 'loja');
 
   // app "secundário": usado só pra criar/checar contas de colaboradores sem afetar a sessão da admin logada
   const secondaryApp = initializeApp(firebaseConfig, 'secondary');
@@ -2700,7 +2718,13 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       return;
     }
     tbody.innerHTML = itensLojaCache.map(it => `<tr>
-        <td><b>${it.Nome || '(sem nome)'}</b></td>
+        <td style="display:flex; align-items:center; gap:10px;">
+          ${it.Foto
+            ? `<img src="${it.Foto}" alt="" style="width:32px; height:32px; border-radius:8px; object-fit:cover; flex:none;">`
+            : `<span style="width:32px; height:32px; border-radius:8px; background:var(--cream); display:flex; align-items:center; justify-content:center; flex:none;">🎁</span>`}
+          <b>${it.Nome || '(sem nome)'}</b>
+        </td>
+        <td>${{comida:'🍔 Comida', produtos:'🎁 Produtos', folgas:'🏖️ Folgas'}[it.Categoria] || '—'}</td>
         <td>${it.CustoPontos || 0}</td>
         <td>${it.Estoque == null ? 'Ilimitado' : it.Estoque}</td>
         <td><span style="color:${it.Ativo === false ? 'var(--ink-soft)' : 'var(--green-dark)'}; font-weight:700; font-size:12.5px;">${it.Ativo === false ? 'Desativado' : 'Ativo'}</span></td>
@@ -2716,6 +2740,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('modalItemLojaTitulo').textContent = 'Novo item';
     document.getElementById('itemLojaNomeInput').value = '';
     document.getElementById('itemLojaDescInput').value = '';
+    document.getElementById('itemLojaCategoriaInput').value = '';
+    document.getElementById('itemLojaFotoInput').value = '';
+    document.getElementById('itemLojaFotoUploadStatus').textContent = '';
     document.getElementById('itemLojaCustoInput').value = '';
     document.getElementById('itemLojaEstoqueInput').value = '';
     const toggle = document.getElementById('itemLojaAtivoToggle');
@@ -2732,6 +2759,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('modalItemLojaTitulo').textContent = 'Editar item';
     document.getElementById('itemLojaNomeInput').value = it.Nome || '';
     document.getElementById('itemLojaDescInput').value = it.Descricao || '';
+    document.getElementById('itemLojaCategoriaInput').value = it.Categoria || '';
+    document.getElementById('itemLojaFotoInput').value = it.Foto || '';
+    document.getElementById('itemLojaFotoUploadStatus').textContent = '';
     document.getElementById('itemLojaCustoInput').value = it.CustoPontos || '';
     document.getElementById('itemLojaEstoqueInput').value = it.Estoque != null ? it.Estoque : '';
     const ativo = it.Ativo !== false;
@@ -2753,6 +2783,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     const dados = {
       Nome: nome,
       Descricao: document.getElementById('itemLojaDescInput').value.trim(),
+      Categoria: document.getElementById('itemLojaCategoriaInput').value,
+      Foto: document.getElementById('itemLojaFotoInput').value.trim(),
       CustoPontos: custo,
       Estoque: estoqueRaw === '' ? null : Number(estoqueRaw),
       Ativo: document.getElementById('itemLojaAtivoToggle').dataset.valor === '1',
