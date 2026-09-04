@@ -1411,8 +1411,21 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     return m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 60);
   }
 
+  // Detecta blocos <script>...</script> (posição inicial/final no texto) — usado pra reconhecer
+  // curso "app dinâmico" (conteúdo montado por JavaScript, não HTML estático de verdade) abaixo.
+  function calcularBlocosScript(html){
+    const blocos = [];
+    const re = /<script\b[^>]*>[\s\S]*?<\/script>/gi;
+    let m;
+    while ((m = re.exec(html)) !== null) blocos.push([m.index, m.index + m[0].length]);
+    return blocos;
+  }
+  function dentroDeAlgumBloco(pos, blocos){
+    return blocos.some(([ini, fim]) => pos >= ini && pos < fim);
+  }
+
   // Aplica a trava de rolagem automaticamente num HTML de curso. Retorna { html, status, secoes }.
-  // status: 'injetado' | 'ja-integrado' | 'tem-prova' | 'sem-secoes'
+  // status: 'injetado' | 'ja-integrado' | 'tem-prova' | 'sem-secoes' | 'estrutura-dinamica'
   function aplicarTravaRolagemAutomatica(htmlOriginal){
     if (/CabanaGate\.iniciar/.test(htmlOriginal)) {
       return { status: 'ja-integrado', html: htmlOriginal };
@@ -1431,11 +1444,26 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       reaproveitouMarcadores = true;
       secoesUsadas = marcadoresExistentes;
     } else {
+      // ⚠ setembro/2026: um curso construído como app de página única — conteúdo montado por
+      // JavaScript (funções que devolvem HTML e trocam o conteúdo da tela conforme a pessoa
+      // navega, em vez de uma página comprida com <section> de verdade já no HTML) engana esse
+      // detector: as tags <section> aparecem no texto do arquivo (dentro de uma string de
+      // template do próprio JavaScript), mas nunca ficam todas no ar ao mesmo tempo, então a
+      // trava de rolagem genérica não consegue medir rolagem de verdade nesse formato (o motor
+      // só escaneia a página uma vez, no carregamento) — e a inserção automática do marcador
+      // pode até quebrar a página, se o título da seção também for montado por JavaScript.
+      // Encontrado de verdade num curso real (Hospitalidade) em setembro/2026. Por segurança,
+      // se qualquer <section> encontrada estiver dentro de um bloco <script>, não mexe em nada
+      // e devolve 'estrutura-dinamica' — mais seguro avisar e pedir integração manual do que
+      // arriscar subir uma trava que parece funcionar mas nunca libera (ou pior).
+      const blocosScript = calcularBlocosScript(html);
       let partes = [];
       let contador = 0;
+      let estruturaDinamica = false;
       const aberturaRegex = /<section\b[^>]*>/gi;
       let m;
       while ((m = aberturaRegex.exec(html)) !== null) {
+        if (dentroDeAlgumBloco(m.index, blocosScript)) { estruturaDinamica = true; break; }
         const fimAbertura = aberturaRegex.lastIndex;
         const fechamentoIdx = html.indexOf('</section>', fimAbertura);
         if (fechamentoIdx === -1) continue;
@@ -1447,6 +1475,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         secoesUsadas.push(idSecao);
         partes.push({ pos: fechamentoIdx, marcador: `<div class="section-end" data-end="${idSecao}" data-cabana-titulo="${titulo.replace(/"/g,'&quot;')}"></div>` });
         aberturaRegex.lastIndex = fechamentoIdx;
+      }
+      if (estruturaDinamica) {
+        return { status: 'estrutura-dinamica', html: htmlOriginal };
       }
       if (!partes.length) {
         return { status: 'sem-secoes', html: htmlOriginal };
@@ -1514,6 +1545,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         avisoTrava = ' Esse arquivo já reporta pra Cabana School por conta própria (prova embutida) — marquei "tem prova" sozinho, mas confira se a nota mínima bate com o corte usado dentro do arquivo.';
       } else if (resultado.status === 'sem-secoes') {
         avisoTrava = ' Não encontrei nenhuma seção nesse arquivo pra travar — enviado sem alterações, como conclusão manual comum.';
+      } else if (resultado.status === 'estrutura-dinamica') {
+        avisoTrava = ' Esse arquivo parece um app de página única (o conteúdo é montado por JavaScript, não é uma página comprida comum) — a trava automática não é confiável nesse formato, então enviei sem mexer em nada. Se quiser trava nesse curso, me chame numa conversa que eu faço a integração manual (dá pra fazer, só não sozinho pelo upload).';
       }
       const nomeSeguro = arquivo.name
         .normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '')
