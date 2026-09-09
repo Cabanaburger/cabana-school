@@ -378,6 +378,123 @@
     .ranking-teaser{ flex-wrap:wrap; }
     .ranking-teaser .avatares-mini{ display:none; }
   }
+
+  /* ---------- atalhos de "Minha equipe" + "Lojinha Cabana" no topbar (setembro/2026) ----------
+     Substituíram os antigos cards grandes .equipe-teaser/.loja-teaser empilhados no corpo da home
+     (removidos) — agora é um ícone só ao lado do avatar, que abre um miniatura com as duas opções.
+     Pedido da Nayuri: manter o ranking como única "estrela" da seção, com esses dois atalhos bem
+     mais discretos, mas ainda fáceis de achar (sempre visíveis no topo, não escondidos só no menu
+     do avatar). O ícone só aparece se pelo menos um dos dois se aplica à pessoa (ver
+     atualizarVisibilidadeAtalhos()). */
+  .grid-ico{
+    position:relative; width:34px; height:34px; border-radius:50%; cursor:pointer; flex:none;
+    background:radial-gradient(120% 140% at 30% 20%, #6EB85D 0%, var(--green) 50%, var(--green-dark) 100%);
+    display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow);
+  }
+  .grid-ico svg{ width:16px; height:16px; color:#fff; }
+  .grid-ico .badge-dot{
+    position:absolute; top:-3px; right:-3px; min-width:14px; height:14px; padding:0 3px; border-radius:100px;
+    background:#B4462B; color:#fff; font-size:8.5px; font-weight:800; display:flex; align-items:center;
+    justify-content:center; border:2px solid var(--cream);
+  }
+  .mini-dropdown{
+    display:none; position:absolute; top:44px; right:0; width:230px; background:var(--paper);
+    border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:8px; z-index:65; text-align:left;
+  }
+  .mini-dropdown.on{ display:block; }
+  .mini-dropdown .item{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; cursor:pointer; }
+  .mini-dropdown .item:hover{ background:var(--cream); }
+  .mini-dropdown .ico-mini{ width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; flex:none; }
+  .mini-dropdown .ico-mini svg{ width:14px; height:14px; }
+  .mini-dropdown .ico-mini.equipe{ background:var(--bacon); }
+  .mini-dropdown .ico-mini.loja{ background:var(--milkshake); }
+  .mini-dropdown b{ display:block; font-size:12.5px; }
+  .mini-dropdown small{ font-size:10.5px; color:var(--ink-soft); }
+  .mini-dropdown small.alerta{ color:#B4462B; font-weight:700; }
+  .seta-dropdown{ position:absolute; top:-6px; right:12px; width:12px; height:12px; background:var(--paper); border-left:1px solid var(--line); border-top:1px solid var(--line); transform:rotate(45deg); }
+
+  /* ---------- painel do gestor: linha de pessoa responsiva (cartão empilhado no celular, vira
+     linha de tabela sozinha numa tela larga — sem JS diferente, só CSS Grid reflindo) ----------- */
+  .legenda-chips-equipe{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; font-size:10.5px; color:var(--ink-soft); margin:0 0 14px; }
+  .legenda-chips-equipe span{ display:flex; align-items:center; gap:5px; }
+  .legenda-chips-equipe i{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .chip-equipe{ font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; white-space:nowrap; }
+  .chip-vencido{ color:#B4462B; background:rgba(180,70,43,0.12); }
+  .chip-reprovado{ color:#D89840; background:rgba(216,152,64,0.16); }
+  .chip-pendente{ color:var(--ink-soft); background:rgba(30,26,20,0.07); }
+  .header-tabela-equipe{ display:none; font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.3px; color:var(--ink-soft); padding:0 0 10px; border-bottom:1px solid var(--line); margin-bottom:4px; }
+  .linha-pessoa{
+    display:grid; grid-template-columns:42px 1fr auto;
+    grid-template-areas: "avatar nome situacao" "avatar progresso progresso" "avatar chips chips";
+    column-gap:14px; row-gap:8px; align-items:center; padding:14px 0; border-bottom:1px solid var(--line);
+  }
+  .cel-avatar{ grid-area:avatar; width:42px; height:42px; border-radius:50%; background:var(--cream); color:var(--green-dark); font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; }
+  .cel-nome{ grid-area:nome; min-width:0; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .cel-nome b{ font-size:14px; }
+  .cel-nome span{ font-size:11.5px; color:var(--ink-soft); white-space:nowrap; }
+  .cel-progresso{ grid-area:progresso; display:flex; align-items:center; gap:10px; }
+  .cel-progresso .barra{ flex:1; height:8px; background:var(--line); border-radius:100px; overflow:hidden; max-width:260px; }
+  .cel-progresso .barra div{ height:100%; background:var(--green); }
+  .cel-progresso b{ font-size:12px; white-space:nowrap; }
+  .cel-chips{ grid-area:chips; display:flex; gap:6px; flex-wrap:wrap; }
+  .cel-situacao{ grid-area:situacao; font-size:11px; font-weight:700; padding:6px 10px; border-radius:100px; white-space:nowrap; }
+  @media (min-width:760px){
+    .header-tabela-equipe, .linha-pessoa{
+      grid-template-columns: 42px 1.6fr 1.3fr 1.8fr auto;
+      grid-template-areas: "avatar nome progresso chips situacao";
+    }
+    .header-tabela-equipe{ display:grid; column-gap:14px; }
+    .cel-nome{ flex-direction:column; align-items:flex-start; gap:1px; }
+    .cel-progresso .barra{ max-width:110px; }
+  }
+
+  /* ---------- lojinha redesenhada: categorias + cards + confirmação (setembro/2026) ----------- */
+  .loja-cat-rail{ display:flex; gap:8px; overflow-x:auto; padding:2px 0 14px; }
+  .loja-chip{
+    flex:none; display:flex; align-items:center; gap:6px; background:var(--cream); border:1px solid var(--line);
+    padding:8px 14px; border-radius:100px; font-size:12px; font-weight:700; color:var(--ink-soft); white-space:nowrap; cursor:pointer;
+  }
+  .loja-chip.on{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .loja-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:12px; }
+  .loja-card{
+    background:var(--cream); border-radius:18px; overflow:hidden; display:flex; flex-direction:column; cursor:pointer;
+    border:1px solid var(--line); transition:transform .12s ease;
+  }
+  .loja-card:active{ transform:scale(.98); }
+  .loja-card .foto{ height:96px; background:#171310; display:flex; align-items:center; justify-content:center; font-size:30px; position:relative; }
+  .loja-card .foto img{ width:100%; height:100%; object-fit:cover; }
+  .loja-card .cat-tag{ position:absolute; top:8px; left:8px; background:rgba(0,0,0,0.55); color:#fff; font-size:9px; font-weight:800; padding:3px 8px; border-radius:100px; }
+  .loja-card .info{ padding:10px 12px 12px; display:flex; flex-direction:column; gap:6px; flex:1; }
+  .loja-card b{ font-size:12.5px; line-height:1.25; }
+  .loja-card .custo{ font-size:12px; font-weight:800; color:var(--green-dark); }
+  .loja-card.sem-saldo .custo{ color:#B4462B; }
+  .loja-card .btn-trocar{ margin-top:auto; background:var(--green); color:#fff; font-size:11.5px; font-weight:800; padding:8px; border-radius:100px; text-align:center; }
+  .loja-card.sem-saldo .btn-trocar{ background:var(--line); color:var(--ink-soft); }
+  .loja-confirma{ text-align:center; padding:6px 4px 4px; }
+  .loja-confirma-foto{ width:120px; height:120px; border-radius:22px; margin:0 auto 16px; overflow:hidden; background:#171310; display:flex; align-items:center; justify-content:center; font-size:44px; box-shadow:var(--shadow); }
+  .loja-confirma-foto img{ width:100%; height:100%; object-fit:cover; }
+  .loja-confirma h4{ font-family:var(--display); font-weight:400; font-size:19px; margin:0 0 6px; }
+  .loja-confirma p.desc{ font-size:12.5px; color:var(--ink-soft); margin:0 0 18px; }
+  .loja-saldo-compare{ display:flex; align-items:center; justify-content:center; gap:12px; background:var(--cream); border-radius:16px; padding:14px; margin-bottom:18px; }
+  .loja-saldo-compare .num{ font-family:var(--display); font-size:20px; }
+  .loja-saldo-compare .lbl{ font-size:10px; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.3px; }
+  .loja-aviso-fila{ font-size:11.5px; color:var(--ink-soft); background:rgba(216,152,64,0.14); border:1px dashed var(--fries); border-radius:12px; padding:10px 12px; margin-bottom:18px; text-align:left; }
+  .loja-botoes{ display:flex; gap:10px; }
+  .loja-botoes button{ flex:1; padding:13px; border-radius:100px; font-size:13px; font-weight:800; border:none; cursor:pointer; }
+  .loja-btn-cancelar{ background:var(--cream); color:var(--ink-soft); }
+  .loja-btn-confirmar{ background:var(--green); color:#fff; }
+  .loja-sucesso{ text-align:center; padding:20px 6px 6px; }
+  .loja-sucesso .emoji{ font-size:52px; margin-bottom:10px; }
+  .loja-sucesso h4{ font-family:var(--display); font-weight:400; font-size:19px; margin:0 0 8px; }
+  .loja-sucesso p{ font-size:12.5px; color:var(--ink-soft); margin:0 0 20px; line-height:1.5; }
+  .loja-btn-voltar{ background:var(--green); color:#fff; padding:13px 28px; border-radius:100px; font-size:13px; font-weight:800; border:none; cursor:pointer; }
+  @media (min-width:640px){
+    .loja-confirma{ display:flex; align-items:flex-start; text-align:left; gap:24px; }
+    .loja-confirma-foto{ margin:0; flex:none; }
+    .loja-confirma-texto{ flex:1; }
+    .loja-saldo-compare{ justify-content:flex-start; }
+    .loja-botoes{ max-width:340px; }
+  }
   /* ---------- modais genéricos ---------- */
   .overlay{
     position:fixed; inset:0; background:rgba(30,26,20,0.45); backdrop-filter:blur(2px);
@@ -535,15 +652,36 @@
       <button type="button" id="idiomaBtnPt" onclick="if(window.IDIOMA!=='pt') setIdioma('pt')">PT</button>
       <button type="button" id="idiomaBtnEs" onclick="if(window.IDIOMA!=='es') setIdioma('es')">ES</button>
     </div>
+    <!-- Atalhos "Minha equipe" + "Lojinha Cabana": um ícone só, com miniatura — substitui os
+         antigos cards grandes no corpo e os itens duplicados que existiam no menu do avatar (ver
+         atualizarVisibilidadeAtalhos(), chamada por iniciarPainelGestor()/iniciarLojaVisibilidade()).
+         Escondido por padrão: só aparece se pelo menos um item dele fizer sentido pra pessoa. -->
+    <div class="grid-ico" id="atalhosIcoWrap" style="display:none;" onclick="document.getElementById('miniDropdownAtalhos').classList.toggle('on')">
+      <span class="badge-dot" id="atalhosBadge" hidden>0</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <div class="mini-dropdown" id="miniDropdownAtalhos">
+        <div class="seta-dropdown"></div>
+        <div id="itemAtalhoEquipe" class="item" style="display:none;" onclick="event.stopPropagation(); document.getElementById('miniDropdownAtalhos').classList.remove('on'); abrirMinhaEquipe();">
+          <div class="ico-mini equipe">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9.5" r="2.4"/><path d="M15.6 14.2c2.4.4 4.4 2.3 4.4 5"/></svg>
+          </div>
+          <div><b data-i18n="atalho_equipe_titulo">Minha equipe</b><small id="atalhoEquipeStatus"></small></div>
+        </div>
+        <div id="itemAtalhoLoja" class="item" style="display:none;" onclick="event.stopPropagation(); document.getElementById('miniDropdownAtalhos').classList.remove('on'); abrirLojaRecompensas();">
+          <div class="ico-mini loja">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9.5" width="16" height="10.5" rx="1.6"/><path d="M4 13.5h16"/><path d="M12 9.5v10.5"/><path d="M12 9.5c-1.6 0-4-.7-4-3.1C8 4.7 9 4 10 4c1.5 0 2 2 2 5.5"/><path d="M12 9.5c1.6 0 4-.7 4-3.1 0-1.7-1-2.4-2-2.4-1.5 0-2 2-2 5.5"/></svg>
+          </div>
+          <div><b data-i18n="atalho_loja_titulo">Lojinha Cabana</b><small data-i18n="atalho_loja_sub">Troque aqui seus pontos por itens</small></div>
+        </div>
+      </div>
+    </div>
     <div class="avatar-wrap" style="position:relative;">
       <div class="avatar" title="" onclick="toggleAvatarMenu()">?</div>
       <div id="avatarMenu" style="display:none; position:absolute; right:0; top:48px; background:var(--paper); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); width:200px; padding:8px; z-index:60;">
         <div id="avatarMenuInfo" style="padding:10px 12px; font-size:12.5px; color:var(--ink-soft); border-bottom:1px solid var(--line); margin-bottom:6px;"><b style="color:var(--ink);">&nbsp;</b><br>&nbsp;</div>
         <div id="menuAdminBtn" onclick="location.href='admin.html'" style="display:none; padding:10px 12px; font-size:13.5px; font-weight:700; border-radius:8px; cursor:pointer;" data-i18n="menu_admin">🛠️ Painel Admin</div>
-        <div id="menuEquipeBtn" onclick="abrirMinhaEquipe()" style="display:none; padding:10px 12px; font-size:13.5px; font-weight:700; border-radius:8px; cursor:pointer;" data-i18n="menu_equipe">👥 Minha equipe</div>
         <div onclick="abrirMeusCertificados()" style="padding:10px 12px; font-size:13.5px; font-weight:600; border-radius:8px; cursor:pointer;" data-i18n="menu_certificados">🏆 Meus certificados</div>
         <div onclick="abrirRanking()" style="padding:10px 12px; font-size:13.5px; font-weight:600; border-radius:8px; cursor:pointer;" data-i18n="menu_ranking">🏅 Ranking Cabana</div>
-        <div id="menuLojaBtn" onclick="abrirLojaRecompensas()" style="display:none; padding:10px 12px; font-size:13.5px; font-weight:600; border-radius:8px; cursor:pointer;" data-i18n="menu_loja">🎁 Trocar pontos</div>
         <div onclick="fazerLogout()" style="padding:10px 12px; font-size:13.5px; font-weight:600; color:var(--ink-soft); border-radius:8px; cursor:pointer;" data-i18n="menu_sair">🚪 Sair</div>
       </div>
     </div>
@@ -641,6 +779,13 @@
     <div class="avatares-mini"><span>🥇</span><span>🥈</span><span>🥉</span></div>
     <div class="cta"><img src="data:image/png;base64,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"><span data-i18n="ver_ranking">Ver ranking</span></div>
   </div>
+  <!-- ⚠ Os cards grandes "equipe-teaser"/"loja-teaser" que ficavam aqui foram substituídos pelo
+       ícone de atalhos no topbar (ver .grid-ico / #miniDropdownAtalhos, ao lado do avatar) —
+       pedido da Nayuri pra deixar o ranking como a única "estrela" desta seção, com equipe/lojinha
+       virando um atalho pequeno e sempre visível em vez de um banner grande. As classes CSS
+       .equipe-teaser/.loja-teaser e os IDs equipeTeaserCard/lojaTeaserCard/equipeTeaserSub/
+       lojaTeaserSub deixaram de existir — se algo antigo ainda referenciar esses IDs, é sinal de
+       código órfão desta migração, não de bug novo. -->
 </section>
 
 <section class="block" id="minhaTrilhaSection" style="display:none;">
@@ -784,35 +929,32 @@
     </div>
     <div style="padding:16px 24px; overflow:auto;">
       <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 14px;" data-i18n="minha_equipe_desc">Só o progresso de treinamento de quem tem você cadastrado como gestor. Ordenado por quem está mais atrasado primeiro.</p>
-      <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; font-size:13px;">
-          <thead>
-            <tr style="text-align:left; border-bottom:2px solid var(--line);">
-              <th style="padding:8px 10px;" data-i18n="col_nome">Nome</th>
-              <th style="padding:8px 10px;" data-i18n="col_cargo">Cargo</th>
-              <th style="padding:8px 10px;" data-i18n="col_concluidos">Concluídos</th>
-              <th style="padding:8px 10px;" data-i18n="col_reprovados">Reprovados</th>
-              <th style="padding:8px 10px;" data-i18n="col_vencidos">Vencidos</th>
-              <th style="padding:8px 10px;" data-i18n="col_situacao">Situação</th>
-            </tr>
-          </thead>
-          <tbody id="equipeTableBody">
-            <tr><td colspan="6" style="text-align:center; color:var(--ink-soft); padding:20px;" data-i18n="carregando">Carregando…</td></tr>
-          </tbody>
-        </table>
+      <div class="legenda-chips-equipe">
+        <span><i style="background:#B4462B;"></i> <span data-i18n="legenda_chip_vencido">vencido</span></span>
+        <span><i style="background:#D89840;"></i> <span data-i18n="legenda_chip_reprovado">reprovado</span></span>
+        <span><i style="background:rgba(30,26,20,0.35);"></i> <span data-i18n="legenda_chip_pendente">pendente</span></span>
+      </div>
+      <div class="header-tabela-equipe">
+        <span></span><span data-i18n="equipe_col_pessoa">Pessoa</span><span data-i18n="equipe_col_progresso">Progresso</span><span data-i18n="equipe_col_pendencias">Pendências</span><span data-i18n="equipe_col_situacao">Situação</span>
+      </div>
+      <div id="equipeCardsLista">
+        <p style="text-align:center; color:var(--ink-soft); padding:20px; font-size:13.5px;" data-i18n="carregando">Carregando…</p>
       </div>
     </div>
   </div>
 </div>
 
 <div id="modalLoja" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:92;">
-  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(560px,92vw); max-height:82vh; display:flex; flex-direction:column; overflow:hidden;">
-    <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
-      <h3 style="margin:0; font-family:var(--display); font-weight:400;" data-i18n="loja_titulo">🎁 Trocar pontos</h3>
-      <button onclick="closeModal('modalLoja')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(880px,94vw); max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div style="padding:20px 24px 14px; border-bottom:1px solid var(--line);">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <h3 style="margin:0; font-family:var(--display); font-weight:400;" data-i18n="loja_titulo">🎁 Lojinha Cabana</h3>
+        <button onclick="closeModal('modalLoja')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
+      </div>
+      <div id="lojaMeusPontos" style="display:inline-flex; align-items:center; gap:6px; background:rgba(79,156,64,0.13); color:var(--green-dark); font-weight:800; font-size:12.5px; padding:6px 12px; border-radius:100px;"></div>
+      <div class="loja-cat-rail" id="lojaCatRail"></div>
     </div>
-    <div style="padding:16px 24px; overflow-y:auto;">
-      <div id="lojaMeusPontos" style="font-size:13.5px; font-weight:700; margin-bottom:14px;"></div>
+    <div style="padding:16px 24px 20px; overflow-y:auto;">
       <div id="lojaItensLista"><p style="color:var(--ink-soft); font-size:13.5px;" data-i18n="carregando">Carregando…</p></div>
     </div>
   </div>
@@ -1080,15 +1222,58 @@ var I18N = {
   col_reprovados: { pt: 'Reprovados', es: 'Reprobados' },
   col_vencidos: { pt: 'Vencidos', es: 'Vencidos' },
   col_situacao: { pt: 'Situação', es: 'Situación' },
-  situacao_emdia: { pt: 'Em dia', es: 'Al día' },
+  situacao_completo: { pt: 'Completo', es: 'Completo' },
+  situacao_emandamento: { pt: 'Em andamento', es: 'En curso' },
   situacao_atencao: { pt: 'Atenção', es: 'Atención' },
   situacao_critico: { pt: 'Crítico', es: 'Crítico' },
   situacao_nunca: { pt: 'Nunca acessou', es: 'Nunca ingresó' },
   equipe_vazia: { pt: 'Você ainda não tem ninguém na sua equipe cadastrado.', es: 'Todavía no tienes a nadie registrado en tu equipo.' },
   equipe_erro: { pt: 'Não foi possível carregar sua equipe agora. Tenta de novo em alguns segundos.', es: 'No fue posible cargar tu equipo ahora. Intenta de nuevo en unos segundos.' },
+  equipe_sem_treinos: { pt: 'Sem treinamentos aplicáveis', es: 'Sin entrenamientos aplicables' },
   carregando: { pt: 'Carregando…', es: 'Cargando…' },
 
-  loja_titulo: { pt: '🎁 Trocar pontos', es: '🎁 Canjear puntos' },
+  equipe_teaser_titulo: { pt: '👥 Minha equipe', es: '👥 Mi equipo' },
+  equipe_teaser_cta: { pt: 'Ver equipe →', es: 'Ver equipo →' },
+  equipe_teaser_pessoa: { pt: 'pessoa na sua equipe · toque pra ver quem está atrasado', es: 'persona en tu equipo · toca para ver quién está atrasado' },
+  equipe_teaser_pessoas: { pt: 'pessoas na sua equipe · toque pra ver quem está atrasado', es: 'personas en tu equipo · toca para ver quién está atrasado' },
+  loja_teaser_titulo: { pt: '🎁 Troque seus pontos', es: '🎁 Canjea tus puntos' },
+  loja_teaser_cta: { pt: 'Ver lojinha →', es: 'Ver tienda →' },
+  loja_teaser_sub_padrao: { pt: 'Troque os pontos que você já ganhou por recompensas de verdade.', es: 'Canjea los puntos que ya ganaste por recompensas de verdad.' },
+  // ---- atalho único no topbar (setembro/2026), substituiu os teasers acima ----
+  atalho_equipe_titulo: { pt: 'Minha equipe', es: 'Mi equipo' },
+  atalho_loja_titulo: { pt: 'Lojinha Cabana', es: 'Tienda Cabana' },
+  atalho_loja_sub: { pt: 'Troque aqui seus pontos por itens', es: 'Canjea aquí tus puntos por artículos' },
+  atalho_equipe_pessoa_atencao: { pt: 'pessoa precisa de atenção', es: 'persona necesita atención' },
+  atalho_equipe_pessoas_atencao: { pt: 'pessoas precisam de atenção', es: 'personas necesitan atención' },
+  atalho_equipe_tudo_em_dia: { pt: 'Todo mundo em dia 🎉', es: '¡Todos al día! 🎉' },
+  // ---- painel do gestor: nome do curso em vez de só contagem (setembro/2026) ----
+  chip_vencido: { pt: 'vencido', es: 'vencido' },
+  chip_reprovado: { pt: 'reprovado', es: 'reprobado' },
+  chip_pendente: { pt: 'pendente', es: 'pendiente' },
+  legenda_chip_vencido: { pt: 'vencido', es: 'vencido' },
+  legenda_chip_reprovado: { pt: 'reprovado', es: 'reprobado' },
+  legenda_chip_pendente: { pt: 'pendente', es: 'pendiente' },
+  equipe_col_pessoa: { pt: 'Pessoa', es: 'Persona' },
+  equipe_col_progresso: { pt: 'Progresso', es: 'Progreso' },
+  equipe_col_pendencias: { pt: 'Pendências', es: 'Pendientes' },
+  equipe_col_situacao: { pt: 'Situação', es: 'Situación' },
+  // ---- lojinha redesenhada: categorias + confirmação (setembro/2026) ----
+  loja_cat_todos: { pt: 'Todos', es: 'Todos' },
+  loja_cat_comida: { pt: '🍔 Comida', es: '🍔 Comida' },
+  loja_cat_produtos: { pt: '🧢 Produtos', es: '🧢 Productos' },
+  loja_cat_folgas: { pt: '🌴 Folgas', es: '🌴 Días libres' },
+  loja_faltam_pts: { pt: 'faltam {n} pts', es: 'faltan {n} pts' },
+  loja_confirmar_titulo: { pt: 'Confirmar troca', es: 'Confirmar canje' },
+  loja_cancelar: { pt: 'Cancelar', es: 'Cancelar' },
+  loja_saldo_agora: { pt: 'Agora', es: 'Ahora' },
+  loja_saldo_depois: { pt: 'Depois', es: 'Después' },
+  loja_aviso_fila: { pt: '📋 Depois de confirmar, seu pedido entra na fila da loja pra ser providenciado — você recebe um aviso quando estiver pronto.', es: '📋 Después de confirmar, tu pedido entra en la fila de la tienda para ser preparado — recibirás un aviso cuando esté listo.' },
+  loja_pedido_enviado: { pt: 'Pedido enviado!', es: '¡Pedido enviado!' },
+  loja_pedido_enviado_msg: { pt: '"{item}" já está na fila da loja. Assim que estiver pronto, você recebe um aviso.', es: '"{item}" ya está en la fila de la tienda. En cuanto esté listo, recibirás un aviso.' },
+  loja_saldo_atual: { pt: 'Saldo atual', es: 'Saldo actual' },
+  loja_voltar: { pt: 'Voltar pra loja', es: 'Volver a la tienda' },
+
+  loja_titulo: { pt: '🎁 Lojinha Cabana', es: '🎁 Tienda Cabana' },
   voce_tem_pontos: { pt: 'Você tem', es: 'Tienes' },
   pontos_pra_trocar: { pt: 'pontos pra trocar', es: 'puntos para canjear' },
   trocar: { pt: 'Trocar', es: 'Canjear' },
@@ -1535,6 +1720,11 @@ document.addEventListener('click', function(e){
   const menu = document.getElementById('avatarMenu');
   if(wrap && menu && !wrap.contains(e.target)){ menu.style.display = 'none'; }
 });
+// fecha o miniatura do ícone de atalhos (Minha equipe / Lojinha Cabana) se a pessoa tocar fora dele
+document.addEventListener('click', function(e){
+  const dd = document.getElementById('miniDropdownAtalhos');
+  if (dd && dd.classList.contains('on') && !e.target.closest('#atalhosIcoWrap')) dd.classList.remove('on');
+});
 
 /* ===== trilha (agrupamento de cursos por categoria) ===== */
 function openTrilha(nomeCategoria){
@@ -1787,14 +1977,38 @@ function configurarGateConclusao(c){
       if (media.duration && media.currentTime >= media.duration - 1) liberar();
     });
   } else {
-    // pdf, link/canva sem prova: o conteúdo abre numa aba separada — não tem como saber se a
+    // pdf, link/html/canva sem prova: o conteúdo abre numa aba separada — não tem como saber se a
     // pessoa realmente leu/assistiu lá dentro. O gate possível aqui é mais fraco de propósito
     // (precisa abrir o conteúdo pelo menos uma vez e esperar alguns segundos antes de poder
     // marcar como concluído) — não impede alguém decidido a burlar, mas evita o clique direto
     // sem nem abrir nada, que era o problema real reportado.
+    //
+    // ⚠ Guarda o momento do clique em localStorage (chave por cpf+curso), não só numa variável em
+    // memória — porque abrirCurso() é chamado de novo (redesenhando #screen-curso do zero) quando a
+    // aba da Home volta a ficar visível depois de abrir o conteúdo numa aba nova (ver
+    // "visibilitychange" mais abaixo), E porque no celular (principalmente Safari no iOS) é comum
+    // o navegador recarregar do zero uma aba que ficou tempo demais em segundo plano — o que
+    // acontece bem fácil enquanto a pessoa está lendo o conteúdo aberto na outra aba. Uma variável
+    // só em `window.*` sobrevive ao primeiro caso mas não ao segundo (reload apaga toda a memória
+    // JS); localStorage sobrevive aos dois, porque é a mesma origem/site. Era exatamente esse
+    // segundo caso — reload no celular perdendo a lembrança do clique — que fazia a Nayuri ver o
+    // botão nunca liberar mesmo depois de abrir o conteúdo e esperar.
+    const chaveGate = `cabanaGateConteudo_${window.currentCpf || ''}_${c.id}`;
+    let clicadoEm = null;
+    try { clicadoEm = parseInt(localStorage.getItem(chaveGate), 10) || null; } catch(e) { /* localStorage indisponível: segue sem persistir, sem travar o resto */ }
+    if (clicadoEm) {
+      const faltam = 15000 - (Date.now() - clicadoEm);
+      if (faltam <= 0) { liberar(); }
+      else {
+        if (hint) hint.textContent = t('autohint_gate_aguardando');
+        setTimeout(liberar, faltam);
+      }
+      return;
+    }
     const link = document.querySelector('#screen-curso a[target="_blank"]');
     if (!link) { liberar(); return; }
     link.addEventListener('click', function(){
+      try { localStorage.setItem(chaveGate, String(Date.now())); } catch(e) {}
       if (hint) hint.textContent = t('autohint_gate_aguardando');
       setTimeout(liberar, 15000);
     }, { once: true });
@@ -1921,7 +2135,7 @@ function configurarGateConclusao(c){
         Pontos: pontosGanhos - (dadosAtuais.PontosGastos || 0),
       }, { merge: true });
 
-      return { sequenciaAtual, melhorSequencia, pontosGanhos, cursosConcluidos };
+      return { sequenciaAtual, melhorSequencia, pontosGanhos, cursosConcluidos, pontosGastos: dadosAtuais.PontosGastos || 0 };
     } catch (err) {
       console.error('Erro ao atualizar pontos/sequência/ranking:', err);
       return null;
@@ -1953,7 +2167,7 @@ function configurarGateConclusao(c){
 
   // mapeia os campos reais gravados pelo admin.html (PascalCase) pro formato interno
   // que as funções de render deste arquivo já esperam (titulo, descricao, capa...)
-  const TIPOS_CONHECIDOS = ['video', 'audio', 'pdf', 'link', 'canva'];
+  const TIPOS_CONHECIDOS = ['video', 'audio', 'pdf', 'link', 'html', 'canva'];
   function mapCursoDoc(d){
     const data = d.data();
     const trilha = TRILHAS.find(t => t.nome === data.Categoria);
@@ -2146,6 +2360,24 @@ function configurarGateConclusao(c){
     }, (err) => console.error('Erro ao carregar banners:', err));
   }
 
+  // Ordem usada em toda lista de cursos (Em destaque, categoria, busca): (1) obrigatório pendente
+  // sempre na frente — prioridade máxima, já era assim; (2) dentro de cada grupo, curso ainda não
+  // concluído (novo, em andamento, reprovado ou vencido) vem antes do já concluído — pedido da
+  // Nayuri pra "Em destaque" não enterrar o que falta fazer debaixo do que a pessoa já terminou
+  // há tempos; (3) empate: respeita o campo "Ordem" cadastrado no admin.
+  function ordenarCursos(){
+    if (!window.CURSOS) return;
+    window.CURSOS.sort((a, b) => {
+      const prioA = (a.obrigatorio && !a.concluido) ? 0 : 1;
+      const prioB = (b.obrigatorio && !b.concluido) ? 0 : 1;
+      if (prioA !== prioB) return prioA - prioB;
+      const concA = a.concluido ? 1 : 0;
+      const concB = b.concluido ? 1 : 0;
+      if (concA !== concB) return concA - concB;
+      return (a.ordem || 999) - (b.ordem || 999);
+    });
+  }
+
   async function carregarCursosEProgresso(cpf){
     // 1) cursos publicados, vindos da coleção 'cursos' (mesma coleção que o admin.html grava),
     //    via onSnapshot pra refletir uma publicação nova do admin sem precisar recarregar a página
@@ -2153,9 +2385,9 @@ function configurarGateConclusao(c){
       query(collection(db, 'cursos'), where('Status', '==', 'publicado')),
       (snap) => {
         window.CURSOS = snap.docs.map(mapCursoDoc).filter(colaboradorPodeVer);
-        // cursos obrigatórios sempre aparecem primeiro, pra deixar claro o que é prioridade
-        window.CURSOS.sort((a, b) => (a.obrigatorio ? 0 : 1) - (b.obrigatorio ? 0 : 1));
+        ordenarCursos();
         aplicarProgressoEmCursos(cpf).then(() => {
+          ordenarCursos(); // reordena de novo agora que c.concluido reflete o progresso de verdade
           window.cursosCarregados = true;
           if (window.renderCards) window.renderCards();
           if (window.renderJornada) window.renderJornada();
@@ -2207,6 +2439,7 @@ function configurarGateConclusao(c){
     const cursoAbertoAntes = window.__cursoAbertoId ? window.CURSOS.find(x => x.id === window.__cursoAbertoId) : null;
     const jaEstavaConcluidoAntes = cursoAbertoAntes ? !!cursoAbertoAntes.concluido : null;
     aplicarProgressoEmCursos(currentCpf).then(() => {
+      ordenarCursos(); // um curso que acabou de ser concluído desce na lista "Em destaque" sozinho
       if (window.renderCards) window.renderCards();
       if (window.renderJornada) window.renderJornada();
       const telaCurso = document.getElementById('screen-curso');
@@ -2333,84 +2566,169 @@ function configurarGateConclusao(c){
     return passaCargo && passaLocal;
   }
 
+  // ---- ícone único de atalhos no topbar (Minha equipe / Lojinha Cabana), setembro/2026 ----
+  // Mostra/esconde o ícone e cada item do miniatura, dependendo do que se aplica à pessoa —
+  // chamada tanto por iniciarPainelGestor() quanto por iniciarLojaVisibilidade(), porque cada uma
+  // só sabe sobre a própria metade (equipe ou loja).
+  function atualizarVisibilidadeAtalhoIcone(){
+    const temEquipe = !!(window.MINHA_EQUIPE && window.MINHA_EQUIPE.length);
+    const temLoja = !!window.__lojaAtiva;
+    const itemEquipe = document.getElementById('itemAtalhoEquipe');
+    const itemLoja = document.getElementById('itemAtalhoLoja');
+    const wrap = document.getElementById('atalhosIcoWrap');
+    if (itemEquipe) itemEquipe.style.display = temEquipe ? 'flex' : 'none';
+    if (itemLoja) itemLoja.style.display = temLoja ? 'flex' : 'none';
+    if (wrap) wrap.style.display = (temEquipe || temLoja) ? 'flex' : 'none';
+  }
+
+  // bolinha vermelha no ícone: número de pessoas da equipe com pelo menos um curso vencido ou
+  // reprovado agora — some sozinha (hidden) quando ninguém precisa de atenção.
+  function atualizarBadgeAtalhoEquipe(linhas){
+    const qtd = linhas.filter(l => l.cursosVencidos.length || l.cursosReprovados.length).length;
+    const badge = document.getElementById('atalhosBadge');
+    const status = document.getElementById('atalhoEquipeStatus');
+    if (badge) { badge.hidden = qtd === 0; badge.textContent = qtd; }
+    if (status) {
+      status.textContent = qtd > 0
+        ? `${qtd} ${qtd === 1 ? t('atalho_equipe_pessoa_atencao') : t('atalho_equipe_pessoas_atencao')}`
+        : t('atalho_equipe_tudo_em_dia');
+      status.className = qtd > 0 ? 'alerta' : '';
+    }
+  }
+
+  // ===== painel do gestor: só leitura do progresso de quem tem esse cpf como CpfGestor =====
+  function cursoAplicavelAColaborador(curso, colab){
+    const restrito = curso.CargosEspecificos === true && Array.isArray(curso.Cargos) && curso.Cargos.length > 0;
+    const passaCargo = !restrito || curso.Cargos.includes(colab.Cargo);
+    const localRestrito = curso.LocalEspecifico === true && ((Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.length) || (Array.isArray(curso.RegionaisPermitidas) && curso.RegionaisPermitidas.length));
+    const passaLocal = !localRestrito ||
+      (Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.includes(colab.Loja)) ||
+      (Array.isArray(curso.RegionaisPermitidas) && curso.RegionaisPermitidas.includes(colab.Regional));
+    return passaCargo && passaLocal;
+  }
+
+  // Busca cursos + progresso da equipe inteira e monta uma linha por pessoa, já com o NOME de
+  // cada curso vencido/reprovado/pendente (não só a contagem — pedido da Nayuri depois de ver a
+  // prévia: "queria ver quais ele tá pendente"). Extraído como função própria porque duas telas
+  // precisam do mesmo cálculo: o badge do ícone (só a contagem de quem precisa de atenção) e o
+  // modal "Minha equipe" (a lista inteira, com os nomes).
+  async function calcularEquipeDetalhada(){
+    const equipe = window.MINHA_EQUIPE || [];
+    if (!equipe.length) return [];
+    const cursosSnap = await getDocs(query(collection(db, 'cursos'), where('Status', '==', 'publicado')));
+    const cursosPublicados = cursosSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    const cpfs = equipe.map(c => c.cpf);
+    const progressoPorPessoa = {};
+    // consulta 'in' do Firestore aceita até 30 valores por vez — separa em lotes se o time for maior que isso
+    const lotes = [];
+    for (let i = 0; i < cpfs.length; i += 30) lotes.push(cpfs.slice(i, i + 30));
+    for (const lote of lotes) {
+      if (!lote.length) continue;
+      const progSnap = await getDocs(query(collection(db, 'progresso'), where('Cpf', 'in', lote)));
+      progSnap.forEach(d => {
+        const p = d.data();
+        if (!p.Cpf || !p.CursoId) return;
+        if (!progressoPorPessoa[p.Cpf]) progressoPorPessoa[p.Cpf] = {};
+        progressoPorPessoa[p.Cpf][p.CursoId] = p;
+      });
+    }
+
+    const agora = new Date();
+    return equipe.map(c => {
+      const aplicaveis = cursosPublicados.filter(cu => cursoAplicavelAColaborador(cu, c));
+      const progDaPessoa = progressoPorPessoa[c.cpf] || {};
+      let concluidos = 0;
+      const cursosVencidos = [], cursosReprovados = [], cursosPendentes = [];
+      aplicaveis.forEach(cu => {
+        const p = progDaPessoa[cu.id];
+        const titulo = cu.Titulo || '(sem título)';
+        if (p && p.Status === 'reprovado') { cursosReprovados.push(titulo); return; }
+        if (p && p.Status === 'concluido') {
+          const venceu = cu.ValidadeMeses && p.ConcluidoEm && p.ConcluidoEm.toDate
+            ? mesesEntre(p.ConcluidoEm.toDate(), agora) >= cu.ValidadeMeses : false;
+          if (venceu) cursosVencidos.push(titulo); else concluidos++;
+          return;
+        }
+        // sem doc de progresso (nunca começou) ou em_andamento: ainda pendente
+        cursosPendentes.push(titulo);
+      });
+      const total = aplicaveis.length;
+      const pct = total ? Math.round((concluidos / total) * 100) : 0;
+      let diasSemAcessar = null;
+      if (c.UltimoAcesso && c.UltimoAcesso.toDate) diasSemAcessar = Math.floor((agora - c.UltimoAcesso.toDate()) / (1000 * 60 * 60 * 24));
+      // ⚠ Antes, "situação" olhava só os dias desde o último acesso — então alguém que tinha
+      // acabado de logar mas não concluído nada aparecia como "Em dia", o que confundia (a
+      // Nayuri apontou isso: "diz que ela ta em dia sendo que ta devendo tudo"). Agora leva o
+      // % concluído em conta primeiro: só é "Completo" quem realmente terminou tudo que se
+      // aplica a ele; "Em dia" virou "Em andamento" pra quem acessou recente mas ainda tem
+      // treinamento pendente — não promete algo que não é verdade.
+      let situacao, cor;
+      if (total > 0 && pct === 100) { situacao = t('situacao_completo'); cor = '#386F2D'; }
+      else if (diasSemAcessar === null) { situacao = t('situacao_nunca'); cor = '#B4462B'; }
+      else if (diasSemAcessar > 30) { situacao = t('situacao_critico'); cor = '#B4462B'; }
+      else if (diasSemAcessar > 15) { situacao = t('situacao_atencao'); cor = '#D89840'; }
+      else { situacao = t('situacao_emandamento'); cor = '#386F2D'; }
+      return { nome: c.Nome || '—', cargo: c.Cargo || '—', concluidos, total, pct, cursosVencidos, cursosReprovados, cursosPendentes, situacao, cor };
+    }).sort((a, b) => a.pct - b.pct);
+  }
+
   async function iniciarPainelGestor(cpf){
     try {
       const snap = await getDocs(query(collection(db, 'colaboradores'), where('CpfGestor', '==', cpf)));
       const equipe = snap.docs.map(d => ({ cpf: d.id, ...d.data() })).filter(c => c.Status !== 'inativo');
       window.MINHA_EQUIPE = equipe;
-      const menuItem = document.getElementById('menuEquipeBtn');
-      if (menuItem) menuItem.style.display = equipe.length ? 'block' : 'none';
+      atualizarVisibilidadeAtalhoIcone();
+      if (equipe.length) {
+        const linhas = await calcularEquipeDetalhada();
+        window.__equipeDetalhada = linhas;
+        atualizarBadgeAtalhoEquipe(linhas);
+      }
     } catch (err) {
       console.error('Erro ao verificar equipe (painel do gestor):', err);
     }
   }
 
-  window.abrirMinhaEquipe = async function(){
-    const equipe = window.MINHA_EQUIPE || [];
-    const corpo = document.getElementById('equipeTableBody');
+  // renderiza a lista de pessoas dentro do modal — separado do fetch pra poder ser chamado de
+  // novo (ex.: depois de recalcular) sem precisar reconsultar o Firestore
+  function renderizarListaEquipe(linhas){
+    const corpo = document.getElementById('equipeCardsLista');
     if (!corpo) return;
-    corpo.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--ink-soft); padding:20px;">${t('carregando')}</td></tr>`;
+    corpo.innerHTML = linhas.length ? linhas.map(l => {
+      const iniciais = l.nome.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase() || '?';
+      const chipsVR = [
+        ...l.cursosVencidos.map(n => `<span class="chip-equipe chip-vencido">${n} · ${t('chip_vencido')}</span>`),
+        ...l.cursosReprovados.map(n => `<span class="chip-equipe chip-reprovado">${n} · ${t('chip_reprovado')}</span>`),
+      ];
+      // pendentes: só nomeia até 2, o resto vira "+N" pra não lotar o cartão/linha
+      const pendentesVisiveis = l.cursosPendentes.slice(0, 2).map(n => `<span class="chip-equipe chip-pendente">${n} · ${t('chip_pendente')}</span>`);
+      const resto = l.cursosPendentes.length - pendentesVisiveis.length;
+      if (resto > 0) pendentesVisiveis.push(`<span class="chip-equipe chip-pendente">+${resto} ${t('chip_pendente')}${resto > 1 ? 's' : ''}</span>`);
+      const chips = [...chipsVR, ...pendentesVisiveis].join('');
+      return `<div class="linha-pessoa">
+        <div class="cel-avatar">${iniciais}</div>
+        <div class="cel-nome"><b>${l.nome}</b><span>${l.cargo}</span></div>
+        <div class="cel-progresso"><div class="barra"><div style="width:${l.pct}%"></div></div><b>${l.total ? `${l.concluidos}/${l.total}` : t('equipe_sem_treinos')}</b></div>
+        <div class="cel-chips">${chips || '<span style="font-size:11px; color:var(--ink-soft);">—</span>'}</div>
+        <div class="cel-situacao" style="color:${l.cor}; background:${l.cor}1F;">${l.situacao}</div>
+      </div>`;
+    }).join('')
+      : `<p style="text-align:center; color:var(--ink-soft); padding:20px; font-size:13.5px;">${t('equipe_vazia')}</p>`;
+  }
+
+  window.abrirMinhaEquipe = async function(){
+    const corpo = document.getElementById('equipeCardsLista');
+    if (!corpo) return;
+    corpo.innerHTML = `<p style="text-align:center; color:var(--ink-soft); padding:20px; font-size:13.5px;">${t('carregando')}</p>`;
     if (window.openModal) window.openModal('modalEquipe');
     try {
-      const cursosSnap = await getDocs(query(collection(db, 'cursos'), where('Status', '==', 'publicado')));
-      const cursosPublicados = cursosSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-      const cpfs = equipe.map(c => c.cpf);
-      const progressoPorPessoa = {};
-      // consulta 'in' do Firestore aceita até 30 valores por vez — separa em lotes se o time for maior que isso
-      const lotes = [];
-      for (let i = 0; i < cpfs.length; i += 30) lotes.push(cpfs.slice(i, i + 30));
-      for (const lote of lotes) {
-        if (!lote.length) continue;
-        const progSnap = await getDocs(query(collection(db, 'progresso'), where('Cpf', 'in', lote)));
-        progSnap.forEach(d => {
-          const p = d.data();
-          if (!p.Cpf || !p.CursoId) return;
-          if (!progressoPorPessoa[p.Cpf]) progressoPorPessoa[p.Cpf] = {};
-          progressoPorPessoa[p.Cpf][p.CursoId] = p;
-        });
-      }
-
-      const agora = new Date();
-      const linhas = equipe.map(c => {
-        const aplicaveis = cursosPublicados.filter(cu => cursoAplicavelAColaborador(cu, c));
-        const progDaPessoa = progressoPorPessoa[c.cpf] || {};
-        let concluidos = 0, reprovados = 0, vencidos = 0;
-        aplicaveis.forEach(cu => {
-          const p = progDaPessoa[cu.id];
-          if (!p) return;
-          if (p.Status === 'reprovado') reprovados++;
-          else if (p.Status === 'concluido') {
-            const venceu = cu.ValidadeMeses && p.ConcluidoEm && p.ConcluidoEm.toDate
-              ? mesesEntre(p.ConcluidoEm.toDate(), agora) >= cu.ValidadeMeses : false;
-            if (venceu) vencidos++; else concluidos++;
-          }
-        });
-        const total = aplicaveis.length;
-        const pct = total ? Math.round((concluidos / total) * 100) : 0;
-        let diasSemAcessar = null;
-        if (c.UltimoAcesso && c.UltimoAcesso.toDate) diasSemAcessar = Math.floor((agora - c.UltimoAcesso.toDate()) / (1000 * 60 * 60 * 24));
-        let situacao, cor;
-        if (diasSemAcessar === null) { situacao = t('situacao_nunca'); cor = '#B4462B'; }
-        else if (diasSemAcessar <= 15) { situacao = t('situacao_emdia'); cor = '#386F2D'; }
-        else if (diasSemAcessar <= 30) { situacao = t('situacao_atencao'); cor = '#D89840'; }
-        else { situacao = t('situacao_critico'); cor = '#B4462B'; }
-        return { nome: c.Nome || '—', cargo: c.Cargo || '—', concluidos, total, pct, reprovados, vencidos, situacao, cor };
-      }).sort((a, b) => a.pct - b.pct);
-
-      corpo.innerHTML = linhas.length ? linhas.map(l => `
-        <tr style="border-bottom:1px solid var(--line);">
-          <td style="padding:8px 10px;">${l.nome}</td>
-          <td style="padding:8px 10px;">${l.cargo}</td>
-          <td style="padding:8px 10px;">${l.concluidos}/${l.total} (${l.pct}%)</td>
-          <td style="padding:8px 10px;">${l.reprovados ? `<span style="color:#B4462B; font-weight:700;">${l.reprovados}</span>` : '0'}</td>
-          <td style="padding:8px 10px;">${l.vencidos ? `<span style="color:#D89840; font-weight:700;">${l.vencidos}</span>` : '0'}</td>
-          <td style="padding:8px 10px;"><span style="color:${l.cor}; font-weight:700;">${l.situacao}</span></td>
-        </tr>`).join('')
-        : `<tr><td colspan="6" style="text-align:center; color:var(--ink-soft); padding:20px;">${t('equipe_vazia')}</td></tr>`;
+      const linhas = await calcularEquipeDetalhada();
+      window.__equipeDetalhada = linhas;
+      atualizarBadgeAtalhoEquipe(linhas);
+      renderizarListaEquipe(linhas);
     } catch (err) {
       console.error('Erro ao carregar minha equipe:', err);
-      corpo.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#B4462B; padding:20px;">${t('equipe_erro')}</td></tr>`;
+      corpo.innerHTML = `<p style="text-align:center; color:#B4462B; padding:20px; font-size:13.5px;">${t('equipe_erro')}</p>`;
     }
   };
 
@@ -2490,6 +2808,7 @@ function configurarGateConclusao(c){
       c.reprovado = !aprovado;
       c.progresso = aprovado ? 100 : 50;
       c.ultimaNota = nota;
+      if (aprovado) ordenarCursos(); // curso aprovado desce na lista "Em destaque" sozinho
       if (window.renderCards) window.renderCards();
       if (window.renderJornada) window.renderJornada();
       if (window.abrirCurso) window.abrirCurso(c.id);
@@ -2523,8 +2842,10 @@ function configurarGateConclusao(c){
         ConcluidoEm: serverTimestamp()
       }, { merge: true });
 
+      try { localStorage.removeItem(`cabanaGateConteudo_${currentCpf}_${cursoId}`); } catch(e) {}
       const c = window.CURSOS && window.CURSOS.find(x => x.id === cursoId);
       if (c){ c.concluido = true; c.progresso = 100; c.vencido = false; }
+      ordenarCursos(); // curso concluído desce na lista "Em destaque" sozinho
       if (window.renderCards) window.renderCards();
       if (window.renderJornada) window.renderJornada();
       if (c && window.abrirCurso) window.abrirCurso(cursoId); // reabre a tela do curso já com o botão atualizado
@@ -2625,9 +2946,67 @@ function configurarGateConclusao(c){
   function iniciarLojaVisibilidade(){
     onSnapshot(doc(db, 'configuracoes', 'loja'), (snap) => {
       window.__lojaAtiva = snap.exists() && snap.data().Ativa === true;
-      const btn = document.getElementById('menuLojaBtn');
-      if (btn) btn.style.display = window.__lojaAtiva ? 'block' : 'none';
+      atualizarVisibilidadeAtalhoIcone();
     }, (err) => console.error('Erro ao checar status da loja:', err));
+  }
+
+  // ⚠ atualizarTeaserLoja(saldo) existia pra atualizar o card grande de lojinha que ficava no
+  // corpo da home — removido junto com esse card (setembro/2026, ver .grid-ico no topbar). O
+  // atalho novo mostra uma legenda fixa ("Troque aqui seus pontos por itens", pedido da Nayuri),
+  // não o saldo — o saldo de verdade aparece dentro do próprio modal da lojinha ao abrir.
+
+  // Categorias fixas (Comida/Produtos/Folgas) — combinado com a Nayuri junto com o redesign da
+  // lojinha (setembro/2026). Um item sem `Categoria` cadastrada (itens antigos, de antes desse
+  // campo existir no admin) continua aparecendo normalmente em "Todos", só não entra em nenhum
+  // filtro específico — não quebra nada, só fica "sem categoria" até alguém editar o item no admin.
+  const LOJA_CATEGORIAS = [
+    { id: 'todos', chave: 'loja_cat_todos' },
+    { id: 'comida', chave: 'loja_cat_comida' },
+    { id: 'produtos', chave: 'loja_cat_produtos' },
+    { id: 'folgas', chave: 'loja_cat_folgas' },
+  ];
+
+  function renderizarCatRailLoja(){
+    const rail = document.getElementById('lojaCatRail');
+    if (!rail) return;
+    const atual = window.__lojaState ? window.__lojaState.categoriaAtual : 'todos';
+    rail.innerHTML = LOJA_CATEGORIAS.map(c =>
+      `<div class="loja-chip ${c.id === atual ? 'on' : ''}" onclick="mudarCategoriaLoja('${c.id}')">${t(c.chave)}</div>`
+    ).join('');
+  }
+
+  window.mudarCategoriaLoja = function(id){
+    if (!window.__lojaState) return;
+    window.__lojaState.categoriaAtual = id;
+    renderizarCatRailLoja();
+    renderizarGridLoja();
+  };
+
+  // renderiza só a grade de itens (categoria atual) — chamada na abertura e toda vez que a pessoa
+  // volta da tela de confirmação/sucesso, sem precisar reconsultar o Firestore de novo
+  function renderizarGridLoja(){
+    const elLista = document.getElementById('lojaItensLista');
+    const rail = document.getElementById('lojaCatRail');
+    if (!elLista || !window.__lojaState) return;
+    if (rail) rail.style.display = 'flex';
+    const { itens, saldo, categoriaAtual } = window.__lojaState;
+    const filtrados = categoriaAtual === 'todos' ? itens : itens.filter(it => it.Categoria === categoriaAtual);
+    if (!itens.length) { elLista.innerHTML = `<p style="color:var(--ink-soft); font-size:13.5px;">${t('loja_vazia')}</p>`; return; }
+    elLista.innerHTML = `<div class="loja-grid">${filtrados.map(it => {
+      const daPraTrocar = saldo >= (it.CustoPontos || 0);
+      const catInfo = LOJA_CATEGORIAS.find(c => c.id === it.Categoria);
+      return `<div class="loja-card ${daPraTrocar ? '' : 'sem-saldo'}" onclick="abrirConfirmacaoTroca('${it.id}')">
+        <div class="foto">
+          ${catInfo ? `<span class="cat-tag">${t(catInfo.chave).replace(/^\S+\s/, '')}</span>` : ''}
+          ${it.Foto ? `<img src="${it.Foto}" alt="">` : '🎁'}
+        </div>
+        <div class="info">
+          <b>${it.Nome}</b>
+          <span class="custo">${daPraTrocar ? `${it.CustoPontos} ${t('pontos')}` : t('loja_faltam_pts').replace('{n}', it.CustoPontos - saldo)}</span>
+          <div class="btn-trocar">${t('trocar')}</div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
   }
 
   window.abrirLojaRecompensas = async function(){
@@ -2652,54 +3031,79 @@ function configurarGateConclusao(c){
         .filter(it => it.Estoque == null || it.Estoque > 0)
         .sort((a, b) => (a.CustoPontos || 0) - (b.CustoPontos || 0));
 
-      elLista.innerHTML = itens.length
-        ? itens.map(it => {
-            const daPraTrocar = saldo >= (it.CustoPontos || 0);
-            return `<div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);">
-              <div style="flex:1;">
-                <b style="font-size:14px;">${it.Nome}</b><br>
-                ${it.Descricao ? `<span style="font-size:12px; color:var(--ink-soft);">${it.Descricao}</span><br>` : ''}
-                <span style="font-size:12.5px; font-weight:700; color:var(--green-dark);">${it.CustoPontos} ${t('pontos')}</span>
-              </div>
-              <button class="btn-primary" style="padding:8px 16px; font-size:12.5px; ${daPraTrocar ? '' : 'opacity:.4; cursor:not-allowed;'}" ${daPraTrocar ? `onclick="resgatarItemLoja('${it.id}')"` : 'disabled'}>${t('trocar')}</button>
-            </div>`;
-          }).join('')
-        : `<p style="color:var(--ink-soft); font-size:13.5px;">${t('loja_vazia')}</p>`;
+      window.__lojaState = { itens, saldo, categoriaAtual: 'todos' };
+      renderizarCatRailLoja();
+      renderizarGridLoja();
     } catch (err) {
       console.error('Erro ao carregar loja de recompensas:', err);
       elLista.innerHTML = `<p style="color:#B4462B; font-size:13.5px;">${t('loja_erro')}</p>`;
     }
   };
 
-  window.resgatarItemLoja = async function(itemId){
-    if (!currentCpf) return;
-    try {
-      const [colabSnap, itemSnap] = await Promise.all([
-        getDoc(doc(db, 'colaboradores', currentCpf)),
-        getDoc(doc(db, 'itensLoja', itemId)),
-      ]);
-      if (!itemSnap.exists()) { alert(t('loja_item_indisponivel')); return; }
-      const item = itemSnap.data();
-      const dadosColab = colabSnap.exists() ? colabSnap.data() : {};
-      const saldo = (dadosColab.PontosGanhos || 0) - (dadosColab.PontosGastos || 0);
-      if (saldo < (item.CustoPontos || 0)) { alert(t('loja_pontos_insuficientes')); return; }
-      if (!confirm(t('loja_confirmar_troca').replace('{pontos}', item.CustoPontos).replace('{item}', item.Nome))) return;
+  // tela de confirmação: mostra saldo antes/depois e deixa claro que é um PEDIDO (fila), não uma
+  // troca instantânea — pedido da Nayuri ao ver a prévia do redesign
+  window.abrirConfirmacaoTroca = function(itemId){
+    if (!window.__lojaState) return;
+    const item = window.__lojaState.itens.find(i => i.id === itemId);
+    if (!item) return;
+    window.__itemLojaSelecionado = item;
+    const saldoDepois = window.__lojaState.saldo - (item.CustoPontos || 0);
+    const rail = document.getElementById('lojaCatRail');
+    if (rail) rail.style.display = 'none';
+    document.getElementById('lojaItensLista').innerHTML = `
+      <div class="loja-confirma">
+        <div class="loja-confirma-foto">${item.Foto ? `<img src="${item.Foto}" alt="">` : '🎁'}</div>
+        <div class="loja-confirma-texto">
+          <h4>${item.Nome}</h4>
+          <p class="desc">${item.Descricao || ''}</p>
+          <div class="loja-saldo-compare">
+            <div><div class="num">${window.__lojaState.saldo}</div><div class="lbl">${t('loja_saldo_agora')}</div></div>
+            <div style="font-size:18px; color:var(--ink-soft);">→</div>
+            <div><div class="num" style="color:${saldoDepois < 0 ? '#B4462B' : 'var(--green-dark)'}">${saldoDepois}</div><div class="lbl">${t('loja_saldo_depois')}</div></div>
+          </div>
+          <div class="loja-aviso-fila">${t('loja_aviso_fila')}</div>
+          <div class="loja-botoes">
+            <button class="loja-btn-cancelar" onclick="voltarParaListaLoja()">${t('loja_cancelar')}</button>
+            <button class="loja-btn-confirmar" onclick="confirmarTrocaItem()" ${saldoDepois < 0 ? 'disabled style="opacity:.5;"' : ''}>${t('loja_confirmar_titulo')}</button>
+          </div>
+        </div>
+      </div>`;
+  };
 
+  window.voltarParaListaLoja = function(){
+    window.__itemLojaSelecionado = null;
+    renderizarGridLoja();
+  };
+
+  window.confirmarTrocaItem = async function(){
+    const item = window.__itemLojaSelecionado;
+    if (!item || !currentCpf) return;
+    try {
       const batch = writeBatch(db);
       batch.update(doc(db, 'colaboradores', currentCpf), { PontosGastos: increment(item.CustoPontos || 0) });
       batch.set(doc(collection(db, 'resgates')), {
         Cpf: currentCpf,
         Nome: nomeColaboradorAtual,
         Loja: lojaColaboradorAtual,
-        ItemId: itemId,
+        ItemId: item.id,
         NomeItem: item.Nome,
         CustoPontos: item.CustoPontos || 0,
         Status: 'pendente',
         CriadoEm: serverTimestamp(),
       });
       await batch.commit();
-      alert(t('loja_troca_feita').replace('{item}', item.Nome));
-      window.abrirLojaRecompensas();
+
+      window.__lojaState.saldo -= (item.CustoPontos || 0);
+      const elPontos = document.getElementById('lojaMeusPontos');
+      if (elPontos) elPontos.textContent = `🏆 ${t('voce_tem_pontos')} ${window.__lojaState.saldo} ${t('pontos_pra_trocar')}`;
+
+      document.getElementById('lojaItensLista').innerHTML = `
+        <div class="loja-sucesso">
+          <div class="emoji">🎉</div>
+          <h4>${t('loja_pedido_enviado')}</h4>
+          <p>${t('loja_pedido_enviado_msg').replace('{item}', item.Nome)}<br><br>${t('loja_saldo_atual')}: <b>${window.__lojaState.saldo}</b></p>
+          <button class="loja-btn-voltar" onclick="voltarParaListaLoja()">${t('loja_voltar')}</button>
+        </div>`;
     } catch (err) {
       console.error('Erro ao resgatar item:', err);
       alert(t('loja_erro_trocar'));
