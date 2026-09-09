@@ -2596,17 +2596,6 @@ function configurarGateConclusao(c){
     }
   }
 
-  // ===== painel do gestor: só leitura do progresso de quem tem esse cpf como CpfGestor =====
-  function cursoAplicavelAColaborador(curso, colab){
-    const restrito = curso.CargosEspecificos === true && Array.isArray(curso.Cargos) && curso.Cargos.length > 0;
-    const passaCargo = !restrito || curso.Cargos.includes(colab.Cargo);
-    const localRestrito = curso.LocalEspecifico === true && ((Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.length) || (Array.isArray(curso.RegionaisPermitidas) && curso.RegionaisPermitidas.length));
-    const passaLocal = !localRestrito ||
-      (Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.includes(colab.Loja)) ||
-      (Array.isArray(curso.RegionaisPermitidas) && curso.RegionaisPermitidas.includes(colab.Regional));
-    return passaCargo && passaLocal;
-  }
-
   // Busca cursos + progresso da equipe inteira e monta uma linha por pessoa, já com o NOME de
   // cada curso vencido/reprovado/pendente (não só a contagem — pedido da Nayuri depois de ver a
   // prévia: "queria ver quais ele tá pendente"). Extraído como função própria porque duas telas
