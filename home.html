@@ -2581,10 +2581,13 @@ function configurarGateConclusao(c){
     if (wrap) wrap.style.display = (temEquipe || temLoja) ? 'flex' : 'none';
   }
 
-  // bolinha vermelha no ícone: número de pessoas da equipe com pelo menos um curso vencido ou
-  // reprovado agora — some sozinha (hidden) quando ninguém precisa de atenção.
+  // bolinha vermelha no ícone: número de pessoas da equipe com QUALQUER pendência agora (vencido,
+  // reprovado ou simplesmente ainda não concluído) — some sozinha (hidden) quando ninguém precisa
+  // de atenção. Antes só contava vencido/reprovado, o que dizia "Todo mundo em dia" pra alguém com
+  // 0% de progresso (nunca vencido/reprovado porque nunca chegou nem a começar) — corrigido depois
+  // da Nayuri notar isso na prática (setembro/2026): "como tá todo mundo em dia se ela n fez nada?"
   function atualizarBadgeAtalhoEquipe(linhas){
-    const qtd = linhas.filter(l => l.cursosVencidos.length || l.cursosReprovados.length).length;
+    const qtd = linhas.filter(l => l.cursosVencidos.length || l.cursosReprovados.length || l.cursosPendentes.length).length;
     const badge = document.getElementById('atalhosBadge');
     const status = document.getElementById('atalhoEquipeStatus');
     if (badge) { badge.hidden = qtd === 0; badge.textContent = qtd; }
