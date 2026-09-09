@@ -1411,8 +1411,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     return m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 60);
   }
 
-  // Detecta blocos <script>...</script> (posição inicial/final no texto) — usado pra reconhecer
+  // Detecta blocos de script (posição inicial/final no texto) — usado pra reconhecer
   // curso "app dinâmico" (conteúdo montado por JavaScript, não HTML estático de verdade) abaixo.
+  // (nota: evitar escrever a tag de fechamento de script por extenso neste comentário — é
+  // exatamente esse tipo de texto literal que corta o bloco de script ao meio na hora de publicar)
   function calcularBlocosScript(html){
     const blocos = [];
     const re = /<script\b[^>]*>[\s\S]*?<\/script>/gi;
