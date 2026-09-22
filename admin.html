@@ -188,6 +188,10 @@
     font-size:12px; font-weight:700; color:var(--ink-soft);
   }
   .visib-chip.on{ background:var(--milkshake); color:#fff; border-color:var(--milkshake); }
+  /* chip de macrocargo (grupo de cargos, ex.: "Analista") — visual diferente pra não confundir com cargo específico */
+  .visib-chip.chip-macro{ border-style:dashed; font-weight:800; }
+  .visib-chip.chip-macro.on{ background:var(--green); border-color:var(--green); }
+  .visib-separador{ width:100%; font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); margin:8px 0 -2px; }
   .modal-foot{ padding:18px 26px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; gap:10px; flex:none; flex-wrap:wrap; }
   .btn-secondary{ background:var(--cream); border:1px solid var(--line); padding:11px 18px; border-radius:100px; font-size:13px; font-weight:700; }
   .btn-primary{ background:var(--green); color:#fff; padding:11px 22px; border-radius:100px; font-size:13px; font-weight:700; }
@@ -436,7 +440,7 @@
       <div class="upload-block">
         <div class="txt">
           <b>Importar cargos</b>
-          <span>Planilha com uma coluna "Cargo" (ou "Nome") — um cargo por linha. Cria os que ainda não existem em Configurações → Cargos; não duplica quem já está cadastrado.</span>
+          <span>Planilha com uma coluna "Cargo" (ou "Nome") — um cargo por linha. Se quiser já vir agrupado, adiciona uma coluna "Macrocargo" (opcional). Cria os que ainda não existem em Configurações → Cargos; não duplica quem já está cadastrado.</span>
         </div>
         <div class="actions">
           <button class="ghost-btn" onclick="document.getElementById('cargosFileInput').click()">📎 <span id="cargosFileNome">Escolher arquivo</span></button>
@@ -532,6 +536,8 @@
           <div class="ptab" data-sub="cursos" onclick="mudarSubRelatorio('cursos', this)">Cursos</div>
           <div class="ptab" data-sub="organizacional" onclick="mudarSubRelatorio('organizacional', this)">Organizacional</div>
           <div class="ptab" data-sub="acompanhamento" onclick="mudarSubRelatorio('acompanhamento', this)">Acompanhamento</div>
+          <div class="ptab" data-sub="desligamentos" onclick="mudarSubRelatorio('desligamentos', this)">Desligamentos</div>
+          <div class="ptab" data-sub="checkin30" onclick="mudarSubRelatorio('checkin30', this)">Check-in · 30 dias</div>
         </div>
       </div>
 
@@ -646,6 +652,62 @@
             <h4>⌛ Certificados vencidos</h4>
             <div id="relVencidos"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
           </div>
+        </div>
+      </div>
+
+      <!-- ===== DESLIGAMENTOS (Jornada do Cabaneiro, setembro/2026) ===== -->
+      <div id="relSub-desligamentos" class="rel-subview" style="display:none;">
+        <p class="sub" style="margin:-4px 0 18px;">Motivo e detalhamento do parecer só aparecem aqui — a visão de Coordenador/Gerente de Operações na Home nunca mostra isso, só a contagem de pendência de curso.</p>
+        <div style="text-align:right; margin-bottom:10px;">
+          <button class="ghost-btn" onclick="exportarDesligamentosCSV()">⬇ Exportar</button>
+        </div>
+        <div class="rep-grid">
+          <div class="rep-card">
+            <h4>🕓 Pareceres pendentes</h4>
+            <div id="relDesligPendentes"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+          <div class="rep-card">
+            <h4>📊 Ranking de motivos</h4>
+            <div id="relDesligMotivos"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+          <div class="rep-card">
+            <h4>🗺️ Desligamentos por regional</h4>
+            <div id="relDesligRegional"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+        </div>
+        <div class="panel-card" style="margin-top:20px;">
+          <table>
+            <thead><tr><th>Colaborador</th><th>Cargo</th><th>Loja</th><th>Regional</th><th>Motivo</th><th>Detalhamento</th><th>Registrado em</th></tr></thead>
+            <tbody id="relDesligBody">
+              <tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== CHECK-IN · 30 DIAS (Jornada do Cabaneiro, setembro/2026) ===== -->
+      <div id="relSub-checkin30" class="rel-subview" style="display:none;">
+        <p class="sub" style="margin:-4px 0 18px;">Farol preenchido pelo gestor direto no ponto de checagem de 30 dias — "Preocupante"/"Atenção" merece um acompanhamento mais de perto.</p>
+        <div style="text-align:right; margin-bottom:10px;">
+          <button class="ghost-btn" onclick="exportarCheckin30CSV()">⬇ Exportar</button>
+        </div>
+        <div class="rep-grid">
+          <div class="rep-card">
+            <h4>🕓 Pendentes agora</h4>
+            <div id="relCheckin30Pendentes"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+          <div class="rep-card">
+            <h4>🚦 Resultado agregado dos faróis</h4>
+            <div id="relCheckin30Farol"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
+        </div>
+        <div class="panel-card" style="margin-top:20px;">
+          <table>
+            <thead><tr><th>Colaborador</th><th>Loja</th><th>Regional</th><th>Integração</th><th>Treinamento</th><th>Comportamento</th><th>Registrado em</th></tr></thead>
+            <tbody id="relCheckin30Body">
+              <tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -1049,16 +1111,26 @@
 </div>
 
 <div class="overlay" id="modalCargo" style="display:none;">
-  <div class="modal" style="width:380px;">
-    <div class="modal-head"><h3>Novo cargo</h3><button onclick="closeModal('modalCargo')">✕</button></div>
+  <div class="modal" style="width:440px;">
+    <div class="modal-head"><h3>Cargos &amp; macrocargos</h3><button onclick="closeModal('modalCargo')">✕</button></div>
     <div class="modal-body">
       <div class="field">
         <label>Cargos existentes</label>
-        <div id="cargoListaExistentes" style="display:flex; flex-direction:column; gap:6px;"><small class="hint" style="color:var(--ink-soft);">Carregando…</small></div>
-        <small class="hint"><button type="button" id="btnCarregarCargosPadrao" onclick="carregarCargosPadrao()" style="background:none; border:none; padding:0; color:var(--green-dark); font-weight:700; font-size:inherit; cursor:pointer;">🌱 Carregar lista inicial de cargos</button> — adiciona algumas sugestões prontas (pode remover as que não quiser depois).</small>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input type="text" placeholder="Filtrar por nome…" oninput="filtrarListaCargos(this.value)" style="flex:1;">
+          <button type="button" id="btnRemoverCargosSelecionados" onclick="removerCargosSelecionados()" style="display:none; background:none; border:1px solid #B4462B; color:#B4462B; font-weight:700; font-size:12px; padding:0 12px; border-radius:8px; white-space:nowrap;">Remover selecionados</button>
+        </div>
+        <div id="cargoListaExistentes" style="display:flex; flex-direction:column; gap:6px; max-height:280px; overflow-y:auto; padding-right:4px;"><small class="hint" style="color:var(--ink-soft);">Carregando…</small></div>
+        <small class="hint">O campo ao lado de cada cargo é o <b>macrocargo</b> — edita e sai do campo (Tab ou clicar fora) que já salva. <button type="button" id="btnCarregarCargosPadrao" onclick="carregarCargosPadrao()" style="background:none; border:none; padding:0; color:var(--green-dark); font-weight:700; font-size:inherit; cursor:pointer;">🌱 Carregar lista inicial de cargos</button> adiciona algumas sugestões prontas.</small>
       </div>
       <div style="border-top:1px solid var(--line); margin:2px 0 6px;"></div>
       <div class="field"><label>Nome do cargo</label><input type="text" id="cargoNomeInput" placeholder="Ex: Supervisor de Turno"></div>
+      <div class="field">
+        <label>Macrocargo (opcional)</label>
+        <input type="text" id="cargoMacrocargoInput" placeholder="Ex: Analista — agrupa Jr/Pleno/Sênior" list="macrocargosDatalist">
+        <datalist id="macrocargosDatalist"></datalist>
+        <small class="hint">Serve pra agrupar variações do mesmo cargo (Jr/Pleno/Sênior, por exemplo) num rótulo só — útil na hora de restringir curso/material por um grupo inteiro em vez de marcar cargo por cargo. Pode editar depois, direto na lista acima.</small>
+      </div>
       <small class="hint">Esse cargo passa a aparecer em toda a plataforma: cadastro de colaborador, restrição de cursos e materiais da biblioteca.</small>
     </div>
     <div class="modal-foot">
@@ -1163,11 +1235,12 @@
       <div class="field-row">
         <div class="field">
           <label>Cargo</label>
-          <select id="colabCargoInput">
+          <select id="colabCargoInput" onchange="atualizarMacrocargoVisivelDoColaborador()">
             <option>Atendente de Salão</option><option>Atendente de Caixa</option><option>Cozinheiro(a)</option>
             <option>Auxiliar de Cozinha</option><option>Entregador(a) / Delivery</option><option>Líder de Loja</option>
             <option>Gerente de Loja</option><option>Gerente Regional</option><option>Administrativo</option>
           </select>
+          <small class="hint" id="colabMacrocargoHint" style="display:block; margin-top:6px;"></small>
         </div>
         <div class="field">
           <label>Nível de acesso</label>
@@ -1311,6 +1384,7 @@ function mudarSubRelatorio(sub, el){
 }
 function abrirModalCargo(){
   document.getElementById('cargoNomeInput').value = '';
+  document.getElementById('cargoMacrocargoInput').value = '';
   openModal('modalCargo');
 }
 function abrirModalCategoriaBiblioteca(){
@@ -1645,6 +1719,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     iniciarTrilhas();
     iniciarColaboradores();
     iniciarRelatorios();
+    iniciarDesligamentos();
+    iniciarCheckin30();
     iniciarBiblioteca();
     iniciarBanners();
     iniciarIdentidade();
@@ -1792,9 +1868,33 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     return cargosCache.map(c => c.nome);
   }
 
+  // lista única de macrocargos já usados, ordenada — alimenta o datalist do campo "Macrocargo"
+  // e os chips de "restringir por grupo" nas telas de curso/trilha/biblioteca (ver renderCargosEmTodaParte)
+  function macrocargosParaExibir(){
+    const nomes = new Set(cargosCache.map(c => (c.macrocargo || '').trim()).filter(Boolean));
+    return [...nomes].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }
+
+  window.atualizarMacrocargoCargo = async function(id, valor){
+    try {
+      await updateDoc(doc(db, 'cargos', id), { Macrocargo: valor.trim() });
+    } catch (err) {
+      console.error('Erro ao atualizar macrocargo do cargo:', err);
+      alert('Não foi possível salvar o macrocargo agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  window.filtrarListaCargos = function(termo){
+    const alvo = (termo || '').toLowerCase().trim();
+    document.querySelectorAll('#cargoListaExistentes .linha-cargo').forEach(linha => {
+      const nome = (linha.dataset.nome || '').toLowerCase();
+      linha.style.display = !alvo || nome.includes(alvo) ? 'flex' : 'none';
+    });
+  };
+
   function iniciarCargos(){
     onSnapshot(collection(db, 'cargos'), (snapshot) => {
-      cargosCache = snapshot.docs.map(d => ({ id: d.id, nome: d.data().Nome })).filter(c => c.nome);
+      cargosCache = snapshot.docs.map(d => ({ id: d.id, nome: d.data().Nome, macrocargo: d.data().Macrocargo || '' })).filter(c => c.nome);
       renderCargosEmTodaParte();
       renderCargoListaExistentes();
     }, (err) => console.error('Erro ao carregar cargos:', err));
@@ -1807,13 +1907,46 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       el.innerHTML = '<small class="hint" style="color:var(--ink-soft);">Nenhum cargo cadastrado ainda. Cria um abaixo, ou clica em "Carregar lista inicial" pra começar com sugestões prontas.</small>';
       return;
     }
-    el.innerHTML = cargosCache.map(c =>
-      `<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:var(--cream); border-radius:8px; font-size:13px;">
-        <span>${c.nome}</span>
-        <button type="button" onclick="removerCargo('${c.id}','${c.nome.replace(/'/g, "\\'")}')" style="background:none; color:#B4462B; font-weight:700; font-size:12px; padding:2px 6px;">Remover</button>
+    const macrocargos = macrocargosParaExibir();
+    el.innerHTML = [...cargosCache].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c =>
+      `<div class="linha-cargo" data-nome="${c.nome.replace(/"/g, '&quot;')}" data-id="${c.id}" style="display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--cream); border-radius:8px; font-size:13px;">
+        <input type="checkbox" class="chk-cargo" value="${c.id}" onchange="atualizarBotaoRemoverSelecionados()" style="flex:none; width:15px; height:15px;">
+        <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.nome}</span>
+        <input type="text" value="${(c.macrocargo || '').replace(/"/g, '&quot;')}" placeholder="Macrocargo…" list="macrocargosDatalist"
+          onchange="atualizarMacrocargoCargo('${c.id}', this.value)"
+          style="width:130px; flex:none; padding:5px 8px; font-size:12px; border-radius:6px; border:1px solid var(--line);">
+        <button type="button" onclick="removerCargo('${c.id}','${c.nome.replace(/'/g, "\\'")}')" style="background:none; color:#B4462B; font-weight:700; font-size:12px; padding:2px 6px; flex:none;">Remover</button>
       </div>`
     ).join('');
+    const datalist = document.getElementById('macrocargosDatalist');
+    if (datalist) datalist.innerHTML = macrocargos.map(m => `<option value="${m}">`).join('');
+    atualizarBotaoRemoverSelecionados();
   }
+
+  // marcar vários cargos "errados" (ex.: os de exemplo antigos) e remover de uma vez, em vez de
+  // clicar "Remover" um por um — pedido direto da Nayuri depois de subir a lista real de cargos
+  window.atualizarBotaoRemoverSelecionados = function(){
+    const btn = document.getElementById('btnRemoverCargosSelecionados');
+    if (!btn) return;
+    const qtd = document.querySelectorAll('#cargoListaExistentes .chk-cargo:checked').length;
+    btn.style.display = qtd ? 'inline-flex' : 'none';
+    btn.textContent = `Remover ${qtd} selecionado${qtd === 1 ? '' : 's'}`;
+  };
+
+  window.removerCargosSelecionados = async function(){
+    const marcados = [...document.querySelectorAll('#cargoListaExistentes .chk-cargo:checked')];
+    if (!marcados.length) return;
+    const nomes = marcados.map(chk => chk.closest('.linha-cargo').dataset.nome);
+    if (!confirm(`Remover ${marcados.length} cargo(s)?\n\n${nomes.join(', ')}\n\nColaboradores que já tinham algum desses continuam com o cargo salvo, só não aparece mais como opção pra novos cadastros.`)) return;
+    try {
+      const batch = writeBatch(db);
+      marcados.forEach(chk => batch.delete(doc(db, 'cargos', chk.value)));
+      await batch.commit();
+    } catch (err) {
+      console.error('Erro ao remover cargos selecionados:', err);
+      alert('Não foi possível remover agora. Tenta de novo em alguns segundos.');
+    }
+  };
 
   window.carregarCargosPadrao = async function(){
     const btn = document.getElementById('btnCarregarCargosPadrao');
@@ -1843,8 +1976,27 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     }
   };
 
+  // monta o HTML dos chips de "quem pode ver": primeiro os macrocargos (grupo, tracejado, verde quando
+  // selecionado), depois cada cargo específico — os dois tipos entram juntos no mesmo array salvo (Cargos),
+  // e colaboradorPodeVer()/cursoAplicavelAColaborador() no home.html aceitam bater em qualquer um dos dois
+  function montarChipsCargoEMacrocargo(cargos, macrocargos, selecionadosAntes){
+    let html = '';
+    if (macrocargos.length) {
+      html += '<span class="visib-separador">Macrocargos (grupo)</span>';
+      html += macrocargos.map(nome =>
+        `<span class="visib-chip chip-macro${selecionadosAntes.includes(nome) ? ' on' : ''}">${nome}</span>`
+      ).join('');
+      html += '<span class="visib-separador">Cargos específicos</span>';
+    }
+    html += cargos.map(nome =>
+      `<span class="visib-chip${selecionadosAntes.includes(nome) ? ' on' : ''}">${nome}</span>`
+    ).join('');
+    return html;
+  }
+
   function renderCargosEmTodaParte(){
     const cargos = cargosParaExibir();
+    const macrocargos = macrocargosParaExibir();
 
     // select do cadastro de colaborador
     const colabSelect = document.getElementById('colabCargoInput');
@@ -1852,15 +2004,14 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       const valorAtual = colabSelect.value;
       colabSelect.innerHTML = cargos.map(nome => `<option>${nome}</option>`).join('');
       if (valorAtual && cargos.includes(valorAtual)) colabSelect.value = valorAtual;
+      atualizarMacrocargoVisivelDoColaborador();
     }
 
     // chips de "quem pode ver este curso"
     const visibChips = document.getElementById('visibChips');
     if (visibChips) {
       const selecionadosAntes = [...visibChips.querySelectorAll('.visib-chip.on')].map(c => c.textContent.trim());
-      visibChips.innerHTML = cargos.map(nome =>
-        `<span class="visib-chip${selecionadosAntes.includes(nome) ? ' on' : ''}">${nome}</span>`
-      ).join('');
+      visibChips.innerHTML = montarChipsCargoEMacrocargo(cargos, macrocargos, selecionadosAntes);
       visibChips.querySelectorAll('.visib-chip').forEach(chip => {
         chip.addEventListener('click', () => chip.classList.toggle('on'));
       });
@@ -1870,28 +2021,38 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     const trilhaVisibChips = document.getElementById('trilhaVisibChips');
     if (trilhaVisibChips) {
       const selecionadosAntes = [...trilhaVisibChips.querySelectorAll('.visib-chip.on')].map(c => c.textContent.trim());
-      trilhaVisibChips.innerHTML = cargos.map(nome =>
-        `<span class="visib-chip${selecionadosAntes.includes(nome) ? ' on' : ''}">${nome}</span>`
-      ).join('');
+      trilhaVisibChips.innerHTML = montarChipsCargoEMacrocargo(cargos, macrocargos, selecionadosAntes);
       trilhaVisibChips.querySelectorAll('.visib-chip').forEach(chip => {
         chip.addEventListener('click', () => chip.classList.toggle('on'));
       });
     }
 
-    // sugestões de cargo pro campo de texto da biblioteca
+    // sugestões de cargo (e macrocargo) pro campo de texto da biblioteca
     const datalist = document.getElementById('cargosDatalist');
-    if (datalist) datalist.innerHTML = cargos.map(nome => `<option value="${nome}">`).join('');
+    if (datalist) datalist.innerHTML = [...macrocargos, ...cargos].map(nome => `<option value="${nome}">`).join('');
   }
+
+  // mostra, ao lado do select de Cargo no cadastro de colaborador, qual macrocargo esse cargo já carrega
+  // (só informativo — o Macrocargo em si é definido na tela de Cargos, não aqui)
+  function atualizarMacrocargoVisivelDoColaborador(){
+    const colabSelect = document.getElementById('colabCargoInput');
+    const hintEl = document.getElementById('colabMacrocargoHint');
+    if (!colabSelect || !hintEl) return;
+    const cargo = cargosCache.find(c => c.nome === colabSelect.value);
+    hintEl.textContent = (cargo && cargo.macrocargo) ? `Macrocargo: ${cargo.macrocargo}` : 'Sem macrocargo definido pra esse cargo ainda.';
+  }
+  window.atualizarMacrocargoVisivelDoColaborador = atualizarMacrocargoVisivelDoColaborador;
 
   window.salvarCargo = async function(){
     const nome = document.getElementById('cargoNomeInput').value.trim();
+    const macrocargo = document.getElementById('cargoMacrocargoInput').value.trim();
     if (!nome) { alert('Dá um nome pro cargo antes de criar.'); return; }
     if (cargosParaExibir().some(c => c.toLowerCase() === nome.toLowerCase())) {
       alert('Já existe um cargo com esse nome.');
       return;
     }
     try {
-      await addDoc(collection(db, 'cargos'), { Nome: nome, CriadoEm: serverTimestamp() });
+      await addDoc(collection(db, 'cargos'), { Nome: nome, Macrocargo: macrocargo, CriadoEm: serverTimestamp() });
       closeModal('modalCargo');
     } catch (err) {
       console.error('Erro ao criar cargo:', err);
@@ -2702,6 +2863,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       if (window.renderRelatorios) window.renderRelatorios();
       renderCursosStats();
       if (window.renderAdmins) window.renderAdmins();
+      if (window.renderDesligamentos) window.renderDesligamentos();
+      if (window.renderCheckin30Relatorio) window.renderCheckin30Relatorio();
     }, (err) => console.error('Erro ao carregar colaboradores:', err));
   }
 
@@ -3164,6 +3327,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('colabCpfInput').disabled = false;
     document.getElementById('colabAdmissaoInput').value = '';
     document.getElementById('colabCargoInput').selectedIndex = 0;
+    atualizarMacrocargoVisivelDoColaborador();
     document.getElementById('colabNivelInput').selectedIndex = 0;
     document.getElementById('colabLocalInput').selectedIndex = 0;
     document.getElementById('colabDiretoriaInput').value = '';
@@ -3197,6 +3361,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('colabAdmissaoInput').value = (c.Admissao && c.Admissao.toDate) ? c.Admissao.toDate().toISOString().slice(0, 10) : '';
     const cargoSelect = document.getElementById('colabCargoInput');
     [...cargoSelect.options].forEach((opt,i)=>{ if(opt.textContent === c.Cargo) cargoSelect.selectedIndex = i; });
+    atualizarMacrocargoVisivelDoColaborador();
     document.getElementById('colabNivelInput').value = c.Nivel === 'Admin' ? 'Admin' : 'Colaborador';
     document.getElementById('colabLocalInput').value = c.Local || 'Loja';
     document.getElementById('colabDiretoriaInput').value = c.Diretoria || '';
@@ -3268,10 +3433,14 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     try {
       const localEscolhido = document.getElementById('colabLocalInput').value;
       const admissaoValor = document.getElementById('colabAdmissaoInput').value;
+      const cargoEscolhido = document.getElementById('colabCargoInput').value;
+      // Macrocargo é derivado do cargo escolhido (definido na tela de Cargos) — não é um campo digitado aqui
+      const cargoInfo = cargosCache.find(c => c.nome === cargoEscolhido);
       const dados = {
         Nome: nome,
         Loja: localEscolhido === 'Loja' ? document.getElementById('colabLojaInput').value.trim() : '',
-        Cargo: document.getElementById('colabCargoInput').value,
+        Cargo: cargoEscolhido,
+        Macrocargo: (cargoInfo && cargoInfo.macrocargo) || '',
         Nivel: document.getElementById('colabNivelInput').value,
         Local: localEscolhido,
         Regional: localEscolhido === 'Loja' ? document.getElementById('colabRegionalSelect').value.trim() : '',
@@ -3456,10 +3625,11 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       for (const linha of linhas) {
         const nome = pegar(linha, ['cargo', 'cargos', 'nome', 'nome do cargo']);
         if (!nome) continue;
+        const macrocargo = pegar(linha, ['macrocargo', 'macro cargo', 'grupo', 'macro']);
         const chave = nome.toLowerCase();
         if (nomesJaExistentes.has(chave) || novosNesseArquivo.has(chave)) { ignorados++; continue; }
         novosNesseArquivo.add(chave);
-        batch.set(doc(collection(db, 'cargos')), { Nome: nome, CriadoEm: serverTimestamp() });
+        batch.set(doc(collection(db, 'cargos')), { Nome: nome, Macrocargo: macrocargo, CriadoEm: serverTimestamp() });
         criados++;
       }
       if (criados) await batch.commit();
@@ -3585,12 +3755,33 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       });
       const nomesLojasNaoReconhecidas = Object.keys(lojasNaoReconhecidas);
 
+      // mesma lógica da checagem de loja acima, agora pro Cargo: se o texto da planilha não bate com
+      // nenhum cargo cadastrado em Configurações → Cargos, a pessoa é salva do mesmo jeito (não bloqueia),
+      // só que sem Macrocargo nenhum atrelado — e esse cargo também não vai aparecer nos chips de restrição
+      // de curso/material até alguém cadastrar ele de verdade. Avisa antes, não impede.
+      const nomesCargosOficiais = new Set(cargosCache.map(c => c.nome.trim().toLowerCase()));
+      const cargosNaoReconhecidos = {}; // cargo escrito na planilha -> [nomes das pessoas]
+      linhasValidas.forEach(l => {
+        if (!l.cargo) return;
+        if (!nomesCargosOficiais.has(l.cargo.trim().toLowerCase())) {
+          if (!cargosNaoReconhecidos[l.cargo]) cargosNaoReconhecidos[l.cargo] = [];
+          cargosNaoReconhecidos[l.cargo].push(l.nome);
+        }
+      });
+      const nomesCargosNaoReconhecidos = Object.keys(cargosNaoReconhecidos);
+
       let resumo = `Essa planilha tem ${linhasValidas.length} colaborador(es) válido(s).\n\n`;
       if (nomesLojasNaoReconhecidas.length) {
         resumo += `⚠️ ${nomesLojasNaoReconhecidas.length} nome(s) de loja na planilha NÃO batem com nenhuma loja cadastrada (confere acento/abreviação — "Botafogo" ≠ "Loja Botafogo"):\n`
           + nomesLojasNaoReconhecidas.slice(0, 8).map(nome => `"${nome}" (${lojasNaoReconhecidas[nome].slice(0, 3).join(', ')}${lojasNaoReconhecidas[nome].length > 3 ? '...' : ''})`).join('\n')
           + (nomesLojasNaoReconhecidas.length > 8 ? `\n...e mais ${nomesLojasNaoReconhecidas.length - 8}` : '')
           + '\n\nEssas pessoas ficam salvas mesmo assim, mas não vão aparecer nos filtros por loja até alguém corrigir o nome (na planilha ou no cadastro).\n\n';
+      }
+      if (nomesCargosNaoReconhecidos.length) {
+        resumo += `⚠️ ${nomesCargosNaoReconhecidos.length} nome(s) de CARGO na planilha NÃO batem com nenhum cargo cadastrado em Configurações → Cargos:\n`
+          + nomesCargosNaoReconhecidos.slice(0, 8).map(nome => `"${nome}" (${cargosNaoReconhecidos[nome].slice(0, 3).join(', ')}${cargosNaoReconhecidos[nome].length > 3 ? '...' : ''})`).join('\n')
+          + (nomesCargosNaoReconhecidos.length > 8 ? `\n...e mais ${nomesCargosNaoReconhecidos.length - 8}` : '')
+          + '\n\nEssas pessoas ficam salvas mesmo assim, com esse cargo exatamente como veio na planilha — só que sem macrocargo nenhum atrelado, e esse cargo não aparece nos chips de restrição de curso/material até você cadastrar ele em Cargos (ou corrigir o texto na planilha pra bater com um já existente).\n\n';
       }
       if (mudancasCargo.length) {
         resumo += `⚠️ ${mudancasCargo.length} pessoa(s) vão ter o CARGO alterado:\n` + mudancasCargo.slice(0, 10).join('\n') + (mudancasCargo.length > 10 ? `\n...e mais ${mudancasCargo.length - 10}` : '') + '\n\n';
@@ -3602,7 +3793,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       }
       resumo += 'Confirma que quer aplicar essas mudanças?';
 
-      if ((mudancasCargo.length || seriamDesativados.length || nomesLojasNaoReconhecidas.length) && !confirm(resumo)) {
+      if ((mudancasCargo.length || seriamDesativados.length || nomesLojasNaoReconhecidas.length || nomesCargosNaoReconhecidos.length) && !confirm(resumo)) {
         resultadoEl.textContent = 'Sincronização cancelada — nada foi alterado.';
         resultadoEl.style.color = 'var(--ink-soft)';
         resultadoEl.style.display = 'block';
@@ -3615,10 +3806,14 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       for (const l of linhasValidas) {
         const jaExistia = cpfsExistentesAntes.has(l.cpf);
 
+        // Macrocargo é derivado do cargo da linha via cargosCache (definido na tela de Cargos) —
+        // a planilha de colaboradores não precisa de coluna própria pra isso
+        const cargoInfoLinha = cargosCache.find(c => c.nome === l.cargo);
         batch.set(doc(db, 'colaboradores', l.cpf), {
           Nome: l.nome,
           Loja: l.loja,
           Cargo: l.cargo,
+          Macrocargo: (cargoInfoLinha && cargoInfoLinha.macrocargo) || '',
           Nivel: l.nivel,
           Local: l.local,
           Regional: l.regional,
@@ -3639,7 +3834,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       let desativados = 0;
       colaboradoresCache.forEach(c => {
         if (!cpfsNaPlanilha.has(c.cpf) && c.Status !== 'inativo') {
-          batch.update(doc(db, 'colaboradores', c.cpf), { Status: 'inativo' });
+          // InativadoEm marca quando a pessoa sumiu da base — usado pelo popup "foi desligado?"
+          // na Home do gestor e pelo relatório de Desligamentos aqui no admin (Jornada do
+          // Cabaneiro, setembro/2026. Ver contrato do projeto.)
+          batch.update(doc(db, 'colaboradores', c.cpf), { Status: 'inativo', InativadoEm: serverTimestamp() });
           desativados++;
         }
       });
@@ -3697,6 +3895,144 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       renderCursosStats();
     }, (err) => console.error('Erro ao carregar progresso:', err));
   }
+
+  /* ===================== JORNADA DO CABANEIRO — Desligamentos & Check-in 30 dias (setembro/2026) =====================
+     Ver contrato do projeto pra contexto completo. Motivo/Detalhamento do desligamento só aparece
+     aqui (Nivel Admin) — nunca nas visões de Coordenador/Gerente de Operações na Home. */
+  let desligamentosCache = [];
+  let checkins30Cache = [];
+
+  function iniciarDesligamentos(){
+    onSnapshot(collection(db, 'desligamentos'), (snapshot) => {
+      desligamentosCache = snapshot.docs.map(d => ({ cpf: d.id, ...d.data() }));
+      renderDesligamentos();
+    }, (err) => console.error('Erro ao carregar desligamentos:', err));
+  }
+
+  function iniciarCheckin30(){
+    onSnapshot(collection(db, 'checkins30'), (snapshot) => {
+      checkins30Cache = snapshot.docs.map(d => ({ cpf: d.id, ...d.data() }));
+      renderCheckin30Relatorio();
+    }, (err) => console.error('Erro ao carregar check-ins de 30 dias:', err));
+  }
+
+  function formatarDataHora(ts){
+    if (!ts || !ts.toDate) return '—';
+    return ts.toDate().toLocaleDateString('pt-BR');
+  }
+
+  let ultimoDesligamentosCache = null;
+  function renderDesligamentos(){
+    const pendentesEl = document.getElementById('relDesligPendentes');
+    if (!pendentesEl) return; // aba ainda não está no DOM
+
+    const registrados = desligamentosCache.filter(d => !d.Descartado);
+    const porCpfRegistrado = new Set(desligamentosCache.map(d => d.cpf));
+    const pendentes = colaboradoresCache.filter(c => c.Status === 'inativo' && !porCpfRegistrado.has(c.cpf));
+
+    pendentesEl.innerHTML = renderListaCard(
+      pendentes.map(c => linhaSimples(c.Nome || c.cpf, [c.Cargo, c.Loja].filter(Boolean).join(' · '))),
+      'Nenhum parecer pendente — todo mundo que saiu já tem parecer registrado ou foi marcado como engano de cadastro.'
+    );
+
+    const porMotivo = {};
+    registrados.forEach(d => { const m = d.Motivo || '(sem motivo)'; porMotivo[m] = (porMotivo[m] || 0) + 1; });
+    const motivosOrdenados = Object.keys(porMotivo).sort((a, b) => porMotivo[b] - porMotivo[a]);
+    document.getElementById('relDesligMotivos').innerHTML = motivosOrdenados.length
+      ? motivosOrdenados.map(m => linhaSimples(m, `${porMotivo[m]} desligamento${porMotivo[m] === 1 ? '' : 's'}`)).join('')
+      : `<small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Sem desligamentos registrados ainda.</small>`;
+
+    const porRegional = {};
+    registrados.forEach(d => { const r = d.Regional || '(sem regional)'; porRegional[r] = (porRegional[r] || 0) + 1; });
+    const regionaisOrdenadas = Object.keys(porRegional).sort((a, b) => porRegional[b] - porRegional[a]);
+    document.getElementById('relDesligRegional').innerHTML = regionaisOrdenadas.length
+      ? regionaisOrdenadas.map(r => linhaSimples(r, `${porRegional[r]} desligamento${porRegional[r] === 1 ? '' : 's'}`)).join('')
+      : `<small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Sem desligamentos registrados ainda.</small>`;
+
+    const corpo = document.getElementById('relDesligBody');
+    const linhasTabela = registrados.slice().sort((a, b) => (b.RegistradoEm?.toDate?.() || 0) - (a.RegistradoEm?.toDate?.() || 0));
+    corpo.innerHTML = linhasTabela.length
+      ? linhasTabela.map(d => `<tr><td>${d.Nome || d.cpf}</td><td>${d.Cargo || '—'}</td><td>${d.Loja || '—'}</td><td>${d.Regional || '—'}</td><td>${d.Motivo || '—'}</td><td>${d.Detalhamento || '—'}</td><td>${formatarDataHora(d.RegistradoEm)}</td></tr>`).join('')
+      : `<tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum parecer de desligamento registrado ainda.</td></tr>`;
+
+    ultimoDesligamentosCache = { pendentes, registrados: linhasTabela };
+  }
+  window.renderDesligamentos = renderDesligamentos;
+
+  window.exportarDesligamentosCSV = function(){
+    if (!ultimoDesligamentosCache) { alert('Ainda não há dados pra exportar.'); return; }
+    const linhas = [
+      ['Pareceres pendentes'],
+      ['Colaborador', 'Cargo', 'Loja'],
+      ...(ultimoDesligamentosCache.pendentes.length ? ultimoDesligamentosCache.pendentes.map(c => [c.Nome || c.cpf, c.Cargo || '', c.Loja || '']) : [['Nenhum parecer pendente.', '', '']]),
+      [],
+      ['Desligamentos registrados'],
+      ['Colaborador', 'Cargo', 'Loja', 'Regional', 'Motivo', 'Detalhamento', 'Registrado em'],
+      ...(ultimoDesligamentosCache.registrados.length ? ultimoDesligamentosCache.registrados.map(d => [d.Nome || d.cpf, d.Cargo || '', d.Loja || '', d.Regional || '', d.Motivo || '', d.Detalhamento || '', formatarDataHora(d.RegistradoEm)]) : [['Nenhum desligamento registrado ainda.', '', '', '', '', '', '']]),
+    ];
+    baixarXLSX(linhas, `desligamentos-${new Date().toISOString().slice(0,10)}.xlsx`, 'Desligamentos');
+  };
+
+  let ultimoCheckin30Cache = null;
+  function renderCheckin30Relatorio(){
+    const pendentesEl = document.getElementById('relCheckin30Pendentes');
+    if (!pendentesEl) return; // aba ainda não está no DOM
+
+    const agora = new Date();
+    const feitosPorCpf = new Set(checkins30Cache.map(c => c.cpf));
+    const pendentes = colaboradoresCache.filter(c => {
+      if (c.Status === 'inativo' || !c.Admissao || !c.Admissao.toDate) return false;
+      const dias = Math.floor((agora - c.Admissao.toDate()) / (1000 * 60 * 60 * 24));
+      return dias >= 30 && dias <= 90 && !feitosPorCpf.has(c.cpf);
+    }).map(c => {
+      const dias = Math.floor((agora - c.Admissao.toDate()) / (1000 * 60 * 60 * 24));
+      return { ...c, diasAtraso: dias - 30 };
+    }).sort((a, b) => b.diasAtraso - a.diasAtraso);
+
+    pendentesEl.innerHTML = renderListaCard(
+      pendentes.map(c => linhaSimples(c.Nome || c.cpf, `${[c.Loja, c.Regional].filter(Boolean).join(' · ')} · ${c.diasAtraso > 0 ? c.diasAtraso + ' dia(s) de atraso' : 'no prazo'}`)),
+      'Nenhum ponto de checagem de 30 dias pendente agora.'
+    );
+
+    const contagemFarol = { integracao: { verde: 0, amarelo: 0, vermelho: 0 }, treinamento: { verde: 0, amarelo: 0, vermelho: 0 }, comportamento: { verde: 0, amarelo: 0, vermelho: 0 } };
+    checkins30Cache.forEach(c => {
+      if (c.Integracao && contagemFarol.integracao[c.Integracao] !== undefined) contagemFarol.integracao[c.Integracao]++;
+      if (c.Treinamento && contagemFarol.treinamento[c.Treinamento] !== undefined) contagemFarol.treinamento[c.Treinamento]++;
+      if (c.Comportamento && contagemFarol.comportamento[c.Comportamento] !== undefined) contagemFarol.comportamento[c.Comportamento]++;
+    });
+    const nomesFarol = { integracao: 'Integração à loja e equipe', treinamento: 'Treinamento inicial', comportamento: 'Comportamento e postura' };
+    document.getElementById('relCheckin30Farol').innerHTML = checkins30Cache.length
+      ? Object.keys(contagemFarol).map(chave => {
+          const f = contagemFarol[chave];
+          return linhaSimples(nomesFarol[chave], `🟢 ${f.verde} indo bem · 🟡 ${f.amarelo} atenção · 🔴 ${f.vermelho} preocupante`);
+        }).join('')
+      : `<small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Sem pontos de checagem registrados ainda.</small>`;
+
+    const corpo = document.getElementById('relCheckin30Body');
+    const linhasTabela = checkins30Cache.slice().sort((a, b) => (b.RegistradoEm?.toDate?.() || 0) - (a.RegistradoEm?.toDate?.() || 0));
+    const rotuloFarol = { verde: '🟢 Indo bem', amarelo: '🟡 Atenção', vermelho: '🔴 Preocupante' };
+    corpo.innerHTML = linhasTabela.length
+      ? linhasTabela.map(c => `<tr><td>${c.Nome || c.cpf}</td><td>${c.Loja || '—'}</td><td>${c.Regional || '—'}</td><td>${rotuloFarol[c.Integracao] || '—'}</td><td>${rotuloFarol[c.Treinamento] || '—'}</td><td>${rotuloFarol[c.Comportamento] || '—'}</td><td>${formatarDataHora(c.RegistradoEm)}</td></tr>`).join('')
+      : `<tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum ponto de checagem registrado ainda.</td></tr>`;
+
+    ultimoCheckin30Cache = { pendentes, registrados: linhasTabela };
+  }
+  window.renderCheckin30Relatorio = renderCheckin30Relatorio;
+
+  window.exportarCheckin30CSV = function(){
+    if (!ultimoCheckin30Cache) { alert('Ainda não há dados pra exportar.'); return; }
+    const rotuloFarol = { verde: 'Indo bem', amarelo: 'Atenção', vermelho: 'Preocupante' };
+    const linhas = [
+      ['Pendentes agora'],
+      ['Colaborador', 'Loja', 'Regional', 'Dias de atraso'],
+      ...(ultimoCheckin30Cache.pendentes.length ? ultimoCheckin30Cache.pendentes.map(c => [c.Nome || c.cpf, c.Loja || '', c.Regional || '', Math.max(0, c.diasAtraso)]) : [['Nenhum pendente agora.', '', '', '']]),
+      [],
+      ['Pontos de checagem registrados'],
+      ['Colaborador', 'Loja', 'Regional', 'Integração', 'Treinamento', 'Comportamento', 'Registrado em'],
+      ...(ultimoCheckin30Cache.registrados.length ? ultimoCheckin30Cache.registrados.map(c => [c.Nome || c.cpf, c.Loja || '', c.Regional || '', rotuloFarol[c.Integracao] || '', rotuloFarol[c.Treinamento] || '', rotuloFarol[c.Comportamento] || '', formatarDataHora(c.RegistradoEm)]) : [['Nenhum registrado ainda.', '', '', '', '', '', '']]),
+    ];
+    baixarXLSX(linhas, `checkin-30-dias-${new Date().toISOString().slice(0,10)}.xlsx`, 'Check-in 30 dias');
+  };
 
   function renderBarras(grupos){
     const chaves = Object.keys(grupos);
@@ -3840,7 +4176,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     function cursoAplicavelA(curso, colab){
       if (colab.Nivel === 'Admin') return true;
       const passaCargo = !(curso.CargosEspecificos === true && Array.isArray(curso.Cargos) && curso.Cargos.length)
-        || curso.Cargos.includes(colab.Cargo);
+        || curso.Cargos.includes(colab.Cargo)
+        || (colab.Macrocargo && curso.Cargos.includes(colab.Macrocargo));
       const temRestricaoLocal = curso.LocalEspecifico === true && ((Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.length) || (Array.isArray(curso.RegionaisPermitidas) && curso.RegionaisPermitidas.length));
       const passaLocal = !temRestricaoLocal
         || (Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.includes(colab.Loja))
