@@ -448,6 +448,46 @@
     .cel-progresso .barra{ max-width:110px; }
   }
 
+  /* ---------- Jornada do Cabaneiro (setembro/2026) — pendências, check-in 30 dias, desligamento,
+     visões de Coordenador/Gerente de Operações. Ver contrato do projeto pra contexto completo. ----------- */
+  .jornada-section-label{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin:0 0 12px; display:flex; align-items:center; gap:8px; }
+  .jornada-section-label .contagem{ background:#B4462B; color:#fff; font-size:10.5px; padding:2px 8px; border-radius:100px; }
+  .jornada-bloco{ background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg); box-shadow:var(--shadow); padding:20px 22px; margin-bottom:20px; }
+  .pendencia-card{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 16px; background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-md); margin-bottom:10px; }
+  .pendencia-card:last-child{ margin-bottom:0; }
+  .pendencia-card.critico{ border-color:rgba(180,70,43,0.35); background:#FBF0EC; }
+  .pendencia-info b{ display:block; font-size:13.5px; margin-bottom:2px; }
+  .pendencia-info span{ font-size:12px; color:var(--ink-soft); }
+  .prazo-chip{ font-size:11px; font-weight:800; padding:6px 12px; border-radius:100px; background:#F3D9D0; color:#B4462B; white-space:nowrap; flex:none; }
+  .prazo-chip.ok{ background:#E4F2DF; color:var(--green-dark); }
+  .prazo-chip.atencao{ background:#FBEBD2; color:#D89840; }
+  .jornada-vazio{ text-align:center; color:var(--ink-soft); padding:14px; font-size:13px; }
+  .farol-item{ margin-bottom:18px; }
+  .farol-item > label{ display:block; font-size:13px; font-weight:700; margin-bottom:9px; }
+  .farol-opts{ display:flex; gap:8px; }
+  .farol-opt{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px 8px; border-radius:12px; border:2px solid var(--line); cursor:pointer; background:#fff; }
+  .farol-opt .bolinha{ width:20px; height:20px; border-radius:50%; }
+  .farol-opt span{ font-size:11px; font-weight:700; color:var(--ink-soft); }
+  .farol-opt.g .bolinha{ background:var(--green); }
+  .farol-opt.y .bolinha{ background:#D89840; }
+  .farol-opt.r .bolinha{ background:#B4462B; }
+  .farol-opt.sel{ border-color:var(--ink); background:var(--cream); }
+  .loja-count-card{ background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-md); box-shadow:var(--shadow); padding:16px 18px; display:flex; align-items:center; gap:14px; }
+  .lc-ring{ width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; font-family:var(--display); color:#fff; flex:none; }
+  .lc-info b{ display:block; font-size:14px; }
+  .lc-info span{ font-size:11.5px; color:var(--ink-soft); }
+  .cards-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; margin-bottom:20px; }
+  .regional-toggle{ display:flex; gap:6px; background:var(--cream); border-radius:100px; padding:4px; width:fit-content; margin-bottom:20px; }
+  .regional-toggle button{ border:none; background:none; padding:9px 18px; border-radius:100px; font-size:12.5px; font-weight:700; color:var(--ink-soft); cursor:pointer; font-family:inherit; }
+  .regional-toggle button.on{ background:var(--paper); color:var(--ink); box-shadow:var(--shadow); }
+  .jornada-tabela{ width:100%; border-collapse:collapse; }
+  .jornada-tabela th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); padding:12px 4px; border-bottom:1px solid var(--line); font-weight:700; }
+  .jornada-tabela td{ padding:12px 4px; font-size:13px; border-bottom:1px solid var(--line); }
+  .jornada-pill{ font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; display:inline-block; }
+  .jornada-pill.pendente{ background:#F0E6D2; color:var(--ink-soft); }
+  .jornada-pill.atrasado{ background:#F3D9D0; color:#B4462B; }
+  .jornada-pill.ok{ background:#E4F2DF; color:var(--green-dark); }
+
   /* ---------- lojinha redesenhada: categorias + cards + confirmação (setembro/2026) ----------- */
   .loja-cat-rail{ display:flex; gap:8px; overflow-x:auto; padding:2px 0 14px; }
   .loja-chip{
@@ -672,6 +712,18 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9.5" width="16" height="10.5" rx="1.6"/><path d="M4 13.5h16"/><path d="M12 9.5v10.5"/><path d="M12 9.5c-1.6 0-4-.7-4-3.1C8 4.7 9 4 10 4c1.5 0 2 2 2 5.5"/><path d="M12 9.5c1.6 0 4-.7 4-3.1 0-1.7-1-2.4-2-2.4-1.5 0-2 2-2 5.5"/></svg>
           </div>
           <div><b data-i18n="atalho_loja_titulo">Lojinha Cabana</b><small data-i18n="atalho_loja_sub">Troque aqui seus pontos por itens</small></div>
+        </div>
+        <div id="itemAtalhoPendencias" class="item" style="display:none;" onclick="event.stopPropagation(); document.getElementById('miniDropdownAtalhos').classList.remove('on'); window.abrirPendenciasGestor();">
+          <div class="ico-mini equipe" style="background:#B4462B;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor"/><path d="M10.3 3.9 2.7 17.5c-.6 1 .2 2.3 1.4 2.3h15.8c1.2 0 2-1.3 1.4-2.3L13.7 3.9c-.6-1.1-2-1.1-2.6 0Z"/></svg>
+          </div>
+          <div><b>Pendências</b><small id="atalhoPendenciasStatus"></small></div>
+        </div>
+        <div id="itemAtalhoRegional" class="item" style="display:none;" onclick="event.stopPropagation(); document.getElementById('miniDropdownAtalhos').classList.remove('on'); window.abrirJornadaRegional();">
+          <div class="ico-mini loja" style="background:var(--green-dark);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-7h6v7"/></svg>
+          </div>
+          <div><b id="atalhoRegionalTitulo">Minha regional</b><small>Visão da sua regional</small></div>
         </div>
       </div>
     </div>
@@ -939,6 +991,161 @@
       </div>
       <div id="equipeCardsLista">
         <p style="text-align:center; color:var(--ink-soft); padding:20px; font-size:13.5px;" data-i18n="carregando">Carregando…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Jornada do Cabaneiro — setembro/2026 (ver contrato do projeto) ===== -->
+
+<div id="modalDesligadoPergunta" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:96;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(420px,92vw); text-align:center; padding:32px 28px;">
+    <div style="font-size:40px; margin-bottom:6px;">🤔</div>
+    <h3 id="desligadoPergTitulo" style="margin:0 0 10px; font-family:var(--display); font-weight:400; font-size:20px;"></h3>
+    <p style="color:var(--ink-soft); font-size:13.5px; line-height:1.6; margin:0 0 22px;">Ela(e) sumiu na última atualização da planilha de colaboradores. Foi um desligamento?</p>
+    <button class="btn-primary" style="width:100%; margin-bottom:10px;" onclick="window.abrirParecerDesligamento()">Sim, foi desligado(a) →</button>
+    <button class="btn-secondary" style="width:100%;" onclick="window.dispensarDesligamento()">Foi engano no cadastro</button>
+  </div>
+</div>
+
+<div id="modalParecerDesligamento" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:96;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(480px,92vw); max-height:88vh; overflow-y:auto;">
+    <div style="padding:22px 26px; border-bottom:1px solid var(--line);">
+      <h3 style="margin:0; font-family:var(--display); font-weight:400; font-size:19px;">Parecer de desligamento</h3>
+    </div>
+    <div style="padding:22px 26px; display:flex; flex-direction:column; gap:16px;">
+      <p id="parecerColaboradorInfo" style="margin:0; font-size:12.5px; color:var(--ink-soft);"></p>
+      <div class="field">
+        <label style="display:block; font-size:12.5px; font-weight:700; margin-bottom:7px;">Motivo *</label>
+        <select id="parecerMotivoSelect" style="width:100%; padding:11px 14px; border-radius:10px; border:1px solid var(--line); font-size:13.5px; background:#fff; color:var(--ink);">
+          <option value="">Selecione…</option>
+          <option>Pediu demissão</option>
+          <option>Fim de período de experiência</option>
+          <option>Faltas / assiduidade</option>
+          <option>Baixo desempenho</option>
+          <option>Quebra de conduta</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label style="display:block; font-size:12.5px; font-weight:700; margin-bottom:7px;">Detalhamento *</label>
+        <textarea id="parecerDetalhamentoInput" placeholder="Descreva o contexto do desligamento…" style="width:100%; padding:11px 14px; border-radius:10px; border:1px solid var(--line); font-size:13.5px; min-height:90px; resize:vertical; font-family:inherit;"></textarea>
+        <small style="display:block; margin-top:6px; font-size:11.5px; color:var(--ink-soft);">Os dois campos são obrigatórios. Só o DHO tem acesso a esse conteúdo no painel admin.</small>
+      </div>
+      <div id="parecerErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600;"></div>
+      <button class="btn-primary" style="width:100%;" onclick="window.salvarParecerDesligamento()">Registrar parecer</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalPendenciasGestor" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:92;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(760px,94vw); max-height:86vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
+      <h3 style="margin:0; font-family:var(--display); font-weight:400;">📋 Pendências</h3>
+      <button onclick="closeModal('modalPendenciasGestor')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
+    </div>
+    <div style="padding:20px 24px; overflow-y:auto;">
+      <div class="jornada-bloco">
+        <div class="jornada-section-label">🆕 Colaboradores novos · treinamento obrigatório <span class="contagem" id="pendNovatosContagem" style="display:none;">0</span></div>
+        <div id="pendNovatosLista"><p class="jornada-vazio">Carregando…</p></div>
+      </div>
+      <div class="jornada-bloco">
+        <div class="jornada-section-label">🚦 Ponto de checagem · 30 dias <span class="contagem" id="pendCheckinContagem" style="display:none;">0</span></div>
+        <div id="pendCheckinLista"><p class="jornada-vazio">Carregando…</p></div>
+      </div>
+      <div class="jornada-bloco">
+        <div class="jornada-section-label">📋 Pesquisa de 45 / 90 dias</div>
+        <div id="pendPesquisaLista"><p class="jornada-vazio">Carregando…</p></div>
+      </div>
+      <div class="jornada-bloco" style="margin-bottom:0;">
+        <div class="jornada-section-label">📚 Pendências de curso do time <span class="contagem" id="pendCursosContagem" style="display:none;">0</span></div>
+        <div id="pendCursosLista"><p class="jornada-vazio">Carregando…</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modalPesquisaLinkQr" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:97;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(380px,92vw); text-align:center; padding:28px 24px;">
+    <h3 id="pesquisaLinkQrTitulo" style="margin:0 0 14px; font-family:var(--display); font-weight:400; font-size:17px;"></h3>
+    <img id="pesquisaLinkQrImg" src="" alt="QR code" style="width:170px; height:170px; margin:0 auto 16px; display:block; border-radius:12px; border:1px solid var(--line);">
+    <a id="pesquisaLinkQrLink" href="#" target="_blank" style="display:block; background:var(--green); color:#fff; font-weight:700; font-size:13.5px; padding:12px; border-radius:100px; text-decoration:none; margin-bottom:10px;">Abrir pesquisa →</a>
+    <button onclick="closeModal('modalPesquisaLinkQr')" style="background:none; border:none; color:var(--ink-soft); font-size:12.5px; cursor:pointer; text-decoration:underline;">Fechar</button>
+  </div>
+</div>
+
+<div id="modalCheckin30" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:96;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(560px,92vw); max-height:88vh; overflow-y:auto;">
+    <div style="padding:22px 26px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
+      <h3 style="margin:0; font-family:var(--display); font-weight:400; font-size:19px;">Ponto de checagem · 30 dias</h3>
+      <button onclick="closeModal('modalCheckin30')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
+    </div>
+    <div style="padding:22px 26px; display:flex; flex-direction:column; gap:16px;">
+      <p id="checkin30ColaboradorInfo" style="margin:0; font-size:12.5px; color:var(--ink-soft);"></p>
+
+      <div class="farol-item" data-farol="integracao">
+        <label>Integração à loja e equipe *</label>
+        <div class="farol-opts">
+          <div class="farol-opt g" data-valor="verde"><div class="bolinha"></div><span>Indo bem</span></div>
+          <div class="farol-opt y" data-valor="amarelo"><div class="bolinha"></div><span>Atenção</span></div>
+          <div class="farol-opt r" data-valor="vermelho"><div class="bolinha"></div><span>Preocupante</span></div>
+        </div>
+      </div>
+      <div class="farol-item" data-farol="treinamento">
+        <label>Treinamento inicial *</label>
+        <div class="farol-opts">
+          <div class="farol-opt g" data-valor="verde"><div class="bolinha"></div><span>Indo bem</span></div>
+          <div class="farol-opt y" data-valor="amarelo"><div class="bolinha"></div><span>Atenção</span></div>
+          <div class="farol-opt r" data-valor="vermelho"><div class="bolinha"></div><span>Preocupante</span></div>
+        </div>
+      </div>
+      <div class="farol-item" data-farol="comportamento">
+        <label>Comportamento e postura *</label>
+        <div class="farol-opts">
+          <div class="farol-opt g" data-valor="verde"><div class="bolinha"></div><span>Indo bem</span></div>
+          <div class="farol-opt y" data-valor="amarelo"><div class="bolinha"></div><span>Atenção</span></div>
+          <div class="farol-opt r" data-valor="vermelho"><div class="bolinha"></div><span>Preocupante</span></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label style="display:block; font-size:12.5px; font-weight:700; margin-bottom:7px;">O que está acontecendo? *</label>
+        <textarea id="checkin30OqueInput" placeholder="Descreva livremente a situação…" style="width:100%; padding:11px 14px; border-radius:10px; border:1px solid var(--line); font-size:13.5px; min-height:80px; resize:vertical; font-family:inherit;"></textarea>
+      </div>
+      <div class="field">
+        <label style="display:block; font-size:12.5px; font-weight:700; margin-bottom:7px;">Resumo do feedback informal com o colaborador *</label>
+        <textarea id="checkin30ResumoInput" placeholder="O que foi conversado com ele(a) até agora…" style="width:100%; padding:11px 14px; border-radius:10px; border:1px solid var(--line); font-size:13.5px; min-height:80px; resize:vertical; font-family:inherit;"></textarea>
+        <small style="display:block; margin-top:6px; font-size:11.5px; color:var(--ink-soft);">Converse com o colaborador antes de preencher — esse resumo é do que já foi dito a ele(a).</small>
+      </div>
+      <div id="checkin30Erro" style="display:none; color:#B4462B; font-size:13px; font-weight:600;"></div>
+      <button class="btn-primary" style="width:100%;" onclick="window.salvarCheckin30()">Salvar ponto de checagem</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalJornadaRegional" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:92;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(880px,94vw); max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
+      <h3 id="jornadaRegionalTitulo" style="margin:0; font-family:var(--display); font-weight:400;"></h3>
+      <button onclick="closeModal('modalJornadaRegional')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
+    </div>
+    <div style="padding:20px 24px; overflow-y:auto;">
+      <div class="regional-toggle">
+        <button id="jornadaToggleEquipe" class="on" onclick="window.mudarVisaoJornadaRegional('equipe')"></button>
+        <button id="jornadaToggleGeral" onclick="window.mudarVisaoJornadaRegional('geral')"></button>
+      </div>
+      <div id="jornadaVisaoEquipe">
+        <div id="jornadaListaPessoas"><p class="jornada-vazio">Carregando…</p></div>
+      </div>
+      <div id="jornadaVisaoGeral" style="display:none;">
+        <div class="cards-grid" id="jornadaCardsAgregado"></div>
+        <div class="jornada-bloco" style="margin-bottom:0;">
+          <div class="jornada-section-label">Pendências de curso por loja</div>
+          <table class="jornada-tabela">
+            <thead><tr id="jornadaTabelaCabecalho"></tr></thead>
+            <tbody id="jornadaTabelaCorpo"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -2059,6 +2266,7 @@ function configurarGateConclusao(c){
   let currentCpf = null;
   let currentUid = null; // uid do Firebase Auth (diferente do CPF) — usado só como chave não-identificável do ranking público
   let cargoColaboradorAtual = '';
+  let macrocargoColaboradorAtual = ''; // agrupamento de cargo (ex.: "Analista" pra Jr/Pl/Sr) — setembro/2026, ver contrato
   let nivelColaboradorAtual = '';
   let lojaColaboradorAtual = '';
   let regionalColaboradorAtual = '';
@@ -2213,7 +2421,12 @@ function configurarGateConclusao(c){
   // só valendo se tiver sido marcada como restrita — Admin sempre vê tudo, pra poder revisar/gerenciar
   function colaboradorPodeVer(item){
     if (nivelColaboradorAtual === 'Admin') return true;
-    const passaCargo = !item.restrito || (Array.isArray(item.cargosPermitidos) && item.cargosPermitidos.includes(cargoColaboradorAtual));
+    // cargosPermitidos pode ter cargo específico ("Analista de Marketing Pleno") e/ou macrocargo
+    // ("Analista") misturados na mesma lista — qualquer um dos dois batendo já libera
+    const passaCargo = !item.restrito || (Array.isArray(item.cargosPermitidos) && (
+      item.cargosPermitidos.includes(cargoColaboradorAtual) ||
+      (macrocargoColaboradorAtual && item.cargosPermitidos.includes(macrocargoColaboradorAtual))
+    ));
     const passaLocal = !item.localRestrito ||
       (Array.isArray(item.lojasPermitidas) && item.lojasPermitidas.includes(lojaColaboradorAtual)) ||
       (Array.isArray(item.regionaisPermitidas) && item.regionaisPermitidas.includes(regionalColaboradorAtual));
@@ -2391,7 +2604,7 @@ function configurarGateConclusao(c){
           window.cursosCarregados = true;
           if (window.renderCards) window.renderCards();
           if (window.renderJornada) window.renderJornada();
-          verificarTrilhas(cpf, cargoColaboradorAtual, localColaboradorAtual);
+          verificarTrilhas(cpf, cargoColaboradorAtual, localColaboradorAtual, macrocargoColaboradorAtual);
         });
       },
       (err) => {
@@ -2457,20 +2670,21 @@ function configurarGateConclusao(c){
   });
 
   // ===== trilhas de aprendizagem: sequência de cursos definida pelo admin pra um cargo/local/grupo de cargos =====
-  function trilhaAplicavelA(t, cargo, local){
+  function trilhaAplicavelA(t, cargo, local, macrocargo){
+    // Cargos aqui também pode ter macrocargo misturado (ex.: "Analista") — ver colaboradorPodeVer()
     const passaCargo = !(t.CargosEspecificos === true && Array.isArray(t.Cargos) && t.Cargos.length)
-      || t.Cargos.includes(cargo);
+      || t.Cargos.includes(cargo) || (macrocargo && t.Cargos.includes(macrocargo));
     const passaLocal = !(t.LocalEspecifico === true && Array.isArray(t.Locais) && t.Locais.length)
       || t.Locais.includes(local);
     return passaCargo && passaLocal;
   }
 
-  async function verificarTrilhas(cpf, cargo, local){
+  async function verificarTrilhas(cpf, cargo, local, macrocargo){
     if (!cpf) return;
     try {
       const snap = await getDocs(query(collection(db, 'trilhas'), where('Ativa', '==', true)));
       const todas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const aplicaveis = todas.filter(t => trilhaAplicavelA(t, cargo, local));
+      const aplicaveis = todas.filter(t => trilhaAplicavelA(t, cargo, local, macrocargo));
       window.MINHAS_TRILHAS = aplicaveis;
       if (window.renderMinhaTrilha) window.renderMinhaTrilha();
 
@@ -2558,7 +2772,7 @@ function configurarGateConclusao(c){
   // ===== painel do gestor: só leitura do progresso de quem tem esse cpf como CpfGestor =====
   function cursoAplicavelAColaborador(curso, colab){
     const restrito = curso.CargosEspecificos === true && Array.isArray(curso.Cargos) && curso.Cargos.length > 0;
-    const passaCargo = !restrito || curso.Cargos.includes(colab.Cargo);
+    const passaCargo = !restrito || curso.Cargos.includes(colab.Cargo) || (colab.Macrocargo && curso.Cargos.includes(colab.Macrocargo));
     const localRestrito = curso.LocalEspecifico === true && ((Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.length) || (Array.isArray(curso.RegionaisPermitidas) && curso.RegionaisPermitidas.length));
     const passaLocal = !localRestrito ||
       (Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.includes(colab.Loja)) ||
@@ -2573,12 +2787,28 @@ function configurarGateConclusao(c){
   function atualizarVisibilidadeAtalhoIcone(){
     const temEquipe = !!(window.MINHA_EQUIPE && window.MINHA_EQUIPE.length);
     const temLoja = !!window.__lojaAtiva;
+    // Jornada do Cabaneiro (setembro/2026): "Pendências" segue a mesma regra de "Minha equipe"
+    // (só existe pendência pra quem tem gente reportando); "Minha regional"/"Minhas regionais" é
+    // por cargo — reaproveita o mecanismo genérico de CpfGestor, só muda o rótulo e o escopo da
+    // consulta dependendo do nível (Coordenador de Operações vê 1 regional, Gerente de Operações
+    // vê várias).
+    const ehCoordenador = cargoColaboradorAtual === 'COORDENADOR DE OPERAÇÕES';
+    const ehGerenteOperacoes = cargoColaboradorAtual === 'GERENTE DE OPERAÇÕES';
+    const temRegional = ehCoordenador || ehGerenteOperacoes;
     const itemEquipe = document.getElementById('itemAtalhoEquipe');
     const itemLoja = document.getElementById('itemAtalhoLoja');
+    const itemPendencias = document.getElementById('itemAtalhoPendencias');
+    const itemRegional = document.getElementById('itemAtalhoRegional');
     const wrap = document.getElementById('atalhosIcoWrap');
     if (itemEquipe) itemEquipe.style.display = temEquipe ? 'flex' : 'none';
     if (itemLoja) itemLoja.style.display = temLoja ? 'flex' : 'none';
-    if (wrap) wrap.style.display = (temEquipe || temLoja) ? 'flex' : 'none';
+    if (itemPendencias) itemPendencias.style.display = temEquipe ? 'flex' : 'none';
+    if (itemRegional) {
+      itemRegional.style.display = temRegional ? 'flex' : 'none';
+      const titulo = document.getElementById('atalhoRegionalTitulo');
+      if (titulo) titulo.textContent = ehGerenteOperacoes ? 'Minhas regionais' : 'Minha regional';
+    }
+    if (wrap) wrap.style.display = (temEquipe || temLoja || temRegional) ? 'flex' : 'none';
   }
 
   // bolinha vermelha no ícone: número de pessoas da equipe com QUALQUER pendência agora (vencido,
@@ -2604,15 +2834,17 @@ function configurarGateConclusao(c){
   // prévia: "queria ver quais ele tá pendente"). Extraído como função própria porque duas telas
   // precisam do mesmo cálculo: o badge do ícone (só a contagem de quem precisa de atenção) e o
   // modal "Minha equipe" (a lista inteira, com os nomes).
-  async function calcularEquipeDetalhada(){
-    const equipe = window.MINHA_EQUIPE || [];
-    if (!equipe.length) return [];
+  // Núcleo do cálculo de pendência de curso, extraído pra aceitar QUALQUER lista de colaboradores
+  // (não só window.MINHA_EQUIPE) — a Jornada do Cabaneiro (setembro/2026) reaproveita isso tanto
+  // pro painel do gestor quanto pras visões agregadas de Coordenador/Gerente de Operações.
+  async function calcularPendenciaCursosParaLista(lista){
+    if (!lista.length) return [];
     const cursosSnap = await getDocs(query(collection(db, 'cursos'), where('Status', '==', 'publicado')));
     const cursosPublicados = cursosSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    const cpfs = equipe.map(c => c.cpf);
+    const cpfs = lista.map(c => c.cpf);
     const progressoPorPessoa = {};
-    // consulta 'in' do Firestore aceita até 30 valores por vez — separa em lotes se o time for maior que isso
+    // consulta 'in' do Firestore aceita até 30 valores por vez — separa em lotes se a lista for maior que isso
     const lotes = [];
     for (let i = 0; i < cpfs.length; i += 30) lotes.push(cpfs.slice(i, i + 30));
     for (const lote of lotes) {
@@ -2627,7 +2859,7 @@ function configurarGateConclusao(c){
     }
 
     const agora = new Date();
-    return equipe.map(c => {
+    return lista.map(c => {
       const aplicaveis = cursosPublicados.filter(cu => cursoAplicavelAColaborador(cu, c));
       const progDaPessoa = progressoPorPessoa[c.cpf] || {};
       let concluidos = 0;
@@ -2661,14 +2893,19 @@ function configurarGateConclusao(c){
       else if (diasSemAcessar > 30) { situacao = t('situacao_critico'); cor = '#B4462B'; }
       else if (diasSemAcessar > 15) { situacao = t('situacao_atencao'); cor = '#D89840'; }
       else { situacao = t('situacao_emandamento'); cor = '#386F2D'; }
-      return { nome: c.Nome || '—', cargo: c.Cargo || '—', concluidos, total, pct, cursosVencidos, cursosReprovados, cursosPendentes, situacao, cor };
+      return { cpf: c.cpf, nome: c.Nome || '—', cargo: c.Cargo || '—', loja: c.Loja || '—', regional: c.Regional || '—', concluidos, total, pct, cursosVencidos, cursosReprovados, cursosPendentes, situacao, cor };
     }).sort((a, b) => a.pct - b.pct);
+  }
+
+  async function calcularEquipeDetalhada(){
+    return calcularPendenciaCursosParaLista(window.MINHA_EQUIPE || []);
   }
 
   async function iniciarPainelGestor(cpf){
     try {
       const snap = await getDocs(query(collection(db, 'colaboradores'), where('CpfGestor', '==', cpf)));
-      const equipe = snap.docs.map(d => ({ cpf: d.id, ...d.data() })).filter(c => c.Status !== 'inativo');
+      const todos = snap.docs.map(d => ({ cpf: d.id, ...d.data() }));
+      const equipe = todos.filter(c => c.Status !== 'inativo');
       window.MINHA_EQUIPE = equipe;
       atualizarVisibilidadeAtalhoIcone();
       if (equipe.length) {
@@ -2676,6 +2913,10 @@ function configurarGateConclusao(c){
         window.__equipeDetalhada = linhas;
         atualizarBadgeAtalhoEquipe(linhas);
       }
+      // Jornada do Cabaneiro (setembro/2026): popup de "foi desligado?" pra quem sumiu da base
+      // (Status virou inativo e ainda não tem parecer registrado) + painel de pendências do gestor.
+      await verificarDesligadosPendentes(todos.filter(c => c.Status === 'inativo'));
+      await atualizarPainelPendenciasGestor();
     } catch (err) {
       console.error('Erro ao verificar equipe (painel do gestor):', err);
     }
@@ -2723,6 +2964,542 @@ function configurarGateConclusao(c){
       corpo.innerHTML = `<p style="text-align:center; color:#B4462B; padding:20px; font-size:13.5px;">${t('equipe_erro')}</p>`;
     }
   };
+
+  // ================================================================================
+  // Jornada do Cabaneiro (setembro/2026) — ver contrato do projeto pra contexto completo.
+  // Reaproveita: window.MINHA_EQUIPE / calcularPendenciaCursosParaLista / cursoAplicavelAColaborador
+  // (já existentes) em vez de reimplementar a lógica de pendência de curso do zero.
+  // ================================================================================
+
+  // ---------- popup "foi desligado?" + parecer de desligamento ----------
+
+  let filaDesligadosPendentes = [];
+
+  async function verificarDesligadosPendentes(inativos){
+    if (!inativos || !inativos.length) return;
+    try {
+      const pendentes = [];
+      for (const c of inativos) {
+        const snap = await getDoc(doc(db, 'desligamentos', c.cpf));
+        if (!snap.exists()) pendentes.push(c); // ainda não tem parecer nem foi descartado como engano
+      }
+      filaDesligadosPendentes = pendentes;
+      mostrarProximoDesligadoPendente();
+    } catch (err) {
+      console.error('Erro ao verificar desligamentos pendentes:', err);
+    }
+  }
+
+  function mostrarProximoDesligadoPendente(){
+    if (!filaDesligadosPendentes.length) return;
+    // não interrompe se algum outro modal já estiver aberto na tela (ex.: pesquisa de marco 45/90)
+    const jaTemModalAberto = document.querySelector('div[style*="display:flex"][style*="position:fixed"]');
+    if (jaTemModalAberto) { setTimeout(mostrarProximoDesligadoPendente, 1200); return; }
+    const c = filaDesligadosPendentes[0];
+    document.getElementById('desligadoPergTitulo').textContent = `${c.Nome || 'Um colaborador'} não aparece mais na base`;
+    openModal('modalDesligadoPergunta');
+  }
+
+  window.abrirParecerDesligamento = function(){
+    closeModal('modalDesligadoPergunta');
+    const c = filaDesligadosPendentes[0];
+    if (!c) return;
+    document.getElementById('parecerColaboradorInfo').textContent = [c.Nome, c.Cargo, c.Loja].filter(Boolean).join(' · ');
+    document.getElementById('parecerMotivoSelect').value = '';
+    document.getElementById('parecerDetalhamentoInput').value = '';
+    document.getElementById('parecerErro').style.display = 'none';
+    openModal('modalParecerDesligamento');
+  };
+
+  window.dispensarDesligamento = async function(){
+    closeModal('modalDesligadoPergunta');
+    const c = filaDesligadosPendentes[0];
+    if (c) {
+      try {
+        await setDoc(doc(db, 'desligamentos', c.cpf), {
+          Cpf: c.cpf,
+          Nome: c.Nome || '',
+          Descartado: true, // engano de cadastro — não é um desligamento de verdade, não conta em nenhum relatório
+          RegistradoPor: currentCpf,
+          RegistradoEm: serverTimestamp()
+        });
+      } catch (err) {
+        console.error('Erro ao descartar aviso de desligamento:', err);
+      }
+    }
+    filaDesligadosPendentes.shift();
+    mostrarProximoDesligadoPendente();
+  };
+
+  window.salvarParecerDesligamento = async function(){
+    const c = filaDesligadosPendentes[0];
+    if (!c) return;
+    const motivo = document.getElementById('parecerMotivoSelect').value;
+    const detalhamento = document.getElementById('parecerDetalhamentoInput').value.trim();
+    const erro = document.getElementById('parecerErro');
+    if (!motivo || !detalhamento) {
+      erro.textContent = 'Preencha o motivo e o detalhamento — os dois são obrigatórios.';
+      erro.style.display = 'block';
+      return;
+    }
+    erro.style.display = 'none';
+    try {
+      await setDoc(doc(db, 'desligamentos', c.cpf), {
+        Cpf: c.cpf,
+        Nome: c.Nome || '',
+        Cargo: c.Cargo || '',
+        Loja: c.Loja || '',
+        Regional: c.Regional || '',
+        Motivo: motivo,
+        Detalhamento: detalhamento,
+        Descartado: false,
+        RegistradoPor: currentCpf,
+        RegistradoEm: serverTimestamp()
+      });
+    } catch (err) {
+      console.error('Erro ao salvar parecer de desligamento:', err);
+      erro.textContent = 'Não deu pra salvar agora. Tenta de novo em instantes.';
+      erro.style.display = 'block';
+      return;
+    }
+    closeModal('modalParecerDesligamento');
+    filaDesligadosPendentes.shift();
+    mostrarProximoDesligadoPendente();
+  };
+
+  // ---------- painel de pendências do gestor ----------
+
+  let __cursosObrigatoriosCache = null;
+  async function obterCursosObrigatoriosPublicados(){
+    if (__cursosObrigatoriosCache) return __cursosObrigatoriosCache;
+    const snap = await getDocs(query(collection(db, 'cursos'), where('Status', '==', 'publicado')));
+    __cursosObrigatoriosCache = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.Obrigatorio === true);
+    return __cursosObrigatoriosCache;
+  }
+
+  let __configPesquisasCache = null;
+  async function obterConfigPesquisas(){
+    if (__configPesquisasCache) return __configPesquisasCache;
+    const snap = await getDoc(doc(db, 'configuracoes', 'pesquisas'));
+    __configPesquisasCache = snap.exists() ? snap.data() : {};
+    return __configPesquisasCache;
+  }
+
+  async function atualizarPainelPendenciasGestor(){
+    const equipe = window.MINHA_EQUIPE || [];
+    if (!equipe.length) return;
+    const [qtdNovatos, qtdCheckin, qtdPesquisa] = await Promise.all([
+      renderPendNovatos(equipe),
+      renderPendCheckin30(equipe),
+      renderPendPesquisas(equipe)
+    ]);
+    const qtdCursos = renderPendCursosGeral(window.__equipeDetalhada || []);
+    const total = (qtdNovatos || 0) + (qtdCheckin || 0) + (qtdPesquisa || 0) + (qtdCursos || 0);
+    const status = document.getElementById('atalhoPendenciasStatus');
+    if (status) status.textContent = total > 0 ? `${total} pendência${total === 1 ? '' : 's'}` : 'Tudo em dia';
+  }
+
+  window.abrirPendenciasGestor = function(){
+    openModal('modalPendenciasGestor');
+  };
+
+  // treinamento obrigatório de colaboradores novos (só Local = Loja, prazo 30 dias corridos —
+  // ver contrato do projeto pra decisão sobre o prazo e os cursos que contam)
+  async function renderPendNovatos(equipe){
+    const lista = document.getElementById('pendNovatosLista');
+    const contagem = document.getElementById('pendNovatosContagem');
+    if (!lista) return 0;
+    const candidatos = equipe.filter(c => c.Local === 'Loja' && c.Admissao && c.Admissao.toDate);
+    if (!candidatos.length) {
+      lista.innerHTML = `<p class="jornada-vazio">Ninguém em período de treinamento obrigatório agora.</p>`;
+      if (contagem) contagem.style.display = 'none';
+      return 0;
+    }
+    try {
+      const obrigatorios = await obterCursosObrigatoriosPublicados();
+      if (!obrigatorios.length) {
+        lista.innerHTML = `<p class="jornada-vazio">Nenhum curso marcado como obrigatório no sistema ainda.</p>`;
+        if (contagem) contagem.style.display = 'none';
+        return 0;
+      }
+      const cpfs = candidatos.map(c => c.cpf);
+      const progressoPorPessoa = {};
+      const lotes = [];
+      for (let i = 0; i < cpfs.length; i += 30) lotes.push(cpfs.slice(i, i + 30));
+      for (const lote of lotes) {
+        if (!lote.length) continue;
+        const progSnap = await getDocs(query(collection(db, 'progresso'), where('Cpf', 'in', lote)));
+        progSnap.forEach(d => {
+          const p = d.data();
+          if (!p.Cpf || !p.CursoId) return;
+          if (!progressoPorPessoa[p.Cpf]) progressoPorPessoa[p.Cpf] = {};
+          progressoPorPessoa[p.Cpf][p.CursoId] = p;
+        });
+      }
+      const agora = new Date();
+      const linhas = candidatos.map(c => {
+        const aplicaveis = obrigatorios.filter(cu => cursoAplicavelAColaborador(cu, c));
+        if (!aplicaveis.length) return null;
+        const prog = progressoPorPessoa[c.cpf] || {};
+        const pendentes = aplicaveis.filter(cu => !prog[cu.id] || prog[cu.id].Status !== 'concluido');
+        if (!pendentes.length) return null;
+        const diasDesdeAdmissao = Math.floor((agora - c.Admissao.toDate()) / (1000 * 60 * 60 * 24));
+        const diasRestantes = 30 - diasDesdeAdmissao;
+        return { nome: c.Nome || '—', loja: c.Loja || '—', qtd: pendentes.length, diasRestantes };
+      }).filter(Boolean).sort((a, b) => a.diasRestantes - b.diasRestantes);
+
+      if (contagem) { contagem.style.display = linhas.length ? 'inline-flex' : 'none'; contagem.textContent = linhas.length; }
+      lista.innerHTML = linhas.length ? linhas.map(l => {
+        const atrasado = l.diasRestantes < 0;
+        const proximo = !atrasado && l.diasRestantes <= 7;
+        const chipClass = atrasado ? '' : (proximo ? 'atencao' : 'ok');
+        const chipTxt = atrasado
+          ? `${Math.abs(l.diasRestantes)} dia${Math.abs(l.diasRestantes) === 1 ? '' : 's'} atrasado`
+          : `faltam ${l.diasRestantes} dia${l.diasRestantes === 1 ? '' : 's'}`;
+        return `<div class="pendencia-card ${atrasado ? 'critico' : ''}">
+          <div class="pendencia-info"><b>${l.nome}</b><span>${l.loja} · ${l.qtd} curso${l.qtd === 1 ? '' : 's'} obrigatório${l.qtd === 1 ? '' : 's'} pendente${l.qtd === 1 ? '' : 's'}</span></div>
+          <div class="prazo-chip ${chipClass}">${chipTxt}</div>
+        </div>`;
+      }).join('') : `<p class="jornada-vazio">Todo mundo em dia com o treinamento obrigatório.</p>`;
+      return linhas.length;
+    } catch (err) {
+      console.error('Erro ao carregar pendências de novatos:', err);
+      lista.innerHTML = `<p class="jornada-vazio">Não deu pra carregar agora.</p>`;
+      return 0;
+    }
+  }
+
+  // ponto de checagem de 30 dias — pendência é "não tem doc em checkins30 ainda"; janela de 30–90
+  // dias desde a admissão pra não acumular gente antiga (de antes dessa funcionalidade existir)
+  // pra sempre na lista — ver contrato do projeto.
+  async function renderPendCheckin30(equipe){
+    const lista = document.getElementById('pendCheckinLista');
+    const contagem = document.getElementById('pendCheckinContagem');
+    if (!lista) return 0;
+    const agora = new Date();
+    const candidatos = equipe.filter(c => {
+      if (!c.Admissao || !c.Admissao.toDate) return false;
+      const dias = Math.floor((agora - c.Admissao.toDate()) / (1000 * 60 * 60 * 24));
+      return dias >= 30 && dias <= 90;
+    });
+    if (!candidatos.length) {
+      lista.innerHTML = `<p class="jornada-vazio">Nenhum ponto de checagem de 30 dias pendente agora.</p>`;
+      if (contagem) contagem.style.display = 'none';
+      return 0;
+    }
+    try {
+      const cpfs = candidatos.map(c => c.cpf);
+      const jaFeitos = new Set();
+      const lotes = [];
+      for (let i = 0; i < cpfs.length; i += 30) lotes.push(cpfs.slice(i, i + 30));
+      for (const lote of lotes) {
+        if (!lote.length) continue;
+        const snap = await getDocs(query(collection(db, 'checkins30'), where('Cpf', 'in', lote)));
+        snap.forEach(d => jaFeitos.add(d.id));
+      }
+      const pendentes = candidatos.filter(c => !jaFeitos.has(c.cpf)).map(c => {
+        const dias = Math.floor((agora - c.Admissao.toDate()) / (1000 * 60 * 60 * 24));
+        return { cpf: c.cpf, nome: c.Nome || '—', loja: c.Loja || '—', diasAtraso: dias - 30 };
+      }).sort((a, b) => b.diasAtraso - a.diasAtraso);
+
+      if (contagem) { contagem.style.display = pendentes.length ? 'inline-flex' : 'none'; contagem.textContent = pendentes.length; }
+      lista.innerHTML = pendentes.length ? pendentes.map(p => `
+        <div class="pendencia-card ${p.diasAtraso > 0 ? 'critico' : ''}">
+          <div class="pendencia-info"><b>${p.nome}</b><span>${p.loja}</span></div>
+          <button class="btn-secondary" style="padding:8px 14px; font-size:12.5px;" onclick="window.abrirCheckin30('${p.cpf}')">Preencher →</button>
+        </div>
+      `).join('') : `<p class="jornada-vazio">Nenhum ponto de checagem de 30 dias pendente agora.</p>`;
+      return pendentes.length;
+    } catch (err) {
+      console.error('Erro ao carregar pendências de check-in 30 dias:', err);
+      lista.innerHTML = `<p class="jornada-vazio">Não deu pra carregar agora.</p>`;
+      return 0;
+    }
+  }
+
+  // pesquisa de 45/90 dias — reaproveita configuracoes/pesquisas (Link45/Link90) e os campos
+  // Pesquisa45Fechada/Pesquisa90Fechada já usados pelo popup de marco do próprio colaborador.
+  window.__pendPesquisasIndex = [];
+  async function renderPendPesquisas(equipe){
+    const lista = document.getElementById('pendPesquisaLista');
+    if (!lista) return 0;
+    const candidatos = equipe.filter(c => c.Admissao && c.Admissao.toDate);
+    if (!candidatos.length) { lista.innerHTML = `<p class="jornada-vazio">Nenhuma pesquisa de marco pendente agora.</p>`; return 0; }
+    try {
+      const config = await obterConfigPesquisas();
+      const agora = new Date();
+      const linhas = [];
+      candidatos.forEach(c => {
+        const dias = Math.floor((agora - c.Admissao.toDate()) / (1000 * 60 * 60 * 24));
+        const marcos = [
+          { dias: 90, campo: 'Pesquisa90Fechada', link: config.Link90, label: '90 dias' },
+          { dias: 45, campo: 'Pesquisa45Fechada', link: config.Link45, label: '45 dias' },
+        ];
+        const marco = marcos.find(m => dias >= m.dias && m.link && !c[m.campo]);
+        if (marco) linhas.push({ nome: c.Nome || '—', loja: c.Loja || '—', label: marco.label, link: marco.link });
+      });
+      window.__pendPesquisasIndex = linhas;
+      lista.innerHTML = linhas.length ? linhas.map((l, i) => `
+        <div class="pendencia-card">
+          <div class="pendencia-info"><b>${l.nome}</b><span>${l.loja} · pesquisa de ${l.label}</span></div>
+          <button class="btn-secondary" style="padding:8px 14px; font-size:12.5px;" onclick="window.abrirPesquisaLinkQrPorIndice(${i})">Link e QR →</button>
+        </div>
+      `).join('') : `<p class="jornada-vazio">Nenhuma pesquisa de marco pendente agora.</p>`;
+      return linhas.length;
+    } catch (err) {
+      console.error('Erro ao carregar pendências de pesquisa:', err);
+      lista.innerHTML = `<p class="jornada-vazio">Não deu pra carregar agora.</p>`;
+      return 0;
+    }
+  }
+
+  window.abrirPesquisaLinkQrPorIndice = function(i){
+    const l = window.__pendPesquisasIndex[i];
+    if (!l || !l.link) return;
+    document.getElementById('pesquisaLinkQrTitulo').textContent = `Pesquisa de ${l.label}`;
+    document.getElementById('pesquisaLinkQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(l.link)}`;
+    document.getElementById('pesquisaLinkQrLink').href = l.link;
+    openModal('modalPesquisaLinkQr');
+  };
+
+  // pendência geral de curso do time — reaproveita window.__equipeDetalhada, já calculado por
+  // iniciarPainelGestor()/calcularEquipeDetalhada() (mesma fonte do modal "Minha equipe")
+  function renderPendCursosGeral(linhas){
+    const lista = document.getElementById('pendCursosLista');
+    const contagem = document.getElementById('pendCursosContagem');
+    if (!lista) return 0;
+    const comPendencia = (linhas || []).filter(l => l.cursosVencidos.length || l.cursosReprovados.length || l.cursosPendentes.length);
+    if (contagem) { contagem.style.display = comPendencia.length ? 'inline-flex' : 'none'; contagem.textContent = comPendencia.length; }
+    lista.innerHTML = comPendencia.length ? comPendencia.map(l => {
+      const qtd = l.cursosVencidos.length + l.cursosReprovados.length + l.cursosPendentes.length;
+      return `<div class="pendencia-card">
+        <div class="pendencia-info"><b>${l.nome}</b><span>${l.cargo} · ${qtd} curso${qtd === 1 ? '' : 's'} pendente${qtd === 1 ? '' : 's'}</span></div>
+        <div class="jornada-pill pendente">${l.situacao}</div>
+      </div>`;
+    }).join('') : `<p class="jornada-vazio">Time inteiro em dia com os cursos.</p>`;
+    return comPendencia.length;
+  }
+
+  // ---------- ponto de checagem de 30 dias (farol + texto livre) ----------
+
+  let checkin30ColaboradorAtual = null;
+
+  window.abrirCheckin30 = function(cpf){
+    const c = (window.MINHA_EQUIPE || []).find(x => x.cpf === cpf);
+    if (!c) return;
+    checkin30ColaboradorAtual = c;
+    document.getElementById('checkin30ColaboradorInfo').textContent = [c.Nome, c.Cargo, c.Loja].filter(Boolean).join(' · ');
+    document.querySelectorAll('#modalCheckin30 .farol-opt').forEach(el => el.classList.remove('sel'));
+    document.getElementById('checkin30OqueInput').value = '';
+    document.getElementById('checkin30ResumoInput').value = '';
+    document.getElementById('checkin30Erro').style.display = 'none';
+    closeModal('modalPendenciasGestor');
+    openModal('modalCheckin30');
+  };
+
+  document.querySelectorAll('#modalCheckin30 .farol-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const grupo = opt.closest('.farol-item');
+      if (grupo) grupo.querySelectorAll('.farol-opt').forEach(el => el.classList.remove('sel'));
+      opt.classList.add('sel');
+    });
+  });
+
+  window.salvarCheckin30 = async function(){
+    const c = checkin30ColaboradorAtual;
+    if (!c) return;
+    const valores = {};
+    document.querySelectorAll('#modalCheckin30 .farol-item').forEach(item => {
+      const chave = item.dataset.farol;
+      const sel = item.querySelector('.farol-opt.sel');
+      valores[chave] = sel ? sel.dataset.valor : null;
+    });
+    const oque = document.getElementById('checkin30OqueInput').value.trim();
+    const resumo = document.getElementById('checkin30ResumoInput').value.trim();
+    const erro = document.getElementById('checkin30Erro');
+    if (!valores.integracao || !valores.treinamento || !valores.comportamento || !oque || !resumo) {
+      erro.textContent = 'Preencha os três faróis e os dois campos de texto — tudo é obrigatório.';
+      erro.style.display = 'block';
+      return;
+    }
+    erro.style.display = 'none';
+    try {
+      await setDoc(doc(db, 'checkins30', c.cpf), {
+        Cpf: c.cpf,
+        Nome: c.Nome || '',
+        Loja: c.Loja || '',
+        Regional: c.Regional || '',
+        Integracao: valores.integracao,
+        Treinamento: valores.treinamento,
+        Comportamento: valores.comportamento,
+        OQueEstaAcontecendo: oque,
+        ResumoFeedback: resumo,
+        RegistradoPor: currentCpf,
+        RegistradoEm: serverTimestamp()
+      });
+    } catch (err) {
+      console.error('Erro ao salvar ponto de checagem:', err);
+      erro.textContent = 'Não deu pra salvar agora. Tenta de novo em instantes.';
+      erro.style.display = 'block';
+      return;
+    }
+    closeModal('modalCheckin30');
+    checkin30ColaboradorAtual = null;
+    await atualizarPainelPendenciasGestor();
+  };
+
+  // ---------- Coordenador Regional ("Meus gerentes"/"Visão geral da regional") e Gerente de
+  // Operações ("Meus coordenadores"/"Visão geral das regionais"), um nível acima do mesmo jeito ----------
+
+  window.abrirJornadaRegional = function(){
+    const ehGO = cargoColaboradorAtual === 'GERENTE DE OPERAÇÕES';
+    document.getElementById('jornadaRegionalTitulo').textContent = ehGO ? '🗺️ Minhas regionais' : '🗺️ Minha regional';
+    document.getElementById('jornadaToggleEquipe').textContent = ehGO ? 'Meus coordenadores' : 'Meus gerentes';
+    document.getElementById('jornadaToggleGeral').textContent = ehGO ? 'Visão geral das regionais' : 'Visão geral da regional';
+    openModal('modalJornadaRegional');
+    window.mudarVisaoJornadaRegional('equipe');
+  };
+
+  window.mudarVisaoJornadaRegional = function(qual){
+    const btnEquipe = document.getElementById('jornadaToggleEquipe');
+    const btnGeral = document.getElementById('jornadaToggleGeral');
+    const visaoEquipe = document.getElementById('jornadaVisaoEquipe');
+    const visaoGeral = document.getElementById('jornadaVisaoGeral');
+    if (qual === 'geral') {
+      btnEquipe.classList.remove('on'); btnGeral.classList.add('on');
+      visaoEquipe.style.display = 'none'; visaoGeral.style.display = '';
+      carregarVisaoGeralRegional();
+    } else {
+      btnGeral.classList.remove('on'); btnEquipe.classList.add('on');
+      visaoGeral.style.display = 'none'; visaoEquipe.style.display = '';
+      carregarMinhaEquipeRegional();
+    }
+  };
+
+  // "Meus gerentes"/"Meus coordenadores": window.MINHA_EQUIPE já é essa lista (CpfGestor == eu,
+  // mecanismo genérico já existente) — mostra pendência PESSOAL de curso de cada um + pendência
+  // de check-in 30 dias do time deles (não a pendência de curso do time, só o check-in).
+  async function carregarMinhaEquipeRegional(){
+    const lista = document.getElementById('jornadaListaPessoas');
+    if (!lista) return;
+    lista.innerHTML = `<p class="jornada-vazio">Carregando…</p>`;
+    const equipe = window.MINHA_EQUIPE || [];
+    if (!equipe.length) { lista.innerHTML = `<p class="jornada-vazio">Ninguém reportando diretamente pra você ainda.</p>`; return; }
+    try {
+      const linhasPessoais = await calcularPendenciaCursosParaLista(equipe);
+      const porCpf = {};
+      linhasPessoais.forEach(l => { porCpf[l.cpf] = l; });
+
+      const linhas = await Promise.all(equipe.map(async (c) => {
+        let qtdCheckinPendente = 0;
+        try {
+          const subSnap = await getDocs(query(collection(db, 'colaboradores'), where('CpfGestor', '==', c.cpf)));
+          const subordinados = subSnap.docs.map(d => ({ cpf: d.id, ...d.data() })).filter(s => s.Status !== 'inativo');
+          const agora = new Date();
+          const candidatosCheckin = subordinados.filter(s => {
+            if (!s.Admissao || !s.Admissao.toDate) return false;
+            const dias = Math.floor((agora - s.Admissao.toDate()) / (1000 * 60 * 60 * 24));
+            return dias >= 30 && dias <= 90;
+          });
+          if (candidatosCheckin.length) {
+            const cpfs = candidatosCheckin.map(s => s.cpf);
+            const jaFeitos = new Set();
+            const lotes = [];
+            for (let i = 0; i < cpfs.length; i += 30) lotes.push(cpfs.slice(i, i + 30));
+            for (const lote of lotes) {
+              const snap = await getDocs(query(collection(db, 'checkins30'), where('Cpf', 'in', lote)));
+              snap.forEach(d => jaFeitos.add(d.id));
+            }
+            qtdCheckinPendente = candidatosCheckin.filter(s => !jaFeitos.has(s.cpf)).length;
+          }
+        } catch (err) {
+          console.error('Erro ao calcular check-in 30 dias da loja de', c.cpf, err);
+        }
+        const pessoal = porCpf[c.cpf];
+        const qtdCursosPessoal = pessoal ? (pessoal.cursosVencidos.length + pessoal.cursosReprovados.length + pessoal.cursosPendentes.length) : 0;
+        return { nome: c.Nome || '—', loja: c.Loja || '—', qtdCursosPessoal, qtdCheckinPendente };
+      }));
+
+      lista.innerHTML = linhas.map(l => `
+        <div class="pendencia-card ${(l.qtdCursosPessoal || l.qtdCheckinPendente) ? 'critico' : ''}">
+          <div class="pendencia-info"><b>${l.nome}</b><span>${l.loja}</span></div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <div class="jornada-pill ${l.qtdCursosPessoal ? 'atrasado' : 'ok'}">${l.qtdCursosPessoal ? `${l.qtdCursosPessoal} curso${l.qtdCursosPessoal === 1 ? '' : 's'} pendente${l.qtdCursosPessoal === 1 ? '' : 's'}` : 'Cursos em dia'}</div>
+            <div class="jornada-pill ${l.qtdCheckinPendente ? 'atrasado' : 'ok'}">${l.qtdCheckinPendente ? `${l.qtdCheckinPendente} check-in pendente${l.qtdCheckinPendente === 1 ? '' : 's'}` : 'Check-in em dia'}</div>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      console.error('Erro ao carregar visão de equipe regional:', err);
+      lista.innerHTML = `<p class="jornada-vazio">Não deu pra carregar agora.</p>`;
+    }
+  }
+
+  // "Visão geral da regional"/"Visão geral das regionais": agregado só por loja (Coordenador) ou
+  // por regional + loja (Gerente de Operações) — QUANTIDADE de pendência de curso, sem nome de
+  // colaborador nenhum e sem motivo/detalhe de desligamento (isso é só do DHO — ver contrato).
+  async function carregarVisaoGeralRegional(){
+    const cardsWrap = document.getElementById('jornadaCardsAgregado');
+    const cabecalho = document.getElementById('jornadaTabelaCabecalho');
+    const corpo = document.getElementById('jornadaTabelaCorpo');
+    if (!cardsWrap || !corpo || !cabecalho) return;
+    cardsWrap.innerHTML = `<p class="jornada-vazio">Carregando…</p>`;
+    corpo.innerHTML = '';
+    const ehGO = cargoColaboradorAtual === 'GERENTE DE OPERAÇÕES';
+    try {
+      // Só entra gente de loja de verdade nessa agregação (Local === 'Loja') — cargo administrativo
+      // (o próprio coordenador, gerente de operações, etc.) não é "uma loja" e só poluiria a tabela
+      // com uma linha "—" sem sentido.
+      let escopo = [];
+      if (ehGO) {
+        const regionais = [...new Set((window.MINHA_EQUIPE || []).map(c => c.Regional).filter(Boolean))];
+        if (!regionais.length) { cardsWrap.innerHTML = `<p class="jornada-vazio">Nenhuma regional encontrada pros seus coordenadores.</p>`; return; }
+        const lotes = [];
+        for (let i = 0; i < regionais.length; i += 30) lotes.push(regionais.slice(i, i + 30));
+        for (const lote of lotes) {
+          const snap = await getDocs(query(collection(db, 'colaboradores'), where('Regional', 'in', lote)));
+          snap.forEach(d => { const dados = d.data(); if (dados.Status !== 'inativo' && dados.Local === 'Loja') escopo.push({ cpf: d.id, ...dados }); });
+        }
+      } else {
+        const snap = await getDocs(query(collection(db, 'colaboradores'), where('Regional', '==', regionalColaboradorAtual)));
+        escopo = snap.docs.map(d => ({ cpf: d.id, ...d.data() })).filter(c => c.Status !== 'inativo' && c.Local === 'Loja');
+      }
+
+      if (!escopo.length) { cardsWrap.innerHTML = `<p class="jornada-vazio">Nenhum colaborador encontrado nessa regional ainda.</p>`; return; }
+
+      const linhas = await calcularPendenciaCursosParaLista(escopo);
+      const comPendencia = new Set(linhas.filter(l => l.cursosVencidos.length || l.cursosReprovados.length || l.cursosPendentes.length).map(l => l.cpf));
+
+      const porLoja = {};
+      escopo.forEach(c => {
+        const chave = ehGO ? `${c.Regional || '—'} · ${c.Loja || '—'}` : (c.Loja || '—');
+        if (!porLoja[chave]) porLoja[chave] = { loja: c.Loja || '—', regional: c.Regional || '—', total: 0, pendentes: 0 };
+        porLoja[chave].total++;
+        if (comPendencia.has(c.cpf)) porLoja[chave].pendentes++;
+      });
+      const linhasAgregadas = Object.values(porLoja).sort((a, b) => b.pendentes - a.pendentes);
+
+      cardsWrap.innerHTML = linhasAgregadas.map(l => {
+        const pct = l.total ? Math.round(((l.total - l.pendentes) / l.total) * 100) : 100;
+        const cor = pct === 100 ? '#386F2D' : pct >= 70 ? '#D89840' : '#B4462B';
+        return `<div class="loja-count-card">
+          <div class="lc-ring" style="background:${cor};">${pct}%</div>
+          <div class="lc-info"><b>${ehGO ? `${l.regional} · ${l.loja}` : l.loja}</b><span>${l.pendentes} de ${l.total} com pendência de curso</span></div>
+        </div>`;
+      }).join('');
+
+      cabecalho.innerHTML = ehGO
+        ? `<th>Regional</th><th>Loja</th><th>Colaboradores</th><th>Com pendência de curso</th>`
+        : `<th>Loja</th><th>Colaboradores</th><th>Com pendência de curso</th>`;
+      corpo.innerHTML = linhasAgregadas.map(l => ehGO
+        ? `<tr><td>${l.regional}</td><td>${l.loja}</td><td>${l.total}</td><td><span class="jornada-pill ${l.pendentes ? 'pendente' : 'ok'}">${l.pendentes}</span></td></tr>`
+        : `<tr><td>${l.loja}</td><td>${l.total}</td><td><span class="jornada-pill ${l.pendentes ? 'pendente' : 'ok'}">${l.pendentes}</span></td></tr>`
+      ).join('');
+    } catch (err) {
+      console.error('Erro ao carregar visão geral da regional:', err);
+      cardsWrap.innerHTML = `<p class="jornada-vazio">Não deu pra carregar agora.</p>`;
+    }
+  }
 
   window.registrarInicio = async function(cursoId, cursoTitulo){
     if (!currentCpf || !cursoId) return;
@@ -2806,7 +3583,7 @@ function configurarGateConclusao(c){
       if (window.abrirCurso) window.abrirCurso(c.id);
       if (aprovado) {
         atualizarPontosStreakERanking(currentCpf, nomeColaboradorAtual, lojaColaboradorAtual, cargoColaboradorAtual, localColaboradorAtual);
-        verificarTrilhas(currentCpf, cargoColaboradorAtual, localColaboradorAtual);
+        verificarTrilhas(currentCpf, cargoColaboradorAtual, localColaboradorAtual, macrocargoColaboradorAtual);
       }
 
       if (aprovado) {
@@ -2842,7 +3619,7 @@ function configurarGateConclusao(c){
       if (window.renderJornada) window.renderJornada();
       if (c && window.abrirCurso) window.abrirCurso(cursoId); // reabre a tela do curso já com o botão atualizado
       atualizarPontosStreakERanking(currentCpf, nomeColaboradorAtual, lojaColaboradorAtual, cargoColaboradorAtual, localColaboradorAtual);
-      verificarTrilhas(currentCpf, cargoColaboradorAtual, localColaboradorAtual);
+      verificarTrilhas(currentCpf, cargoColaboradorAtual, localColaboradorAtual, macrocargoColaboradorAtual);
       if (window.mostrarModalAprovado) window.mostrarModalAprovado(null, cursoId, !!(c && c.certificadoModelo));
     } catch (err) {
       console.error('Erro ao marcar curso como concluído:', err);
@@ -3254,6 +4031,7 @@ function configurarGateConclusao(c){
 
     // precisa estar definido antes de carregar cursos, pra filtrar certo por "cargos específicos"
     cargoColaboradorAtual = cargo;
+    macrocargoColaboradorAtual = dados.Macrocargo || '';
     nivelColaboradorAtual = nivel;
     lojaColaboradorAtual = loja;
     regionalColaboradorAtual = dados.Regional || '';
