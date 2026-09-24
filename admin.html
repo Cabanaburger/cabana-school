@@ -182,7 +182,11 @@
     min-width:90px;
   }
   .status-toggle button.on{ background:var(--ink); color:#fff; border-color:var(--ink); }
-  .visib-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .visib-chips{
+    display:flex; flex-wrap:wrap; align-content:flex-start; gap:8px; margin-top:10px;
+    max-height:168px; overflow-y:auto; padding:10px; border:1px solid var(--line);
+    border-radius:12px; background:var(--cream);
+  }
   .visib-chip{
     padding:8px 13px; border-radius:100px; border:1px solid var(--line); background:var(--paper);
     font-size:12px; font-weight:700; color:var(--ink-soft);
@@ -903,6 +907,11 @@
         <small class="hint">Depois de vencido, o certificado aparece como "vencido" pro colaborador. Não bloqueia nada sozinho — se quiser liberar de novo, é reabrindo o curso pra ele (editando o progresso) ou publicando uma atualização do curso.</small>
       </div>
       <div class="field">
+        <label>Pontos que esse treinamento vale</label>
+        <input type="number" id="cursoPontosInput" min="0" step="10" value="100" style="width:140px;">
+        <small class="hint">Some no total de pontos do colaborador quando ele conclui o curso (e vira ranking/lojinha). Quem passa na prova de primeira ainda ganha metade desse valor de bônus, como já acontecia. Cursos antigos que não tinham esse campo continuam valendo 100.</small>
+      </div>
+      <div class="field">
         <label>Quem pode ver este curso</label>
         <div class="status-toggle" id="visibToggle">
           <button class="on" onclick="setVisib(this,false)">Todos os públicos</button>
@@ -931,6 +940,19 @@
           <div class="visib-chips" id="visibLojasChips"></div>
         </div>
         <small class="hint">Se marcar cargo E loja/regional juntos, só vê quem bater as duas condições ao mesmo tempo.</small>
+      </div>
+      <div class="field">
+        <label>Restringir por tipo de local (Loja, Cozinha Central, Casa Cabana...)</label>
+        <div class="status-toggle" id="visibTipoLocalToggle">
+          <button class="on" onclick="setVisibTipoLocal(this,false)">Todos os tipos</button>
+          <button onclick="setVisibTipoLocal(this,true)">Tipo(s) específico(s)</button>
+        </div>
+        <div class="visib-chips" id="visibTipoLocalChips" style="display:none;">
+          <span class="visib-chip">Loja</span>
+          <span class="visib-chip">Cozinha Central</span>
+          <span class="visib-chip">Casa Cabana</span>
+        </div>
+        <small class="hint">Pra treinamento que vale só pra quem trabalha na loja, na cozinha central, ou na Casa Cabana (sede). Combina com as restrições acima — quem não bater todas as marcadas não vê o curso.</small>
       </div>
       <div class="field">
         <label>Selo</label>
@@ -1371,6 +1393,11 @@ function setVisibLocal(btn, show){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   document.getElementById('visibLocalBlock').style.display = show ? 'block' : 'none';
+}
+function setVisibTipoLocal(btn, show){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('visibTipoLocalChips').style.display = show ? 'flex' : 'none';
 }
 function setPdfVisibLocal(btn, show){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
@@ -2647,6 +2674,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('cursoCapaInput').value = '';
     document.getElementById('cursoCertInput').value = '';
     document.getElementById('cursoValidadeInput').value = '';
+    document.getElementById('cursoPontosInput').value = '100';
     document.querySelectorAll('#cursoObrigatorioToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
     document.getElementById('cursoObrigatorioToggle').dataset.valor = '0';
     document.getElementById('cursoOrdemInput').value = '';
@@ -2664,6 +2692,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.querySelectorAll('#visibLocalToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
     document.getElementById('visibLocalBlock').style.display = 'none';
     document.querySelectorAll('#visibRegionaisChips .visib-chip, #visibLojasChips .visib-chip').forEach(ch => ch.classList.remove('on'));
+    document.querySelectorAll('#visibTipoLocalToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
+    document.getElementById('visibTipoLocalChips').style.display = 'none';
+    document.querySelectorAll('#visibTipoLocalChips .visib-chip').forEach(ch => ch.classList.remove('on'));
     document.querySelectorAll('#seloToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
   }
 
@@ -2724,6 +2755,17 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         });
       }
     }
+    if (c.TipoLocalEspecifico) {
+      const btnsTipoLocal = document.querySelectorAll('#visibTipoLocalToggle button');
+      btnsTipoLocal.forEach(b => b.classList.remove('on'));
+      if (btnsTipoLocal[1]) btnsTipoLocal[1].classList.add('on');
+      document.getElementById('visibTipoLocalChips').style.display = 'flex';
+      if (Array.isArray(c.TiposLocal)) {
+        document.querySelectorAll('#visibTipoLocalChips .visib-chip').forEach(ch => {
+          ch.classList.toggle('on', c.TiposLocal.includes(ch.textContent.trim()));
+        });
+      }
+    }
     if (c.Selo) {
       const seloMap = { nenhum: 0, novo: 1, destaque: 2 };
       const btns = document.querySelectorAll('#seloToggle button');
@@ -2750,6 +2792,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     }
     if (c.CertificadoModeloURL) document.getElementById('cursoCertInput').value = c.CertificadoModeloURL;
     if (c.ValidadeMeses) document.getElementById('cursoValidadeInput').value = String(c.ValidadeMeses);
+    document.getElementById('cursoPontosInput').value = (typeof c.Pontos === 'number') ? String(c.Pontos) : '100';
     document.getElementById('btnSalvarRascunho').onclick = () => salvarCurso('rascunho');
     document.getElementById('btnPublicarCurso').onclick = () => salvarCurso('publicado');
     document.getElementById('btnPublicarCurso').textContent = c.Status === 'publicado' ? 'Salvar alterações →' : 'Publicar curso →';
@@ -2790,6 +2833,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       const regionaisPermitidas = localEspecifico
         ? [...document.querySelectorAll('#visibRegionaisChips .visib-chip.on')].map(ch => ch.textContent.trim())
         : [];
+      const tipoLocalEspecifico = document.querySelectorAll('#visibTipoLocalToggle button')[1]?.classList.contains('on') || false;
+      const tiposLocal = tipoLocalEspecifico
+        ? [...document.querySelectorAll('#visibTipoLocalChips .visib-chip.on')].map(ch => ch.textContent.trim())
+        : [];
 
       const temProva = document.getElementById('cursoProvaToggle').dataset.valor === '1';
       // curso HTML tem a prova embutida no próprio arquivo (ver cabana-quiz-tracker.js) —
@@ -2826,6 +2873,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         CapaURL: document.getElementById('cursoCapaInput').value.trim(),
         CertificadoModeloURL: document.getElementById('cursoCertInput').value.trim(),
         ValidadeMeses: document.getElementById('cursoValidadeInput').value ? Number(document.getElementById('cursoValidadeInput').value) : null,
+        Pontos: document.getElementById('cursoPontosInput').value !== '' ? Math.max(0, Number(document.getElementById('cursoPontosInput').value)) : 100,
         Obrigatorio: document.getElementById('cursoObrigatorioToggle').dataset.valor === '1',
         Ordem: document.getElementById('cursoOrdemInput').value ? Number(document.getElementById('cursoOrdemInput').value) : null,
         TemProva: temProva,
@@ -2836,6 +2884,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         LocalEspecifico: localEspecifico,
         LojasPermitidas: lojasPermitidas,
         RegionaisPermitidas: regionaisPermitidas,
+        TipoLocalEspecifico: tipoLocalEspecifico,
+        TiposLocal: tiposLocal,
         Selo: seloMap[seloIdx],
         Status: status,
         AtualizadoEm: serverTimestamp(),
@@ -4334,7 +4384,9 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       const passaLocal = !temRestricaoLocal
         || (Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.includes(colab.Loja))
         || (Array.isArray(curso.RegionaisPermitidas) && curso.RegionaisPermitidas.includes(colab.Regional));
-      return passaCargo && passaLocal;
+      const temRestricaoTipoLocal = curso.TipoLocalEspecifico === true && Array.isArray(curso.TiposLocal) && curso.TiposLocal.length > 0;
+      const passaTipoLocal = !temRestricaoTipoLocal || curso.TiposLocal.includes(colab.Local || 'Loja');
+      return passaCargo && passaLocal && passaTipoLocal;
     }
 
     const linhasColab = ativosFiltrados.map(c => {
