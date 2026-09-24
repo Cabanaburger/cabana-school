@@ -1138,9 +1138,13 @@
         <div id="jornadaListaPessoas"><p class="jornada-vazio">Carregando…</p></div>
       </div>
       <div id="jornadaVisaoGeral" style="display:none;">
+        <div id="jornadaResumoRegional" style="margin-bottom:16px;"></div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
+          <div class="jornada-section-label" id="jornadaTabelaTitulo" style="margin:0;">Pendências de curso por loja</div>
+          <select id="jornadaFiltroRegional" style="display:none; min-width:220px; padding:9px 12px; border-radius:10px; border:1px solid var(--line); font-size:12.5px; background:#fff; color:var(--ink);" onchange="window.filtrarVisaoGeralRegional(this.value)"></select>
+        </div>
         <div class="cards-grid" id="jornadaCardsAgregado"></div>
         <div class="jornada-bloco" style="margin-bottom:0;">
-          <div class="jornada-section-label">Pendências de curso por loja</div>
           <table class="jornada-tabela">
             <thead><tr id="jornadaTabelaCabecalho"></tr></thead>
             <tbody id="jornadaTabelaCorpo"></tbody>
@@ -1903,6 +1907,21 @@ function saudacaoPorHorario(){
   if(hora >= 5 && hora < 12) return t('saud_bomdia');
   if(hora >= 12 && hora < 18) return t('saud_boatarde');
   return t('saud_boanoite');
+}
+// Ajeita a exibição de um nome vindo cru do cadastro (ex.: planilhas antigas importadas TUDO EM
+// MAIÚSCULO, antes da normalização feita no admin.html em setembro/2026) sem precisar esperar
+// a base ser resincronizada — só cosmético na tela, não reescreve nada no Firestore.
+const PREPOSICOES_NOME_EXIB = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+function formatarNomeExibicao(nome){
+  const texto = (nome || '').trim();
+  if (!texto) return texto;
+  // se já vem com maiúscula/minúscula misturada (ex.: "Nayuri Rocha"), respeita como está —
+  // só reformata nome que veio inteiro em caixa alta ou inteiro em caixa baixa
+  if (texto !== texto.toUpperCase() && texto !== texto.toLowerCase()) return texto;
+  return texto.toLowerCase().split(/\s+/).map((palavra, i) => {
+    if (i > 0 && PREPOSICOES_NOME_EXIB.has(palavra)) return palavra;
+    return palavra.split(/([-'])/).map(p => (p === '-' || p === "'") ? p : (p.charAt(0).toUpperCase() + p.slice(1))).join('');
+  }).join(' ');
 }
 function aplicarSaudacao(nome){
   const el = document.getElementById('saudacao');
@@ -3438,13 +3457,90 @@ function configurarGateConclusao(c){
   // "Visão geral da regional"/"Visão geral das regionais": agregado só por loja (Coordenador) ou
   // por regional + loja (Gerente de Operações) — QUANTIDADE de pendência de curso, sem nome de
   // colaborador nenhum e sem motivo/detalhe de desligamento (isso é só do DHO — ver contrato).
+  // Cache da última carga da visão geral — só existe (não-null) pro Gerente de Operações, que tem
+  // o filtro de regional; guarda as duas agregações prontas (por loja e por regional) pra trocar
+  // de visão na hora, sem reconsultar o Firestore a cada clique no filtro.
+  let __visaoGeralEscopoCache = null;
+
+  function corPorPct(pct){
+    return pct === 100 ? '#386F2D' : pct >= 70 ? '#D89840' : '#B4462B';
+  }
+
+  // Comparativo entre regionais (Gerente de Operações, visão padrão) — uma linha/card por
+  // REGIONAL, agregando todas as lojas dela, pra comparar regional com regional "de cara".
+  function renderizarTabelaPorRegional(linhasPorRegional){
+    const cardsWrap = document.getElementById('jornadaCardsAgregado');
+    const cabecalho = document.getElementById('jornadaTabelaCabecalho');
+    const corpo = document.getElementById('jornadaTabelaCorpo');
+    const titulo = document.getElementById('jornadaTabelaTitulo');
+    if (titulo) titulo.textContent = 'Comparativo entre regionais';
+    cardsWrap.innerHTML = linhasPorRegional.map(l => {
+      const pct = l.total ? Math.round(((l.total - l.pendentes) / l.total) * 100) : 100;
+      return `<div class="loja-count-card">
+        <div class="lc-ring" style="background:${corPorPct(pct)};">${pct}%</div>
+        <div class="lc-info"><b>${l.regional}</b><span>${l.pendentes} de ${l.total} com pendência de curso</span></div>
+      </div>`;
+    }).join('');
+    cabecalho.innerHTML = `<th>Regional</th><th>Colaboradores</th><th>Com pendência de curso</th><th>% em dia</th>`;
+    corpo.innerHTML = linhasPorRegional.map(l => {
+      const pct = l.total ? Math.round(((l.total - l.pendentes) / l.total) * 100) : 100;
+      return `<tr><td>${l.regional}</td><td>${l.total}</td><td><span class="jornada-pill ${l.pendentes ? 'pendente' : 'ok'}">${l.pendentes}</span></td><td>${pct}%</td></tr>`;
+    }).join('');
+  }
+
+  // Detalhe por loja — usado pro Coordenador (sempre, é a única regional dele) e pelo Gerente de
+  // Operações quando ele filtra uma regional específica pra ver o detalhe de dentro dela.
+  function renderizarTabelaPorLoja(linhasPorLoja, comColunaRegional){
+    const cardsWrap = document.getElementById('jornadaCardsAgregado');
+    const cabecalho = document.getElementById('jornadaTabelaCabecalho');
+    const corpo = document.getElementById('jornadaTabelaCorpo');
+    cardsWrap.innerHTML = linhasPorLoja.map(l => {
+      const pct = l.total ? Math.round(((l.total - l.pendentes) / l.total) * 100) : 100;
+      return `<div class="loja-count-card">
+        <div class="lc-ring" style="background:${corPorPct(pct)};">${pct}%</div>
+        <div class="lc-info"><b>${comColunaRegional ? `${l.regional} · ${l.loja}` : l.loja}</b><span>${l.pendentes} de ${l.total} com pendência de curso</span></div>
+      </div>`;
+    }).join('');
+    cabecalho.innerHTML = comColunaRegional
+      ? `<th>Regional</th><th>Loja</th><th>Colaboradores</th><th>Com pendência de curso</th>`
+      : `<th>Loja</th><th>Colaboradores</th><th>Com pendência de curso</th>`;
+    corpo.innerHTML = linhasPorLoja.map(l => comColunaRegional
+      ? `<tr><td>${l.regional}</td><td>${l.loja}</td><td>${l.total}</td><td><span class="jornada-pill ${l.pendentes ? 'pendente' : 'ok'}">${l.pendentes}</span></td></tr>`
+      : `<tr><td>${l.loja}</td><td>${l.total}</td><td><span class="jornada-pill ${l.pendentes ? 'pendente' : 'ok'}">${l.pendentes}</span></td></tr>`
+    ).join('');
+  }
+
+  // Filtro do Gerente de Operações: "Todas as regionais" volta pro comparativo agregado; escolher
+  // uma regional específica abre o detalhe por loja só dela — pedido da Nayuri (setembro/2026):
+  // "quero que o gerente de operações tenha uma visão boa comparativa de todas as regionais, mesmo
+  // que precise filtrar".
+  window.filtrarVisaoGeralRegional = function(regionalEscolhida){
+    if (!__visaoGeralEscopoCache) return;
+    const titulo = document.getElementById('jornadaTabelaTitulo');
+    if (!regionalEscolhida) {
+      if (titulo) titulo.textContent = 'Comparativo entre regionais';
+      renderizarTabelaPorRegional(__visaoGeralEscopoCache.linhasPorRegional);
+    } else {
+      if (titulo) titulo.textContent = `Lojas da regional ${regionalEscolhida}`;
+      const filtradas = __visaoGeralEscopoCache.linhasPorLoja.filter(l => l.regional === regionalEscolhida);
+      renderizarTabelaPorLoja(filtradas, false);
+    }
+  };
+
   async function carregarVisaoGeralRegional(){
     const cardsWrap = document.getElementById('jornadaCardsAgregado');
     const cabecalho = document.getElementById('jornadaTabelaCabecalho');
     const corpo = document.getElementById('jornadaTabelaCorpo');
+    const resumo = document.getElementById('jornadaResumoRegional');
+    const filtro = document.getElementById('jornadaFiltroRegional');
+    const titulo = document.getElementById('jornadaTabelaTitulo');
     if (!cardsWrap || !corpo || !cabecalho) return;
     cardsWrap.innerHTML = `<p class="jornada-vazio">Carregando…</p>`;
     corpo.innerHTML = '';
+    if (resumo) resumo.innerHTML = '';
+    if (filtro) { filtro.style.display = 'none'; filtro.innerHTML = ''; }
+    if (titulo) titulo.textContent = 'Pendências de curso por loja';
+    __visaoGeralEscopoCache = null;
     const ehGO = cargoColaboradorAtual === 'GERENTE DE OPERAÇÕES';
     try {
       // Só entra gente de loja de verdade nessa agregação (Local === 'Loja') — cargo administrativo
@@ -3465,7 +3561,7 @@ function configurarGateConclusao(c){
         escopo = snap.docs.map(d => ({ cpf: d.id, ...d.data() })).filter(c => c.Status !== 'inativo' && c.Local === 'Loja');
       }
 
-      if (!escopo.length) { cardsWrap.innerHTML = `<p class="jornada-vazio">Nenhum colaborador encontrado nessa regional ainda.</p>`; return; }
+      if (!escopo.length) { cardsWrap.innerHTML = `<p class="jornada-vazio">Nenhum colaborador encontrado ${ehGO ? 'nas regionais dos seus coordenadores' : 'nessa regional'} ainda.</p>`; return; }
 
       const linhas = await calcularPendenciaCursosParaLista(escopo);
       const comPendencia = new Set(linhas.filter(l => l.cursosVencidos.length || l.cursosReprovados.length || l.cursosPendentes.length).map(l => l.cpf));
@@ -3477,24 +3573,43 @@ function configurarGateConclusao(c){
         porLoja[chave].total++;
         if (comPendencia.has(c.cpf)) porLoja[chave].pendentes++;
       });
-      const linhasAgregadas = Object.values(porLoja).sort((a, b) => b.pendentes - a.pendentes);
+      const linhasPorLoja = Object.values(porLoja).sort((a, b) => b.pendentes - a.pendentes);
 
-      cardsWrap.innerHTML = linhasAgregadas.map(l => {
-        const pct = l.total ? Math.round(((l.total - l.pendentes) / l.total) * 100) : 100;
-        const cor = pct === 100 ? '#386F2D' : pct >= 70 ? '#D89840' : '#B4462B';
-        return `<div class="loja-count-card">
-          <div class="lc-ring" style="background:${cor};">${pct}%</div>
-          <div class="lc-info"><b>${ehGO ? `${l.regional} · ${l.loja}` : l.loja}</b><span>${l.pendentes} de ${l.total} com pendência de curso</span></div>
+      // resumo geral no topo (uma regional só, ou todas juntas) — leitura rápida antes de entrar no detalhe
+      const totalGeral = escopo.length;
+      const pendentesGeral = comPendencia.size;
+      const pctGeral = totalGeral ? Math.round(((totalGeral - pendentesGeral) / totalGeral) * 100) : 100;
+      if (resumo) {
+        resumo.innerHTML = `<div class="pendencia-card" style="background:var(--cream); border:none;">
+          <div class="pendencia-info"><b>${ehGO ? 'Todas as regionais' : (regionalColaboradorAtual || 'Sua regional')}</b><span>${totalGeral} colaborador${totalGeral === 1 ? '' : 'es'} de loja · ${pendentesGeral} com pendência de curso</span></div>
+          <div class="jornada-pill ${pctGeral === 100 ? 'ok' : 'atrasado'}" style="font-size:13px; padding:6px 14px;">${pctGeral}% em dia</div>
         </div>`;
-      }).join('');
+      }
 
-      cabecalho.innerHTML = ehGO
-        ? `<th>Regional</th><th>Loja</th><th>Colaboradores</th><th>Com pendência de curso</th>`
-        : `<th>Loja</th><th>Colaboradores</th><th>Com pendência de curso</th>`;
-      corpo.innerHTML = linhasAgregadas.map(l => ehGO
-        ? `<tr><td>${l.regional}</td><td>${l.loja}</td><td>${l.total}</td><td><span class="jornada-pill ${l.pendentes ? 'pendente' : 'ok'}">${l.pendentes}</span></td></tr>`
-        : `<tr><td>${l.loja}</td><td>${l.total}</td><td><span class="jornada-pill ${l.pendentes ? 'pendente' : 'ok'}">${l.pendentes}</span></td></tr>`
-      ).join('');
+      if (!ehGO) {
+        renderizarTabelaPorLoja(linhasPorLoja, false);
+        return;
+      }
+
+      // Gerente de Operações: comparativo por regional é a visão padrão (uma linha por regional
+      // inteira), com filtro pra abrir o detalhe por loja de uma regional específica.
+      const porRegional = {};
+      escopo.forEach(c => {
+        const r = c.Regional || '—';
+        if (!porRegional[r]) porRegional[r] = { regional: r, total: 0, pendentes: 0 };
+        porRegional[r].total++;
+        if (comPendencia.has(c.cpf)) porRegional[r].pendentes++;
+      });
+      const linhasPorRegional = Object.values(porRegional).sort((a, b) => b.pendentes - a.pendentes);
+
+      __visaoGeralEscopoCache = { linhasPorLoja, linhasPorRegional };
+
+      if (filtro) {
+        filtro.style.display = 'inline-block';
+        filtro.innerHTML = `<option value="">Todas as regionais (comparar)</option>` + linhasPorRegional.map(r => `<option value="${r.regional}">${r.regional}</option>`).join('');
+        filtro.value = '';
+      }
+      renderizarTabelaPorRegional(linhasPorRegional);
     } catch (err) {
       console.error('Erro ao carregar visão geral da regional:', err);
       cardsWrap.innerHTML = `<p class="jornada-vazio">Não deu pra carregar agora.</p>`;
@@ -4047,7 +4162,7 @@ function configurarGateConclusao(c){
     // menu do avatar com nome, cargo e loja reais
     const info = document.getElementById('avatarMenuInfo');
     if (info) {
-      info.innerHTML = `<b style="color:var(--ink);">${nome || 'Colaborador(a)'}</b><br>${[nivel, loja].filter(Boolean).join(' · ')}`;
+      info.innerHTML = `<b style="color:var(--ink);">${formatarNomeExibicao(nome) || 'Colaborador(a)'}</b><br>${[nivel, loja].filter(Boolean).join(' · ')}`;
     }
 
     // só quem é Admin vê o botão do Painel Admin
@@ -4056,7 +4171,11 @@ function configurarGateConclusao(c){
       if (btnAdmin) btnAdmin.style.display = 'block';
     }
 
-    aplicarSaudacao(nome || apelido);
+    // prioriza o apelido que a pessoa escolheu no primeiro acesso (ver verificarApelido() abaixo)
+    // — bug encontrado em setembro/2026: estava na ordem invertida (nome || apelido), então a
+    // saudação nunca usava o apelido de verdade, sempre voltava pro Nome completo da planilha
+    // (inclusive em qualquer formatação que a planilha tivesse, como tudo maiúsculo)
+    aplicarSaudacao(apelido || formatarNomeExibicao(nome));
 
     // registra o acesso (pra "último acesso" e contagem aparecerem certinho no admin)
     try {
