@@ -700,6 +700,10 @@
             <h4>🚦 Resultado agregado dos faróis</h4>
             <div id="relCheckin30Farol"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
           </div>
+          <div class="rep-card">
+            <h4>🚩 Pontos de atenção por loja</h4>
+            <div id="relCheckin30PorLoja"><small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Carregando…</small></div>
+          </div>
         </div>
         <div class="panel-card" style="margin-top:20px;">
           <table>
@@ -828,7 +832,11 @@
       <div class="field" id="linkFieldWrap">
         <label id="linkFieldLabel">URL do conteúdo externo</label>
         <input type="text" id="linkFieldInput" placeholder="https://...">
+        <input type="file" id="cursoVideoUploadInput" accept="video/*" style="margin-top:8px; display:none;">
+        <input type="file" id="cursoAudioUploadInput" accept="audio/*" style="margin-top:8px; display:none;">
         <small class="hint" id="linkFieldHint">Qualquer link de terceiros — Canva, Google Slides, um site publicado, etc. O colaborador vê um botão pra abrir o conteúdo em nova aba.</small>
+        <div id="cursoVideoUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
+        <div id="cursoAudioUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
       </div>
       <div class="field" id="htmlUploadWrap" style="display:none;">
         <label>Arquivo do curso (HTML)</label>
@@ -1269,6 +1277,21 @@
           <small class="hint" style="color:#B8622C;">⚠️ Esta é uma senha <b>temporária</b>, visível só agora. O colaborador será obrigado a criar uma senha nova e pessoal no próximo acesso — a partir daí, ninguém no painel Admin consegue ver ou recuperar a senha dele, nem mesmo você. Se ele esquecer de novo, é só clicar em "Gerar nova senha temporária" aqui de novo.</small>
         </div>
       </div>
+      <div id="colabExcluirSection" style="display:none; border-top:1px solid var(--line); padding-top:16px; margin-top:6px;">
+        <label style="color:#B4462B;">Zona de risco</label>
+        <div id="colabExcluirBox">
+          <button type="button" class="btn-secondary" style="width:100%; color:#B4462B; border-color:#B4462B;" onclick="confirmarExcluirColaborador()">🗑 Excluir este colaborador</button>
+          <small class="hint" style="display:block; margin-top:6px;">Remove o cadastro, a conta de login, o progresso dos cursos e o histórico associado (check-in de 30 dias, parecer de desligamento). Não dá pra desfazer — use pra tirar cadastros de teste/fictícios ou uma pessoa que nunca deveria ter entrado na base.</small>
+        </div>
+        <div id="colabExcluirConfirmBox" style="display:none; background:var(--cream); border:1px solid #B4462B; border-radius:12px; padding:14px 16px; margin-top:4px;">
+          <div style="font-size:13px; margin-bottom:10px;">Tem certeza que quer excluir <b id="colabExcluirNomeConfirm"></b>? Essa ação não pode ser desfeita.</div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn-secondary" style="flex:1;" onclick="cancelarExcluirColaborador()">Cancelar</button>
+            <button type="button" class="btn-primary" style="flex:1; background:#B4462B;" id="btnConfirmarExcluirColab" onclick="executarExcluirColaborador()">Sim, excluir</button>
+          </div>
+          <div id="colabExcluirStatus" style="margin-top:8px; font-size:12.5px; font-weight:700;"></div>
+        </div>
+      </div>
       <div id="colabSalvarErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600; margin-top:4px;"></div>
     </div>
     <div class="modal-foot">
@@ -1426,10 +1449,18 @@ function setTipoConteudo(btn, tipo){
   const label = document.getElementById('linkFieldLabel');
   const input = document.getElementById('linkFieldInput');
   const hint = document.getElementById('linkFieldHint');
+  const videoUpload = document.getElementById('cursoVideoUploadInput');
+  const audioUpload = document.getElementById('cursoAudioUploadInput');
+  // Vídeo/Áudio ganharam a opção de subir o arquivo direto (setembro/2026), igual capa/certificado/
+  // PDF/logo/banner/foto de item já tinham — antes só dava pra colar um link já hospedado em
+  // algum lugar. "Link externo"/Canva continuam só link, de propósito: ali o conteúdo já mora
+  // noutro site (Canva, um site publicado), não é um arquivo pra hospedar na Cabana School.
+  videoUpload.style.display = (tipo === 'video') ? '' : 'none';
+  audioUpload.style.display = (tipo === 'audio') ? '' : 'none';
   const map = {
     canva: { label: 'Link do curso no Canva', ph: 'https://seu-link.my.canva.site/...', hint: 'Cole aqui o link de compartilhamento do Canva Site ou da apresentação. É o único lugar que você vai colar isso. A plataforma faz o resto.' },
-    video: { label: 'Link do vídeo (YouTube, Vimeo, Google Drive)', ph: 'https://youtube.com/watch?v=...', hint: 'Cole o link de qualquer plataforma de vídeo. Dica: no YouTube, use "não listado" pra não aparecer em buscas públicas.' },
-    audio: { label: 'Link do áudio (podcast, Google Drive)', ph: 'https://...', hint: 'Cole o link de um host de podcast ou de um arquivo compartilhado. Aparece com player de áudio na tela do colaborador.' },
+    video: { label: 'Link do vídeo (YouTube, Vimeo, Google Drive)', ph: 'https://youtube.com/watch?v=...', hint: 'Cole o link de qualquer plataforma de vídeo (dica: no YouTube, use "não listado" pra não aparecer em buscas públicas) — ou escolhe o arquivo de vídeo logo abaixo pra a plataforma subir ele sozinha, sem precisar de link nenhum.' },
+    audio: { label: 'Link do áudio (podcast, Google Drive)', ph: 'https://...', hint: 'Cole o link de um host de podcast ou de um arquivo compartilhado — ou escolhe o arquivo de áudio logo abaixo pra a plataforma subir ele sozinha. Aparece com player de áudio na tela do colaborador.' },
     link: { label: 'URL do conteúdo externo', ph: 'https://...', hint: 'Qualquer link de terceiros. O colaborador vê um botão pra abrir o conteúdo em nova aba.' },
   };
   const cfg = map[tipo];
@@ -1677,6 +1708,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   ligarUploadDeArquivo('bannerImagemUploadInput', 'bannerImagemInput', 'bannerImagemUploadStatus', 'banners');
   ligarUploadDeArquivo('bannerVideoUploadInput', 'bannerVideoInput', 'bannerVideoUploadStatus', 'banners');
   ligarUploadDeArquivo('itemLojaFotoUploadInput', 'itemLojaFotoInput', 'itemLojaFotoUploadStatus', 'loja');
+  // Vídeo/Áudio do curso (setembro/2026) — antes só aceitavam link colado (YouTube/Vimeo/podcast/
+  // Drive); ambos escrevem no mesmo linkFieldInput, já que os dois tipos compartilham esse campo.
+  ligarUploadDeArquivo('cursoVideoUploadInput', 'linkFieldInput', 'cursoVideoUploadStatus', 'videos-cursos');
+  ligarUploadDeArquivo('cursoAudioUploadInput', 'linkFieldInput', 'cursoAudioUploadStatus', 'audios-cursos');
 
   // app "secundário": usado só pra criar/checar contas de colaboradores sem afetar a sessão da admin logada
   const secondaryApp = initializeApp(firebaseConfig, 'secondary');
@@ -2605,6 +2640,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('categoriaSelect').selectedIndex = 0;
     document.getElementById('cursoDuracaoInput').value = '';
     document.getElementById('linkFieldInput').value = '';
+    document.getElementById('cursoVideoUploadInput').value = '';
+    document.getElementById('cursoAudioUploadInput').value = '';
+    document.getElementById('cursoVideoUploadStatus').textContent = '';
+    document.getElementById('cursoAudioUploadStatus').textContent = '';
     document.getElementById('cursoCapaInput').value = '';
     document.getElementById('cursoCertInput').value = '';
     document.getElementById('cursoValidadeInput').value = '';
@@ -3253,6 +3292,25 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 
   function soDigitos(v){ return (v || '').replace(/\D/g, ''); }
 
+  // Normaliza o nome de uma pessoa pra "Nome Próprio", nunca tudo maiúsculo nem tudo minúsculo —
+  // pedido da Nayuri (setembro/2026) depois de perceber que reimportar a planilha de colaboradores
+  // deixava o nome exatamente como veio do Excel (muitas vezes TUDO EM MAIÚSCULO). Preposições
+  // comuns em nome de pessoa (de/da/do/das/dos/e) ficam em minúsculo, exceto quando são a
+  // primeira palavra. Usada tanto na sincronização por planilha quanto no cadastro manual, pra
+  // nunca ter duas pessoas com o nome formatado de jeitos diferentes dependendo de como entraram.
+  const PREPOSICOES_NOME = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+  function formatarNomePessoa(nome){
+    const texto = (nome || '').trim().toLowerCase();
+    if (!texto) return '';
+    return texto.split(/\s+/).map((palavra, i) => {
+      if (i > 0 && PREPOSICOES_NOME.has(palavra)) return palavra;
+      // capitaliza cada pedaço separado por hífen ou apóstrofo (ex.: "maria-clara", "d'ávila")
+      return palavra.split(/([-'])/).map(parte =>
+        (parte === '-' || parte === "'") ? parte : (parte.charAt(0).toUpperCase() + parte.slice(1))
+      ).join('');
+    }).join(' ');
+  }
+
   function mascaraCpf(cpf){
     if (!cpf || cpf.length !== 11) return cpf || '—';
     return `***.${cpf.slice(3,6)}.***-${cpf.slice(9,11)}`;
@@ -3347,6 +3405,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     const hint = document.getElementById('senhaResetHint');
     hint.textContent = 'Reseta a senha dessa pessoa pros últimos 6 dígitos do CPF dela. No próximo acesso, ela é obrigada a trocar por uma senha pessoal.';
     hint.style.color = '';
+    document.getElementById('colabExcluirSection').style.display = 'none'; // só existe editando alguém que já existe
     openModal('modalColab');
   };
 
@@ -3395,6 +3454,10 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     const hint = document.getElementById('senhaResetHint');
     hint.textContent = 'Reseta a senha dessa pessoa pros últimos 6 dígitos do CPF dela. No próximo acesso, ela é obrigada a trocar por uma senha pessoal.';
     hint.style.color = '';
+    document.getElementById('colabExcluirSection').style.display = 'block';
+    document.getElementById('colabExcluirBox').style.display = 'block';
+    document.getElementById('colabExcluirConfirmBox').style.display = 'none';
+    document.getElementById('colabExcluirStatus').textContent = '';
     openModal('modalColab');
   };
 
@@ -3437,7 +3500,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       // Macrocargo é derivado do cargo escolhido (definido na tela de Cargos) — não é um campo digitado aqui
       const cargoInfo = cargosCache.find(c => c.nome === cargoEscolhido);
       const dados = {
-        Nome: nome,
+        Nome: formatarNomePessoa(nome),
         Loja: localEscolhido === 'Loja' ? document.getElementById('colabLojaInput').value.trim() : '',
         Cargo: cargoEscolhido,
         Macrocargo: (cargoInfo && cargoInfo.macrocargo) || '',
@@ -3511,6 +3574,48 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       hint.style.color = '#B4462B';
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = '🔑 Gerar nova senha temporária'; }
+    }
+  };
+
+  // Excluir colaborador — pedido depois de encontrar cadastros de teste/fictícios (ex.: "(sem
+  // nome)", com um id que não é um CPF de verdade) presos na base, sem nenhum jeito de tirar
+  // pelo painel. Usa colabEditandoCpf (o id exato do doc, guardado quando o modal foi aberto pra
+  // editar), não soDigitos(), porque um cadastro torto desses pode não ter 11 dígitos — e é
+  // justamente esse tipo de registro que essa função precisa conseguir apagar.
+  window.confirmarExcluirColaborador = function(){
+    const c = colaboradoresCache.find(x => x.cpf === colabEditandoCpf);
+    document.getElementById('colabExcluirNomeConfirm').textContent = (c && c.Nome) ? c.Nome : `este cadastro (${colabEditandoCpf})`;
+    document.getElementById('colabExcluirBox').style.display = 'none';
+    document.getElementById('colabExcluirConfirmBox').style.display = 'block';
+  };
+
+  window.cancelarExcluirColaborador = function(){
+    document.getElementById('colabExcluirBox').style.display = 'block';
+    document.getElementById('colabExcluirConfirmBox').style.display = 'none';
+    document.getElementById('colabExcluirStatus').textContent = '';
+  };
+
+  window.executarExcluirColaborador = async function(){
+    const cpfAlvo = colabEditandoCpf;
+    if (!cpfAlvo) return;
+    const btn = document.getElementById('btnConfirmarExcluirColab');
+    const statusEl = document.getElementById('colabExcluirStatus');
+    btn.disabled = true; btn.textContent = 'Excluindo…';
+    statusEl.style.color = 'var(--ink-soft)';
+    statusEl.textContent = 'Removendo cadastro, conta de login e histórico associado…';
+    try {
+      // exclusão de verdade (conta de login incluída) só o Admin SDK consegue fazer, por isso
+      // depende da função excluirColaborador estar publicada no projeto (mesmo motivo de
+      // resetSenhaColaborador acima) — se ainda não estiver publicada, cai no catch abaixo com
+      // uma mensagem clara em vez de travar sem explicação.
+      const chamarExcluir = httpsCallable(functions, 'excluirColaborador');
+      await chamarExcluir({ cpf: cpfAlvo });
+      closeModal('modalColab');
+    } catch (err) {
+      console.error('Erro ao excluir colaborador:', err);
+      statusEl.style.color = '#B4462B';
+      statusEl.textContent = 'Não foi possível excluir (' + (err.message || err) + '). Confere se a função "excluirColaborador" está publicada no Firebase e tenta de novo.';
+      btn.disabled = false; btn.textContent = 'Sim, excluir';
     }
   };
 
@@ -3810,7 +3915,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         // a planilha de colaboradores não precisa de coluna própria pra isso
         const cargoInfoLinha = cargosCache.find(c => c.nome === l.cargo);
         batch.set(doc(db, 'colaboradores', l.cpf), {
-          Nome: l.nome,
+          Nome: formatarNomePessoa(l.nome),
           Loja: l.loja,
           Cargo: l.cargo,
           Macrocargo: (cargoInfoLinha && cargoInfoLinha.macrocargo) || '',
@@ -4008,6 +4113,41 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         }).join('')
       : `<small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Sem pontos de checagem registrados ainda.</small>`;
 
+    // Pontos de atenção POR LOJA, critério por critério — é o que permite enxergar se um mesmo
+    // ponto (ex.: Treinamento inicial) está se repetindo em VÁRIAS lojas diferentes (um padrão a
+    // investigar) ou se é um caso isolado de uma loja só. Pedido da Nayuri (setembro/2026): o
+    // resultado agregado sozinho (só um número geral por critério) não mostrava isso.
+    const criterios = ['integracao', 'treinamento', 'comportamento'];
+    const camposCriterio = { integracao: 'Integracao', treinamento: 'Treinamento', comportamento: 'Comportamento' };
+    const porLojaPorCriterio = {};
+    criterios.forEach(chave => { porLojaPorCriterio[chave] = {}; });
+    checkins30Cache.forEach(c => {
+      const loja = c.Loja || '(sem loja)';
+      criterios.forEach(chave => {
+        const valor = c[camposCriterio[chave]];
+        if (valor === 'amarelo' || valor === 'vermelho') {
+          if (!porLojaPorCriterio[chave][loja]) porLojaPorCriterio[chave][loja] = { amarelo: 0, vermelho: 0 };
+          porLojaPorCriterio[chave][loja][valor]++;
+        }
+      });
+    });
+    const algumPontoDeAtencao = criterios.some(chave => Object.keys(porLojaPorCriterio[chave]).length > 0);
+    document.getElementById('relCheckin30PorLoja').innerHTML = algumPontoDeAtencao
+      ? criterios.map(chave => {
+          const lojas = Object.keys(porLojaPorCriterio[chave]);
+          if (!lojas.length) return linhaSimples(nomesFarol[chave], 'Nenhuma loja com alerta nesse item.');
+          const lojasOrdenadas = lojas.sort((a, b) => (porLojaPorCriterio[chave][b].vermelho - porLojaPorCriterio[chave][a].vermelho) || (porLojaPorCriterio[chave][b].amarelo - porLojaPorCriterio[chave][a].amarelo));
+          const detalhe = lojasOrdenadas.map(loja => {
+            const f = porLojaPorCriterio[chave][loja];
+            const partes = [];
+            if (f.vermelho) partes.push(`🔴${f.vermelho}`);
+            if (f.amarelo) partes.push(`🟡${f.amarelo}`);
+            return `${loja} (${partes.join(' ')})`;
+          }).join(' · ');
+          return linhaSimples(`${nomesFarol[chave]} — ${lojas.length} loja${lojas.length === 1 ? '' : 's'} com alerta`, detalhe);
+        }).join('')
+      : `<small class="hint" style="color:var(--ink-soft); font-size:12.5px;">Nenhuma loja com alerta em nenhum item, por enquanto.</small>`;
+
     const corpo = document.getElementById('relCheckin30Body');
     const linhasTabela = checkins30Cache.slice().sort((a, b) => (b.RegistradoEm?.toDate?.() || 0) - (a.RegistradoEm?.toDate?.() || 0));
     const rotuloFarol = { verde: '🟢 Indo bem', amarelo: '🟡 Atenção', vermelho: '🔴 Preocupante' };
@@ -4015,17 +4155,29 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       ? linhasTabela.map(c => `<tr><td>${c.Nome || c.cpf}</td><td>${c.Loja || '—'}</td><td>${c.Regional || '—'}</td><td>${rotuloFarol[c.Integracao] || '—'}</td><td>${rotuloFarol[c.Treinamento] || '—'}</td><td>${rotuloFarol[c.Comportamento] || '—'}</td><td>${formatarDataHora(c.RegistradoEm)}</td></tr>`).join('')
       : `<tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum ponto de checagem registrado ainda.</td></tr>`;
 
-    ultimoCheckin30Cache = { pendentes, registrados: linhasTabela };
+    ultimoCheckin30Cache = { pendentes, registrados: linhasTabela, porLojaPorCriterio };
   }
   window.renderCheckin30Relatorio = renderCheckin30Relatorio;
 
   window.exportarCheckin30CSV = function(){
     if (!ultimoCheckin30Cache) { alert('Ainda não há dados pra exportar.'); return; }
     const rotuloFarol = { verde: 'Indo bem', amarelo: 'Atenção', vermelho: 'Preocupante' };
+    const nomesFarolExport = { integracao: 'Integração à loja e equipe', treinamento: 'Treinamento inicial', comportamento: 'Comportamento e postura' };
+    const linhasPorLoja = [];
+    Object.keys(ultimoCheckin30Cache.porLojaPorCriterio || {}).forEach(chave => {
+      const porLoja = ultimoCheckin30Cache.porLojaPorCriterio[chave];
+      Object.keys(porLoja).forEach(loja => {
+        linhasPorLoja.push([nomesFarolExport[chave], loja, porLoja[loja].amarelo, porLoja[loja].vermelho]);
+      });
+    });
     const linhas = [
       ['Pendentes agora'],
       ['Colaborador', 'Loja', 'Regional', 'Dias de atraso'],
       ...(ultimoCheckin30Cache.pendentes.length ? ultimoCheckin30Cache.pendentes.map(c => [c.Nome || c.cpf, c.Loja || '', c.Regional || '', Math.max(0, c.diasAtraso)]) : [['Nenhum pendente agora.', '', '', '']]),
+      [],
+      ['Pontos de atenção por loja (critério com amarelo ou vermelho)'],
+      ['Critério', 'Loja', 'Qtd. Atenção (amarelo)', 'Qtd. Preocupante (vermelho)'],
+      ...(linhasPorLoja.length ? linhasPorLoja : [['Nenhuma loja com alerta ainda.', '', '', '']]),
       [],
       ['Pontos de checagem registrados'],
       ['Colaborador', 'Loja', 'Regional', 'Integração', 'Treinamento', 'Comportamento', 'Registrado em'],
