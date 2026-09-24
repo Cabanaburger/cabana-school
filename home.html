@@ -2335,17 +2335,26 @@ function configurarGateConclusao(c){
       const agora = new Date();
       await Promise.all(itens.map(async (item) => {
         let validadeMeses = null;
+        // Pontos por curso é configurável no admin (campo "Pontos que esse treinamento vale");
+        // 100 é o valor padrão pra cursos antigos que foram salvos antes desse campo existir.
+        let pontosBase = 100;
         try {
           const cSnap = await getDoc(doc(db, 'cursos', item.CursoId));
-          if (cSnap.exists()) validadeMeses = cSnap.data().ValidadeMeses || null;
-        } catch (e) { /* curso pode ter sido removido; conta mesmo assim */ }
+          if (cSnap.exists()) {
+            const cData = cSnap.data();
+            validadeMeses = cData.ValidadeMeses || null;
+            if (typeof cData.Pontos === 'number' && cData.Pontos >= 0) pontosBase = cData.Pontos;
+          }
+        } catch (e) { /* curso pode ter sido removido; conta mesmo assim, com o valor padrão */ }
         const vencido = validadeMeses && item.ConcluidoEm && item.ConcluidoEm.toDate
           ? mesesEntre(item.ConcluidoEm.toDate(), agora) >= validadeMeses
           : false;
         if (vencido) return; // certificado vencido não conta pontos até refazer (mesma regra do resto da plataforma)
         cursosConcluidos++;
-        pontosGanhos += 100; // pontuação base por curso concluído
-        if ((item.Tentativas || 1) <= 1) pontosGanhos += 50; // bônus por ter passado sem precisar refazer
+        pontosGanhos += pontosBase; // pontuação base por curso concluído
+        // bônus por ter passado sem precisar refazer — sempre metade da pontuação base do curso,
+        // mesma proporção que já existia (100 base + 50 de bônus)
+        if ((item.Tentativas || 1) <= 1) pontosGanhos += Math.round(pontosBase * 0.5);
       }));
 
       await setDoc(doc(db, 'colaboradores', cpf), { PontosGanhos: pontosGanhos }, { merge: true });
@@ -2402,6 +2411,7 @@ function configurarGateConclusao(c){
     // CargosEspecificos é um booleano (marcado no admin); a lista de cargos de verdade fica em Cargos (array)
     const restrito = data.CargosEspecificos === true && Array.isArray(data.Cargos) && data.Cargos.length > 0;
     const localRestrito = data.LocalEspecifico === true && ((Array.isArray(data.LojasPermitidas) && data.LojasPermitidas.length > 0) || (Array.isArray(data.RegionaisPermitidas) && data.RegionaisPermitidas.length > 0));
+    const tipoLocalRestrito = data.TipoLocalEspecifico === true && Array.isArray(data.TiposLocal) && data.TiposLocal.length > 0;
     const publico = restrito ? data.Cargos.join(', ') : 'Todos os públicos';
     return {
       id: d.id,
@@ -2427,6 +2437,8 @@ function configurarGateConclusao(c){
       localRestrito: localRestrito,
       lojasPermitidas: localRestrito ? (data.LojasPermitidas || []) : null,
       regionaisPermitidas: localRestrito ? (data.RegionaisPermitidas || []) : null,
+      tipoLocalRestrito: tipoLocalRestrito,
+      tiposLocalPermitidos: tipoLocalRestrito ? (data.TiposLocal || []) : null,
       status: data.Selo || '',
       objetivo1: data.Objetivo1 || '',
       objetivo2: data.Objetivo2 || '',
@@ -2449,7 +2461,10 @@ function configurarGateConclusao(c){
     const passaLocal = !item.localRestrito ||
       (Array.isArray(item.lojasPermitidas) && item.lojasPermitidas.includes(lojaColaboradorAtual)) ||
       (Array.isArray(item.regionaisPermitidas) && item.regionaisPermitidas.includes(regionalColaboradorAtual));
-    return passaCargo && passaLocal;
+    // tipo de local (Loja / Cozinha Central / Casa Cabana) — mesma ideia da restrição de trilha por local
+    const passaTipoLocal = !item.tipoLocalRestrito ||
+      (Array.isArray(item.tiposLocalPermitidos) && item.tiposLocalPermitidos.includes(localColaboradorAtual || 'Loja'));
+    return passaCargo && passaLocal && passaTipoLocal;
   }
 
   const CORES_BIB_PADRAO = { POP: '#4F9C40', 'Política': '#D89840', Guia: '#D6699E' };
@@ -2796,7 +2811,9 @@ function configurarGateConclusao(c){
     const passaLocal = !localRestrito ||
       (Array.isArray(curso.LojasPermitidas) && curso.LojasPermitidas.includes(colab.Loja)) ||
       (Array.isArray(curso.RegionaisPermitidas) && curso.RegionaisPermitidas.includes(colab.Regional));
-    return passaCargo && passaLocal;
+    const tipoLocalRestrito = curso.TipoLocalEspecifico === true && Array.isArray(curso.TiposLocal) && curso.TiposLocal.length > 0;
+    const passaTipoLocal = !tipoLocalRestrito || curso.TiposLocal.includes(colab.Local || 'Loja');
+    return passaCargo && passaLocal && passaTipoLocal;
   }
 
   // ---- ícone único de atalhos no topbar (Minha equipe / Lojinha Cabana), setembro/2026 ----
