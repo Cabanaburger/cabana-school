@@ -857,7 +857,7 @@
       <p>Treinamentos em sala — confirme sua presença em cada encontro e emita seu certificado.</p>
     </div>
   </div>
-  <div id="meusProgramasLista" style="display:flex; flex-direction:column; gap:16px;"></div>
+  <div id="meusProgramasLista" class="grid"></div>
 </section>
 
 <section class="block" id="categorias">
@@ -2952,24 +2952,27 @@ function configurarGateConclusao(c){
       const concluidos = encontros.filter(e => confirmadosIds.has(e.Id)).length;
       const total = encontros.length;
       const pct = total ? Math.round((concluidos / total) * 100) : 0;
-      const capaHtml = p.Capa
-        ? `<div style="height:120px; background-image:url('${p.Capa}'); background-size:cover; background-position:center;"></div>`
-        : '';
+      // mesmo visual dos cards de curso/trilha (.card/.thumb) — imagem de capa com
+      // background-size:cover num thumb de 150px (o mesmo tamanho/proporção usado em "Em destaque"),
+      // em vez de uma faixa esticada na largura toda, que cortava a imagem de um jeito estranho.
+      const thumbStyle = p.Capa
+        ? `background-image:url('${p.Capa}'); background-size:cover; background-position:center;`
+        : `background:var(--green);`;
       return `
-        <div style="background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow); cursor:pointer;" onclick="abrirProgramaDetalhe('${p.id}')">
-          ${capaHtml}
-          <div style="padding:20px 24px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-              <b style="font-size:15px;">🎓 ${p.Nome || 'Programa'}</b>
-              <span style="font-size:12.5px; font-weight:700; color:var(--green-dark); white-space:nowrap;">${concluidos}/${total} encontros</span>
+        <div class="card" style="cursor:pointer;" onclick="abrirProgramaDetalhe('${p.id}')">
+          <div class="thumb" style="${thumbStyle}">
+            ${p.Capa ? '<div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%);"></div>' : ''}
+            ${p.Capa ? '' : '<span>🎓</span>'}
+            <span class="cat-tag">${concluidos}/${total} encontros</span>
+          </div>
+          <div class="card-body">
+            <h4>🎓 ${p.Nome || 'Programa'}</h4>
+            ${p.Descricao ? `<p>${p.Descricao}</p>` : ''}
+            <div class="card-progress">
+              <div class="mini-bar"><div style="width:${pct}%; background:var(--green);"></div></div>
+              <small>${pct}%</small>
             </div>
-            ${p.Descricao ? `<p style="font-size:13px; color:var(--ink-soft); margin:8px 0 0;">${p.Descricao}</p>` : ''}
-            <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
-              <div style="flex:1; height:8px; background:var(--line); border-radius:100px; overflow:hidden;">
-                <div style="height:100%; width:${pct}%; background:var(--green);"></div>
-              </div>
-              <b style="font-size:12px;">${pct}%</b>
-            </div>
+            <a class="card-cta" href="#" onclick="abrirProgramaDetalhe('${p.id}'); return false;">Ver encontros →</a>
           </div>
         </div>`;
     }).filter(Boolean);
