@@ -220,6 +220,7 @@
       <h6>Conteúdo</h6>
       <div class="navitem on" onclick="goTab('cursos', this)"><span class="ic">🎬</span> Cursos</div>
       <div class="navitem" onclick="goTab('trilhas', this)"><span class="ic">🧭</span> Trilhas</div>
+      <div class="navitem" onclick="goTab('programas', this)"><span class="ic">🎓</span> Programas</div>
       <div class="navitem" onclick="goTab('biblioteca', this)"><span class="ic">📚</span> Biblioteca</div>
       <div class="navitem" onclick="goTab('banners', this)"><span class="ic">📣</span> Banners</div>
     </div>
@@ -299,6 +300,26 @@
         <table>
           <thead><tr><th>Trilha</th><th>Público</th><th>Cursos</th><th>Status</th><th></th></tr></thead>
           <tbody id="trilhasTableBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== PROGRAMAS PRESENCIAIS ===================== -->
+    <section class="tabpage" id="tab-programas">
+      <div class="topline">
+        <div>
+          <div class="crumb">Admin / Conteúdo</div>
+          <h1>Programas presenciais</h1>
+        </div>
+        <button class="btn-primary" onclick="abrirNovoPrograma()">+ Novo programa</button>
+      </div>
+      <p class="sub" style="margin-bottom:16px;">Pra treinamento em sala, com data marcada. Cada encontro gera um código de presença próprio (mostrado só na sala) e um certificado individual; ao concluir todos os encontros, sai um certificado oficial com a carga horária total somada. O conteúdo em si não fica na plataforma — só o registro de presença e o certificado.</p>
+      <div class="panel-card">
+        <table>
+          <thead><tr><th>Programa</th><th>Público</th><th>Encontros</th><th>Status</th><th></th></tr></thead>
+          <tbody id="programasTableBody">
             <tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Carregando…</td></tr>
           </tbody>
         </table>
@@ -1037,6 +1058,163 @@
   </div>
 </div>
 
+<!-- MODAL: programa presencial (treinamento em sala, encontros/presença/certificado — setembro/2026) -->
+<div class="overlay" id="modalPrograma" style="display:none;">
+  <div class="modal" style="width:680px; max-height:88vh; overflow:auto;">
+    <div class="modal-head"><h3 id="modalProgramaTitulo">Novo programa presencial</h3><button onclick="closeModal('modalPrograma')">✕</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nome do programa</label>
+        <input type="text" id="programaNomeInput" placeholder="Ex: Programa de Liderança">
+      </div>
+      <div class="field">
+        <label>Descrição (opcional)</label>
+        <textarea id="programaDescInput" rows="2" placeholder="Uma frase sobre o programa, que aparece pro colaborador"></textarea>
+      </div>
+      <div class="field">
+        <label>Capa do programa (opcional)</label>
+        <input type="text" id="programaCapaInput" placeholder="Cole o link da imagem, se já tiver um em algum lugar">
+        <input type="file" id="programaCapaUploadInput" accept="image/*" style="margin-top:8px;">
+        <small class="hint">Ou escolhe a imagem aqui — sobe sozinha, sem precisar de GitHub. Aparece no card do programa na Home.</small>
+        <div id="programaCapaUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
+      </div>
+
+      <div class="field">
+        <label>Encontros do programa</label>
+        <div id="programaEncontrosLista" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
+        <button type="button" class="ghost-btn" onclick="abrirNovoEncontro()">+ Adicionar encontro</button>
+        <small class="hint">Cada encontro vira um "episódio" dentro do programa, na ordem que aparecem aqui. Use as setas pra reordenar.</small>
+      </div>
+
+      <div class="field">
+        <label>Certificado final do programa (opcional)</label>
+        <input type="text" id="programaCertFinalInput" placeholder="Cole o link da imagem do modelo, se já tiver um em algum lugar">
+        <input type="file" id="programaCertFinalUploadInput" accept="image/*" style="margin-top:8px;">
+        <small class="hint">Liberado sozinho quando a pessoa confirma presença em todos os encontros. Mostra o nome, o total de horas somado de todos os encontros, e a lista de encontros com as datas — funciona como certificado oficial e lista de presença ao mesmo tempo.</small>
+        <div id="programaCertFinalUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
+      </div>
+
+      <div class="field">
+        <label>Quem pode ver este programa — por cargo</label>
+        <div class="status-toggle" id="programaVisibToggle">
+          <button type="button" class="on" onclick="setVisibPrograma(this,false)">Todos os públicos</button>
+          <button type="button" onclick="setVisibPrograma(this,true)">Cargos específicos</button>
+        </div>
+        <div class="visib-chips" id="programaVisibChips" style="display:none;"></div>
+        <small class="hint">Toque nos cargos (ou macrocargos) que devem ver esse programa. Ex: só "Gerente de Loja".</small>
+      </div>
+      <div class="field">
+        <label>Restringir também por loja ou regional</label>
+        <div class="status-toggle" id="programaVisibLocalToggle">
+          <button type="button" class="on" onclick="setVisibProgramaLocal(this,false)">Todos os locais</button>
+          <button type="button" onclick="setVisibProgramaLocal(this,true)">Loja(s)/Regional(is) específicas</button>
+        </div>
+        <div id="programaVisibLocalBlock" style="display:none; margin-top:10px;">
+          <small class="hint" style="display:block; margin-bottom:6px;">Regionais (libera todas as lojas daquela regional)</small>
+          <div class="visib-chips" id="programaVisibRegionaisChips" style="margin-bottom:12px;"></div>
+          <small class="hint" style="display:block; margin-bottom:6px;">Lojas específicas</small>
+          <div class="visib-chips" id="programaVisibLojasChips"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Restringir por tipo de local (Loja, Cozinha Central, Casa Cabana...)</label>
+        <div class="status-toggle" id="programaVisibTipoLocalToggle">
+          <button type="button" class="on" onclick="setVisibProgramaTipoLocal(this,false)">Todos os tipos</button>
+          <button type="button" onclick="setVisibProgramaTipoLocal(this,true)">Tipo(s) específico(s)</button>
+        </div>
+        <div class="visib-chips" id="programaVisibTipoLocalChips" style="display:none;">
+          <span class="visib-chip">Loja</span>
+          <span class="visib-chip">Cozinha Central</span>
+          <span class="visib-chip">Casa Cabana</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+        <div class="status-toggle" id="programaStatusToggle" data-valor="1">
+          <button type="button" class="on" onclick="setObrigatorio(this,true)">Publicado</button>
+          <button type="button" onclick="setObrigatorio(this,false)">Rascunho (não aparece pra ninguém)</button>
+        </div>
+      </div>
+      <div id="programaSalvarErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600; margin-top:4px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalPrograma')">Cancelar</button>
+      <button class="btn-primary" id="btnSalvarPrograma" onclick="salvarPrograma()">Salvar programa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: encontro (dentro de um programa presencial) -->
+<div class="overlay" id="modalEncontro" style="display:none; z-index:96;">
+  <div class="modal" style="width:560px; max-height:86vh; overflow:auto;">
+    <div class="modal-head"><h3 id="modalEncontroTitulo">Novo encontro</h3><button onclick="closeModal('modalEncontro')">✕</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Título do encontro</label>
+        <input type="text" id="encontroTituloInput" placeholder="Ex: Encontro 1 — Comunicação e feedback">
+      </div>
+      <div class="field">
+        <label>Descrição (opcional)</label>
+        <textarea id="encontroDescInput" rows="2"></textarea>
+      </div>
+      <div class="row">
+        <div class="field"><label>Data do encontro</label><input type="date" id="encontroDataInput"></div>
+        <div class="field"><label>Duração (horas)</label><input type="number" id="encontroDuracaoInput" min="1" step="0.5" value="4" style="width:120px;"></div>
+      </div>
+      <div class="field">
+        <label>CPF do facilitador (opcional)</label>
+        <input type="text" id="encontroFacilitadorInput" placeholder="CPF de quem vai aplicar esse encontro">
+        <small class="hint">Essa pessoa consegue ver o código de presença pra mostrar na sala, sem precisar entrar no admin — direto na conta dela no Cabana School. Deixa em branco se só você mesma for mostrar o código.</small>
+      </div>
+      <div class="field">
+        <label>Capa do encontro (opcional)</label>
+        <input type="text" id="encontroCapaInput" placeholder="Cole o link da imagem, se já tiver um em algum lugar">
+        <input type="file" id="encontroCapaUploadInput" accept="image/*" style="margin-top:8px;">
+        <div id="encontroCapaUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
+      </div>
+      <div class="field">
+        <label>Material do encontro (opcional)</label>
+        <input type="text" id="encontroMaterialInput" placeholder="Cole o link do PDF/arquivo, se já tiver um em algum lugar">
+        <input type="file" id="encontroMaterialUploadInput" style="margin-top:8px;">
+        <small class="hint">Dá pra adicionar ou trocar isso depois, mesmo depois que o encontro já aconteceu — o material aparece pra quem já participou também.</small>
+        <div id="encontroMaterialUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
+      </div>
+      <div class="field">
+        <label>Modelo de certificado deste encontro (opcional)</label>
+        <input type="text" id="encontroCertInput" placeholder="Cole o link da imagem do certificado, se já tiver um em algum lugar">
+        <input type="file" id="encontroCertUploadInput" accept="image/*" style="margin-top:8px;">
+        <small class="hint">Se deixar em branco, esse encontro não gera certificado individual — só conta pro certificado final do programa.</small>
+        <div id="encontroCertUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
+      </div>
+      <div id="encontroSalvarErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600; margin-top:4px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalEncontro')">Cancelar</button>
+      <button class="btn-primary" onclick="confirmarEncontro()">Adicionar à lista</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: presenças de um encontro (roster + marcar manual + mostrar código) -->
+<div class="overlay" id="modalPresencas" style="display:none; z-index:96;">
+  <div class="modal" style="width:560px; max-height:86vh; overflow:auto;">
+    <div class="modal-head"><h3 id="modalPresencasTitulo">Presenças</h3><button onclick="closeModal('modalPresencas')">✕</button></div>
+    <div class="modal-body">
+      <div id="presencasCodigoBlock" style="background:var(--cream); border-radius:12px; padding:16px; text-align:center; margin-bottom:16px;">
+        <small class="hint">Código de presença deste encontro</small>
+        <div id="presencasCodigoTexto" style="font-family:var(--display); font-size:36px; font-weight:700; letter-spacing:4px; margin-top:4px;">——</div>
+        <button type="button" class="ghost-btn" onclick="regenerarCodigoEncontro()" style="margin-top:8px;">🔁 Gerar novo código</button>
+        <small class="hint" style="display:block; margin-top:6px;">Projeta essa tela na sala durante o encontro. Cada participante digita esse código no próprio celular pra confirmar presença.</small>
+      </div>
+      <div id="presencasLista" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalPresencas')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: nova categoria -->
 <div class="overlay" id="modalLoja" style="display:none;">
   <div class="modal" style="width:400px;">
@@ -1399,6 +1577,21 @@ function setVisibTipoLocal(btn, show){
   btn.classList.add('on');
   document.getElementById('visibTipoLocalChips').style.display = show ? 'flex' : 'none';
 }
+function setVisibPrograma(btn, show){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('programaVisibChips').style.display = show ? 'flex' : 'none';
+}
+function setVisibProgramaLocal(btn, show){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('programaVisibLocalBlock').style.display = show ? 'block' : 'none';
+}
+function setVisibProgramaTipoLocal(btn, show){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('programaVisibTipoLocalChips').style.display = show ? 'flex' : 'none';
+}
 function setPdfVisibLocal(btn, show){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
@@ -1503,7 +1696,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, collection, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp, increment, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, collection, doc, getDoc, getDocs, query, where, onSnapshot, setDoc, updateDoc, deleteDoc, addDoc, writeBatch, serverTimestamp, increment, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
   import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
@@ -1739,6 +1932,12 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   // Drive); ambos escrevem no mesmo linkFieldInput, já que os dois tipos compartilham esse campo.
   ligarUploadDeArquivo('cursoVideoUploadInput', 'linkFieldInput', 'cursoVideoUploadStatus', 'videos-cursos');
   ligarUploadDeArquivo('cursoAudioUploadInput', 'linkFieldInput', 'cursoAudioUploadStatus', 'audios-cursos');
+  // Programas presenciais (setembro/2026)
+  ligarUploadDeArquivo('programaCapaUploadInput', 'programaCapaInput', 'programaCapaUploadStatus', 'capas-programas');
+  ligarUploadDeArquivo('programaCertFinalUploadInput', 'programaCertFinalInput', 'programaCertFinalUploadStatus', 'certificados');
+  ligarUploadDeArquivo('encontroCapaUploadInput', 'encontroCapaInput', 'encontroCapaUploadStatus', 'capas-encontros');
+  ligarUploadDeArquivo('encontroMaterialUploadInput', 'encontroMaterialInput', 'encontroMaterialUploadStatus', 'materiais-encontros');
+  ligarUploadDeArquivo('encontroCertUploadInput', 'encontroCertInput', 'encontroCertUploadStatus', 'certificados');
 
   // app "secundário": usado só pra criar/checar contas de colaboradores sem afetar a sessão da admin logada
   const secondaryApp = initializeApp(firebaseConfig, 'secondary');
@@ -1779,6 +1978,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     iniciarPublicos();
     iniciarCursos();
     iniciarTrilhas();
+    iniciarProgramas();
     iniciarColaboradores();
     iniciarRelatorios();
     iniciarDesligamentos();
@@ -1843,7 +2043,8 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     const lojas = lojasCache.map(l => l.nome);
 
     [{ el: 'visibRegionaisChips', itens: regionais }, { el: 'pdfVisibRegionaisChips', itens: regionais },
-     { el: 'visibLojasChips', itens: lojas }, { el: 'pdfVisibLojasChips', itens: lojas }
+     { el: 'visibLojasChips', itens: lojas }, { el: 'pdfVisibLojasChips', itens: lojas },
+     { el: 'programaVisibRegionaisChips', itens: regionais }, { el: 'programaVisibLojasChips', itens: lojas }
     ].forEach(({ el, itens }) => {
       const container = document.getElementById(el);
       if (!container) return;
@@ -2085,6 +2286,16 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       const selecionadosAntes = [...trilhaVisibChips.querySelectorAll('.visib-chip.on')].map(c => c.textContent.trim());
       trilhaVisibChips.innerHTML = montarChipsCargoEMacrocargo(cargos, macrocargos, selecionadosAntes);
       trilhaVisibChips.querySelectorAll('.visib-chip').forEach(chip => {
+        chip.addEventListener('click', () => chip.classList.toggle('on'));
+      });
+    }
+
+    // chips de "quem vê este programa presencial" por cargo
+    const programaVisibChips = document.getElementById('programaVisibChips');
+    if (programaVisibChips) {
+      const selecionadosAntes = [...programaVisibChips.querySelectorAll('.visib-chip.on')].map(c => c.textContent.trim());
+      programaVisibChips.innerHTML = montarChipsCargoEMacrocargo(cargos, macrocargos, selecionadosAntes);
+      programaVisibChips.querySelectorAll('.visib-chip').forEach(chip => {
         chip.addEventListener('click', () => chip.classList.toggle('on'));
       });
     }
@@ -2598,6 +2809,407 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     } catch (err) {
       console.error('Erro ao remover trilha:', err);
       alert('Não foi possível remover agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  /* ===================== PROGRAMAS PRESENCIAIS (encontros, presença, certificado) — setembro/2026 =====================
+     Treinamento em sala, com data marcada — o conteúdo em si não fica na plataforma. O que fica aqui é o
+     registro: cada "encontro" tem um código de presença (guardado à parte, em codigosPrograma, pra nenhum
+     colaborador conseguir ler o código pelo F12 do navegador), e a confirmação de presença (por código ou
+     manual) sempre passa pelas Cloud Functions confirmarPresencaEncontro/marcarPresencaManual — o app nunca
+     escreve direto em presencasPrograma (a regra do Firestore bloqueia isso de propósito). */
+  let programasCache = [];
+  let programaEditandoId = null;
+  let programaEncontrosSelecionados = []; // [{Id, Titulo, Descricao, Data, DuracaoHoras, FacilitadorCpf, Capa, Material, CertificadoModeloURL, _codigo}]
+  let encontroEditandoIdx = null; // índice dentro de programaEncontrosSelecionados, ou null se for um encontro novo
+  let presencasProgramaIdAtual = null;
+  let presencasEncontroIdAtual = null;
+
+  function programaAplicavelA(programa, colab){
+    if (colab.Nivel === 'Admin') return true;
+    const passaCargo = !(programa.CargosEspecificos === true && Array.isArray(programa.Cargos) && programa.Cargos.length)
+      || programa.Cargos.includes(colab.Cargo)
+      || (colab.Macrocargo && programa.Cargos.includes(colab.Macrocargo));
+    const temRestricaoLocal = programa.LocalEspecifico === true && ((Array.isArray(programa.LojasPermitidas) && programa.LojasPermitidas.length) || (Array.isArray(programa.RegionaisPermitidas) && programa.RegionaisPermitidas.length));
+    const passaLocal = !temRestricaoLocal
+      || (Array.isArray(programa.LojasPermitidas) && programa.LojasPermitidas.includes(colab.Loja))
+      || (Array.isArray(programa.RegionaisPermitidas) && programa.RegionaisPermitidas.includes(colab.Regional));
+    const temRestricaoTipoLocal = programa.TipoLocalEspecifico === true && Array.isArray(programa.TiposLocal) && programa.TiposLocal.length > 0;
+    const passaTipoLocal = !temRestricaoTipoLocal || programa.TiposLocal.includes(colab.Local || 'Loja');
+    return passaCargo && passaLocal && passaTipoLocal;
+  }
+
+  function gerarCodigoPresenca(){
+    return String(Math.floor(100000 + Math.random() * 900000)); // 6 dígitos
+  }
+  function gerarIdEncontro(){
+    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  }
+
+  function iniciarProgramas(){
+    onSnapshot(collection(db, 'programas'), (snapshot) => {
+      programasCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderProgramas();
+    }, (err) => console.error('Erro ao carregar programas:', err));
+  }
+
+  function renderProgramas(){
+    const body = document.getElementById('programasTableBody');
+    if (!body) return;
+    if (!programasCache.length) {
+      body.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ink-soft); padding:24px;">Nenhum programa criado ainda.</td></tr>`;
+      return;
+    }
+    body.innerHTML = programasCache.map(p => {
+      const partes = [];
+      if (p.CargosEspecificos && Array.isArray(p.Cargos) && p.Cargos.length) partes.push(p.Cargos.join(', '));
+      if (p.LocalEspecifico && ((Array.isArray(p.LojasPermitidas) && p.LojasPermitidas.length) || (Array.isArray(p.RegionaisPermitidas) && p.RegionaisPermitidas.length))) partes.push([...(p.RegionaisPermitidas||[]), ...(p.LojasPermitidas||[])].join(', '));
+      if (p.TipoLocalEspecifico && Array.isArray(p.TiposLocal) && p.TiposLocal.length) partes.push(p.TiposLocal.join(', '));
+      const publico = partes.length ? partes.join(' · ') : 'Todos';
+      const qtdEncontros = Array.isArray(p.Encontros) ? p.Encontros.length : 0;
+      return `<tr>
+        <td>${p.Nome || '—'}</td>
+        <td>${publico}</td>
+        <td>${qtdEncontros} encontro${qtdEncontros === 1 ? '' : 's'}</td>
+        <td>${p.Status === 'publicado' ? '<span style="color:var(--green-dark); font-weight:700;">Publicado</span>' : '<span style="color:var(--ink-soft);">Rascunho</span>'}</td>
+        <td style="text-align:right; white-space:nowrap;">
+          <button type="button" class="ghost-btn" onclick="editarPrograma('${p.id}')">Editar</button>
+          <button type="button" class="ghost-btn" style="color:#B4462B;" onclick="excluirPrograma('${p.id}','${(p.Nome || '').replace(/'/g, "\\'")}')">Excluir</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderProgramaEncontrosLista(){
+    const el = document.getElementById('programaEncontrosLista');
+    if (!el) return;
+    if (!programaEncontrosSelecionados.length) {
+      el.innerHTML = `<p style="font-size:12.5px; color:var(--ink-soft); margin:4px 0;">Nenhum encontro adicionado ainda.</p>`;
+      return;
+    }
+    el.innerHTML = programaEncontrosSelecionados.map((enc, i) => {
+      const dataFmt = enc.Data ? new Date(enc.Data + 'T00:00:00').toLocaleDateString('pt-BR') : 'sem data';
+      const presencasBtn = programaEditandoId
+        ? `<button type="button" class="ghost-btn" onclick="abrirPresencasEncontro('${programaEditandoId}','${enc.Id}')" style="padding:2px 8px; font-size:12px;">👥 Presenças</button>`
+        : '';
+      return `
+      <div style="display:flex; align-items:center; gap:8px; background:var(--cream); border-radius:10px; padding:8px 10px; font-size:13px;">
+        <span style="font-weight:700; opacity:.5; width:22px;">${i + 1}º</span>
+        <span style="flex:1;">${enc.Titulo || '(sem título)'} <small style="color:var(--ink-soft);">— ${dataFmt} · ${enc.DuracaoHoras || 4}h${enc.FacilitadorCpf ? ' · facilitador ' + enc.FacilitadorCpf : ''}</small></span>
+        ${presencasBtn}
+        <button type="button" class="ghost-btn" onclick="editarEncontroDaLista(${i})" style="padding:2px 8px; font-size:12px;">Editar</button>
+        <button type="button" onclick="moverEncontroNaLista(${i},-1)" ${i === 0 ? 'disabled' : ''} style="background:none; padding:2px 6px;">↑</button>
+        <button type="button" onclick="moverEncontroNaLista(${i},1)" ${i === programaEncontrosSelecionados.length - 1 ? 'disabled' : ''} style="background:none; padding:2px 6px;">↓</button>
+        <button type="button" onclick="removerEncontroDaLista(${i})" style="background:none; color:#B4462B; padding:2px 6px;">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  window.moverEncontroNaLista = function(index, direcao){
+    const novoIndex = index + direcao;
+    if (novoIndex < 0 || novoIndex >= programaEncontrosSelecionados.length) return;
+    const [item] = programaEncontrosSelecionados.splice(index, 1);
+    programaEncontrosSelecionados.splice(novoIndex, 0, item);
+    renderProgramaEncontrosLista();
+  };
+
+  window.removerEncontroDaLista = function(index){
+    if (!confirm('Remover esse encontro da lista? Se o programa já estiver salvo, isso não apaga presenças/certificados já emitidos, só tira o encontro de aparecer daqui pra frente.')) return;
+    programaEncontrosSelecionados.splice(index, 1);
+    renderProgramaEncontrosLista();
+  };
+
+  window.abrirNovoEncontro = function(){
+    encontroEditandoIdx = null;
+    document.getElementById('modalEncontroTitulo').textContent = 'Novo encontro';
+    document.getElementById('encontroTituloInput').value = '';
+    document.getElementById('encontroDescInput').value = '';
+    document.getElementById('encontroDataInput').value = '';
+    document.getElementById('encontroDuracaoInput').value = '4';
+    document.getElementById('encontroFacilitadorInput').value = '';
+    document.getElementById('encontroCapaInput').value = '';
+    document.getElementById('encontroMaterialInput').value = '';
+    document.getElementById('encontroCertInput').value = '';
+    document.getElementById('encontroSalvarErro').style.display = 'none';
+    openModal('modalEncontro');
+  };
+
+  window.editarEncontroDaLista = function(idx){
+    const enc = programaEncontrosSelecionados[idx];
+    if (!enc) return;
+    encontroEditandoIdx = idx;
+    document.getElementById('modalEncontroTitulo').textContent = 'Editar encontro';
+    document.getElementById('encontroTituloInput').value = enc.Titulo || '';
+    document.getElementById('encontroDescInput').value = enc.Descricao || '';
+    document.getElementById('encontroDataInput').value = enc.Data || '';
+    document.getElementById('encontroDuracaoInput').value = enc.DuracaoHoras || 4;
+    document.getElementById('encontroFacilitadorInput').value = enc.FacilitadorCpf || '';
+    document.getElementById('encontroCapaInput').value = enc.Capa || '';
+    document.getElementById('encontroMaterialInput').value = enc.Material || '';
+    document.getElementById('encontroCertInput').value = enc.CertificadoModeloURL || '';
+    document.getElementById('encontroSalvarErro').style.display = 'none';
+    openModal('modalEncontro');
+  };
+
+  window.confirmarEncontro = function(){
+    const titulo = document.getElementById('encontroTituloInput').value.trim();
+    const data = document.getElementById('encontroDataInput').value;
+    const erroEl = document.getElementById('encontroSalvarErro');
+    if (!titulo || !data) {
+      erroEl.textContent = 'Preenche pelo menos o título e a data do encontro.';
+      erroEl.style.display = 'block';
+      return;
+    }
+    const dados = {
+      Titulo: titulo,
+      Descricao: document.getElementById('encontroDescInput').value.trim(),
+      Data: data,
+      DuracaoHoras: Number(document.getElementById('encontroDuracaoInput').value) || 4,
+      FacilitadorCpf: document.getElementById('encontroFacilitadorInput').value.replace(/\D/g, ''),
+      Capa: document.getElementById('encontroCapaInput').value.trim(),
+      Material: document.getElementById('encontroMaterialInput').value.trim(),
+      CertificadoModeloURL: document.getElementById('encontroCertInput').value.trim(),
+    };
+    if (encontroEditandoIdx !== null) {
+      const existente = programaEncontrosSelecionados[encontroEditandoIdx];
+      programaEncontrosSelecionados[encontroEditandoIdx] = { ...existente, ...dados };
+    } else {
+      programaEncontrosSelecionados.push({ Id: gerarIdEncontro(), _codigo: gerarCodigoPresenca(), ...dados });
+    }
+    renderProgramaEncontrosLista();
+    closeModal('modalEncontro');
+  };
+
+  window.abrirNovoPrograma = function(){
+    programaEditandoId = null;
+    programaEncontrosSelecionados = [];
+    document.getElementById('modalProgramaTitulo').textContent = 'Novo programa presencial';
+    document.getElementById('programaNomeInput').value = '';
+    document.getElementById('programaDescInput').value = '';
+    document.getElementById('programaCapaInput').value = '';
+    document.getElementById('programaCertFinalInput').value = '';
+    renderProgramaEncontrosLista();
+
+    document.querySelectorAll('#programaVisibToggle button').forEach((b, i) => b.classList.toggle('on', i === 0));
+    document.getElementById('programaVisibChips').style.display = 'none';
+    document.querySelectorAll('#programaVisibChips .visib-chip').forEach(ch => ch.classList.remove('on'));
+
+    document.querySelectorAll('#programaVisibLocalToggle button').forEach((b, i) => b.classList.toggle('on', i === 0));
+    document.getElementById('programaVisibLocalBlock').style.display = 'none';
+    document.querySelectorAll('#programaVisibLojasChips .visib-chip, #programaVisibRegionaisChips .visib-chip').forEach(ch => ch.classList.remove('on'));
+
+    document.querySelectorAll('#programaVisibTipoLocalToggle button').forEach((b, i) => b.classList.toggle('on', i === 0));
+    document.getElementById('programaVisibTipoLocalChips').style.display = 'none';
+    document.querySelectorAll('#programaVisibTipoLocalChips .visib-chip').forEach(ch => ch.classList.remove('on'));
+
+    document.querySelectorAll('#programaStatusToggle button').forEach((b, i) => b.classList.toggle('on', i === 0));
+    document.getElementById('programaStatusToggle').dataset.valor = '1';
+
+    openModal('modalPrograma');
+  };
+
+  window.editarPrograma = async function(id){
+    const p = programasCache.find(x => x.id === id);
+    if (!p) return;
+    programaEditandoId = id;
+    document.getElementById('modalProgramaTitulo').textContent = 'Editar programa presencial';
+    document.getElementById('programaNomeInput').value = p.Nome || '';
+    document.getElementById('programaDescInput').value = p.Descricao || '';
+    document.getElementById('programaCapaInput').value = p.Capa || '';
+    document.getElementById('programaCertFinalInput').value = p.CertificadoFinalModeloURL || '';
+
+    // busca o código secreto de cada encontro (guardado à parte, em codigosPrograma) — só o
+    // Admin consegue ler essa coleção, mantém o código estável entre edições
+    const encontrosOriginais = Array.isArray(p.Encontros) ? p.Encontros : [];
+    programaEncontrosSelecionados = await Promise.all(encontrosOriginais.map(async (enc) => {
+      let codigo = null;
+      try {
+        const codSnap = await getDoc(doc(db, 'codigosPrograma', `${id}_${enc.Id}`));
+        if (codSnap.exists()) codigo = codSnap.data().Codigo;
+      } catch (err) { console.error('Erro ao buscar código do encontro:', err); }
+      return { ...enc, _codigo: codigo || gerarCodigoPresenca() };
+    }));
+    renderProgramaEncontrosLista();
+
+    const cargoOn = !!p.CargosEspecificos;
+    document.querySelectorAll('#programaVisibToggle button').forEach((b, i) => b.classList.toggle('on', cargoOn ? i === 1 : i === 0));
+    document.getElementById('programaVisibChips').style.display = cargoOn ? 'flex' : 'none';
+    document.querySelectorAll('#programaVisibChips .visib-chip').forEach(ch => {
+      ch.classList.toggle('on', Array.isArray(p.Cargos) && p.Cargos.includes(ch.textContent.trim()));
+    });
+
+    const localOn = !!p.LocalEspecifico;
+    document.querySelectorAll('#programaVisibLocalToggle button').forEach((b, i) => b.classList.toggle('on', localOn ? i === 1 : i === 0));
+    document.getElementById('programaVisibLocalBlock').style.display = localOn ? 'block' : 'none';
+    document.querySelectorAll('#programaVisibLojasChips .visib-chip').forEach(ch => {
+      ch.classList.toggle('on', Array.isArray(p.LojasPermitidas) && p.LojasPermitidas.includes(ch.textContent.trim()));
+    });
+    document.querySelectorAll('#programaVisibRegionaisChips .visib-chip').forEach(ch => {
+      ch.classList.toggle('on', Array.isArray(p.RegionaisPermitidas) && p.RegionaisPermitidas.includes(ch.textContent.trim()));
+    });
+
+    const tipoLocalOn = !!p.TipoLocalEspecifico;
+    document.querySelectorAll('#programaVisibTipoLocalToggle button').forEach((b, i) => b.classList.toggle('on', tipoLocalOn ? i === 1 : i === 0));
+    document.getElementById('programaVisibTipoLocalChips').style.display = tipoLocalOn ? 'flex' : 'none';
+    document.querySelectorAll('#programaVisibTipoLocalChips .visib-chip').forEach(ch => {
+      ch.classList.toggle('on', Array.isArray(p.TiposLocal) && p.TiposLocal.includes(ch.textContent.trim()));
+    });
+
+    document.querySelectorAll('#programaStatusToggle button').forEach((b, i) => b.classList.toggle('on', p.Status === 'publicado' ? i === 0 : i === 1));
+    document.getElementById('programaStatusToggle').dataset.valor = (p.Status === 'publicado') ? '1' : '0';
+
+    openModal('modalPrograma');
+  };
+  window.editPrograma = window.editarPrograma; // alias, mesma convenção de nome usada em editCurso
+
+  window.salvarPrograma = async function(){
+    const nome = document.getElementById('programaNomeInput').value.trim();
+    const erroEl = document.getElementById('programaSalvarErro');
+    erroEl.style.display = 'none';
+    if (!nome) { erroEl.textContent = 'Dá um nome pro programa antes de salvar.'; erroEl.style.display = 'block'; return; }
+    if (!programaEncontrosSelecionados.length) { erroEl.textContent = 'Adiciona pelo menos um encontro.'; erroEl.style.display = 'block'; return; }
+
+    const btn = document.getElementById('btnSalvarPrograma');
+    btn.disabled = true;
+    const textoOriginal = btn.textContent;
+    btn.textContent = 'Salvando…';
+
+    try {
+      const cargosEspecificos = document.querySelectorAll('#programaVisibToggle button')[1]?.classList.contains('on') || false;
+      const cargos = cargosEspecificos ? [...document.querySelectorAll('#programaVisibChips .visib-chip.on')].map(ch => ch.textContent.trim()) : [];
+      const localEspecifico = document.querySelectorAll('#programaVisibLocalToggle button')[1]?.classList.contains('on') || false;
+      const lojasPermitidas = localEspecifico ? [...document.querySelectorAll('#programaVisibLojasChips .visib-chip.on')].map(ch => ch.textContent.trim()) : [];
+      const regionaisPermitidas = localEspecifico ? [...document.querySelectorAll('#programaVisibRegionaisChips .visib-chip.on')].map(ch => ch.textContent.trim()) : [];
+      const tipoLocalEspecifico = document.querySelectorAll('#programaVisibTipoLocalToggle button')[1]?.classList.contains('on') || false;
+      const tiposLocal = tipoLocalEspecifico ? [...document.querySelectorAll('#programaVisibTipoLocalChips .visib-chip.on')].map(ch => ch.textContent.trim()) : [];
+      const status = document.getElementById('programaStatusToggle').dataset.valor === '1' ? 'publicado' : 'rascunho';
+
+      // tira o código secreto (_codigo) antes de gravar no doc público de programas — ele só
+      // pode existir em codigosPrograma, nunca aqui
+      const encontrosParaSalvar = programaEncontrosSelecionados.map(({ _codigo, ...resto }) => resto);
+
+      const dadosPrograma = {
+        Nome: nome,
+        Descricao: document.getElementById('programaDescInput').value.trim(),
+        Capa: document.getElementById('programaCapaInput').value.trim(),
+        CertificadoFinalModeloURL: document.getElementById('programaCertFinalInput').value.trim(),
+        Encontros: encontrosParaSalvar,
+        CargosEspecificos: cargosEspecificos,
+        Cargos: cargos,
+        LocalEspecifico: localEspecifico,
+        LojasPermitidas: lojasPermitidas,
+        RegionaisPermitidas: regionaisPermitidas,
+        TipoLocalEspecifico: tipoLocalEspecifico,
+        TiposLocal: tiposLocal,
+        Status: status,
+        AtualizadoEm: serverTimestamp(),
+      };
+
+      let idPrograma = programaEditandoId;
+      if (idPrograma) {
+        await updateDoc(doc(db, 'programas', idPrograma), dadosPrograma);
+      } else {
+        dadosPrograma.CriadoEm = serverTimestamp();
+        const novoRef = doc(collection(db, 'programas'));
+        idPrograma = novoRef.id;
+        await setDoc(novoRef, dadosPrograma);
+      }
+
+      // grava/atualiza o código de cada encontro na coleção separada (protegida por regra)
+      const batchCodigos = writeBatch(db);
+      programaEncontrosSelecionados.forEach(enc => {
+        batchCodigos.set(doc(db, 'codigosPrograma', `${idPrograma}_${enc.Id}`), {
+          ProgramaId: idPrograma,
+          EncontroId: enc.Id,
+          Codigo: enc._codigo,
+          FacilitadorCpf: enc.FacilitadorCpf || '',
+        }, { merge: true });
+      });
+      await batchCodigos.commit();
+
+      closeModal('modalPrograma');
+    } catch (err) {
+      console.error('Erro ao salvar programa:', err);
+      erroEl.textContent = 'Não foi possível salvar. Tenta de novo em alguns segundos.';
+      erroEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
+  };
+
+  window.excluirPrograma = async function(id, nome){
+    if (!confirm(`Excluir o programa "${nome}"? Presenças e certificados já emitidos não somem pro histórico de quem já participou, mas o programa some da Home de quem ainda não terminou. Essa ação não pode ser desfeita.`)) return;
+    try {
+      await deleteDoc(doc(db, 'programas', id));
+    } catch (err) {
+      console.error('Erro ao excluir programa:', err);
+      alert('Não foi possível excluir agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  // ===== presenças de um encontro: mostra o código, lista quem já confirmou, permite marcar manual =====
+  window.abrirPresencasEncontro = async function(programaId, encontroId){
+    presencasProgramaIdAtual = programaId;
+    presencasEncontroIdAtual = encontroId;
+    const programa = programasCache.find(x => x.id === programaId) || { Nome: '', Encontros: programaEncontrosSelecionados, ...{ CargosEspecificos: false } };
+    const encontro = (programaEncontrosSelecionados.find(e => e.Id === encontroId)) || (Array.isArray(programa.Encontros) ? programa.Encontros.find(e => e.Id === encontroId) : null);
+    document.getElementById('modalPresencasTitulo').textContent = `Presenças — ${encontro ? encontro.Titulo : ''}`;
+
+    try {
+      const codSnap = await getDoc(doc(db, 'codigosPrograma', `${programaId}_${encontroId}`));
+      document.getElementById('presencasCodigoTexto').textContent = codSnap.exists() ? codSnap.data().Codigo : '——';
+    } catch (err) {
+      console.error('Erro ao buscar código:', err);
+    }
+
+    const lista = document.getElementById('presencasLista');
+    lista.innerHTML = `<p style="font-size:12.5px; color:var(--ink-soft);">Carregando…</p>`;
+    try {
+      const publicoAlvo = colaboradoresCache.filter(c => c.Status === 'ativo' && programaAplicavelA(programa, c) && c.Nivel !== 'Admin');
+      const presencasSnap = await getDocs(query(collection(db, 'presencasPrograma'), where('EncontroId', '==', encontroId)));
+      const confirmados = new Set(presencasSnap.docs.filter(d => d.data().ProgramaId === programaId).map(d => d.data().Cpf));
+      if (!publicoAlvo.length) {
+        lista.innerHTML = `<p style="font-size:12.5px; color:var(--ink-soft);">Ninguém no público-alvo desse programa ainda (confere se o programa já está salvo e o público-alvo preenchido).</p>`;
+        return;
+      }
+      lista.innerHTML = publicoAlvo.sort((a,b) => (a.Nome||'').localeCompare(b.Nome||'')).map(c => {
+        const presente = confirmados.has(c.cpf);
+        return `<div style="display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:10px; background:${presente ? 'var(--cream)' : 'transparent'}; border:1px solid var(--line);">
+          <span style="flex:1; font-size:13px;">${presente ? '✅' : '⬜'} ${c.Nome || c.cpf}</span>
+          ${presente ? '' : `<button type="button" class="ghost-btn" onclick="marcarPresencaManualAdmin('${c.cpf}')" style="padding:2px 8px; font-size:12px;">Marcar presente</button>`}
+        </div>`;
+      }).join('');
+    } catch (err) {
+      console.error('Erro ao carregar presenças:', err);
+      lista.innerHTML = `<p style="font-size:12.5px; color:#B4462B;">Não foi possível carregar as presenças agora.</p>`;
+    }
+    openModal('modalPresencas');
+  };
+
+  window.marcarPresencaManualAdmin = async function(cpfAlvo){
+    try {
+      const chamar = httpsCallable(functions, 'marcarPresencaManual');
+      await chamar({ programaId: presencasProgramaIdAtual, encontroId: presencasEncontroIdAtual, cpfAlvo });
+      window.abrirPresencasEncontro(presencasProgramaIdAtual, presencasEncontroIdAtual); // atualiza a lista
+    } catch (err) {
+      console.error('Erro ao marcar presença manual:', err);
+      alert('Não foi possível marcar presença agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  window.regenerarCodigoEncontro = async function(){
+    if (!confirm('Gerar um novo código pra esse encontro? O código antigo deixa de funcionar (útil se ele vazou pra alguém que não devia).')) return;
+    const novoCodigo = gerarCodigoPresenca();
+    try {
+      await setDoc(doc(db, 'codigosPrograma', `${presencasProgramaIdAtual}_${presencasEncontroIdAtual}`), { Codigo: novoCodigo }, { merge: true });
+      document.getElementById('presencasCodigoTexto').textContent = novoCodigo;
+      // mantém em memória, caso o programa ainda esteja aberto no modal principal
+      const enc = programaEncontrosSelecionados.find(e => e.Id === presencasEncontroIdAtual);
+      if (enc) enc._codigo = novoCodigo;
+    } catch (err) {
+      console.error('Erro ao gerar novo código:', err);
+      alert('Não foi possível gerar um novo código agora. Tenta de novo em alguns segundos.');
     }
   };
 
