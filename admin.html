@@ -882,6 +882,7 @@
         <input type="file" id="cursoCertUploadInput" accept="image/*" style="margin-top:8px;">
         <small class="hint">Ou escolhe a imagem do modelo de certificado aqui — sobe sozinha, sem precisar de GitHub. Usada pra gerar o certificado automático quando o colaborador conclui o curso.</small>
         <div id="cursoCertUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
+        <button type="button" class="ghost-btn" onclick="abrirPosicionadorCertificado('curso')" style="margin-top:8px;">🎯 Posicionar campos do certificado</button>
       </div>
       <div class="field">
         <label>Este curso é obrigatório?</label>
@@ -1092,6 +1093,7 @@
         <input type="file" id="programaCertFinalUploadInput" accept="image/*" style="margin-top:8px;">
         <small class="hint">Liberado sozinho quando a pessoa confirma presença em todos os encontros. Mostra o nome, o total de horas somado de todos os encontros, e a lista de encontros com as datas — funciona como certificado oficial e lista de presença ao mesmo tempo.</small>
         <div id="programaCertFinalUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
+        <button type="button" class="ghost-btn" onclick="abrirPosicionadorCertificado('programaFinal')" style="margin-top:8px;">🎯 Posicionar campos do certificado</button>
       </div>
 
       <div class="field">
@@ -1186,6 +1188,7 @@
         <input type="file" id="encontroCertUploadInput" accept="image/*" style="margin-top:8px;">
         <small class="hint">Se deixar em branco, esse encontro não gera certificado individual — só conta pro certificado final do programa.</small>
         <div id="encontroCertUploadStatus" style="margin-top:4px; font-size:12.5px; font-weight:700;"></div>
+        <button type="button" class="ghost-btn" onclick="abrirPosicionadorCertificado('encontro')" style="margin-top:8px;">🎯 Posicionar campos do certificado</button>
       </div>
       <div id="encontroSalvarErro" style="display:none; color:#B4462B; font-size:13px; font-weight:600; margin-top:4px;"></div>
     </div>
@@ -1211,6 +1214,30 @@
     </div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="closeModal('modalPresencas')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: posicionador visual dos campos do certificado (nome, curso/encontro, data, lista...) -->
+<div class="overlay" id="modalPosicionarCertificado" style="display:none; z-index:97;">
+  <div class="modal" style="width:720px; max-height:90vh; overflow:auto;">
+    <div class="modal-head"><h3 id="posCertTitulo">Posicionar campos do certificado</h3><button onclick="closeModal('modalPosicionarCertificado')">✕</button></div>
+    <div class="modal-body">
+      <div id="posCertSemImagem" style="display:none; text-align:center; padding:28px 10px; color:var(--ink-soft);">
+        <p style="font-size:13.5px;">Escolhe ou sobe a imagem do modelo de certificado primeiro (no campo logo acima) — depois volta aqui pra posicionar os campos em cima dela.</p>
+      </div>
+      <div id="posCertConteudo" style="display:none;">
+        <small class="hint" style="display:block; margin-bottom:10px;">Arrasta cada campo pra cima da imagem, no lugar exato onde aquele texto deve aparecer no certificado. Usa os controles abaixo pra ajustar tamanho e negrito.</small>
+        <div id="posCertImgWrap" style="position:relative; width:100%; border-radius:10px; overflow:hidden; background:#e9e2d6; user-select:none; touch-action:none;">
+          <img id="posCertImg" src="" alt="Modelo de certificado" style="display:block; width:100%; height:auto; pointer-events:none;">
+          <div id="posCertPills" style="position:absolute; inset:0;"></div>
+        </div>
+        <div id="posCertControles" style="display:flex; flex-direction:column; gap:12px; margin-top:16px;"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalPosicionarCertificado')">Cancelar</button>
+      <button class="btn-primary" id="btnSalvarPosCert" onclick="salvarPosicionamentoCertificado()">Salvar posições</button>
     </div>
   </div>
 </div>
@@ -2823,6 +2850,11 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
   let programaEncontrosSelecionados = []; // [{Id, Titulo, Descricao, Data, DuracaoHoras, FacilitadorCpf, Capa, Material, CertificadoModeloURL, _codigo}]
   let encontroEditandoIdx = null; // índice dentro de programaEncontrosSelecionados, ou null se for um encontro novo
   let presencasProgramaIdAtual = null;
+  // posições customizadas dos campos do certificado (curso / encontro atual do modal / certificado final do
+  // programa) — null quando ainda não foi customizado, aí home.html usa os valores padrão calibrados.
+  window.__cursoCamposCertificado = null;
+  window.__encontroCamposCertificado = null;
+  window.__programaCamposCertificadoFinal = null;
   let presencasEncontroIdAtual = null;
 
   function programaAplicavelA(programa, colab){
@@ -2931,6 +2963,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('encontroMaterialInput').value = '';
     document.getElementById('encontroCertInput').value = '';
     document.getElementById('encontroSalvarErro').style.display = 'none';
+    window.__encontroCamposCertificado = null;
     openModal('modalEncontro');
   };
 
@@ -2948,6 +2981,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('encontroMaterialInput').value = enc.Material || '';
     document.getElementById('encontroCertInput').value = enc.CertificadoModeloURL || '';
     document.getElementById('encontroSalvarErro').style.display = 'none';
+    window.__encontroCamposCertificado = enc.CamposCertificado || null;
     openModal('modalEncontro');
   };
 
@@ -2969,6 +3003,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       Capa: document.getElementById('encontroCapaInput').value.trim(),
       Material: document.getElementById('encontroMaterialInput').value.trim(),
       CertificadoModeloURL: document.getElementById('encontroCertInput').value.trim(),
+      CamposCertificado: window.__encontroCamposCertificado || null,
     };
     if (encontroEditandoIdx !== null) {
       const existente = programaEncontrosSelecionados[encontroEditandoIdx];
@@ -2988,6 +3023,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('programaDescInput').value = '';
     document.getElementById('programaCapaInput').value = '';
     document.getElementById('programaCertFinalInput').value = '';
+    window.__programaCamposCertificadoFinal = null;
     renderProgramaEncontrosLista();
 
     document.querySelectorAll('#programaVisibToggle button').forEach((b, i) => b.classList.toggle('on', i === 0));
@@ -3017,6 +3053,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('programaDescInput').value = p.Descricao || '';
     document.getElementById('programaCapaInput').value = p.Capa || '';
     document.getElementById('programaCertFinalInput').value = p.CertificadoFinalModeloURL || '';
+    window.__programaCamposCertificadoFinal = p.CamposCertificadoFinal || null;
 
     // busca o código secreto de cada encontro (guardado à parte, em codigosPrograma) — só o
     // Admin consegue ler essa coleção, mantém o código estável entre edições
@@ -3093,6 +3130,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         Descricao: document.getElementById('programaDescInput').value.trim(),
         Capa: document.getElementById('programaCapaInput').value.trim(),
         CertificadoFinalModeloURL: document.getElementById('programaCertFinalInput').value.trim(),
+        CamposCertificadoFinal: window.__programaCamposCertificadoFinal || null,
         Encontros: encontrosParaSalvar,
         CargosEspecificos: cargosEspecificos,
         Cargos: cargos,
@@ -3213,6 +3251,141 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     }
   };
 
+  // ===== posicionador visual dos campos do certificado =====
+  // Espelha exatamente os valores padrão usados em home.html (CAMPOS_CERT_PADRAO / CAMPO_LISTA_PADRAO) —
+  // se um campo nunca foi customizado aqui, o certificado gerado usa esses mesmos números.
+  const POS_CERT_PADRAO = {
+    nome:      { x: 0.5073, y: 0.5486, tam: 0.038, negrito: true },
+    subtitulo: { x: 0.5036, y: 0.6855, tam: 0.026, negrito: false },
+    dia:       { x: 0.3110, y: 0.7995, tam: 0.022, negrito: true },
+    ano:       { x: 0.6884, y: 0.7995, tam: 0.022, negrito: true },
+    lista:     { x: 0.5,    y: 0.74,   tam: 0.016, espacamento: 0.028, negrito: false },
+  };
+  const CAMPOS_POR_CONTEXTO = {
+    curso: ['nome', 'subtitulo', 'dia', 'ano'],
+    encontro: ['nome', 'subtitulo', 'dia', 'ano'],
+    programaFinal: ['nome', 'subtitulo', 'lista'],
+  };
+  const LABEL_CAMPO = {
+    nome: 'Nome do colaborador',
+    subtitulo: 'Nome do curso/encontro',
+    dia: 'Dia (ex: 25/09)',
+    ano: 'Ano (ex: 2026)',
+    lista: 'Lista de encontros + horas',
+  };
+  let posCertContextoAtual = null; // 'curso' | 'encontro' | 'programaFinal'
+  let posCertCampos = {}; // cópia de trabalho: { nome: {x,y,tam,negrito}, ... }
+  let posCertArrastando = null; // nome do campo sendo arrastado no momento, ou null
+
+  function posCertInputImagemId(contexto){
+    return { curso: 'cursoCertInput', encontro: 'encontroCertInput', programaFinal: 'programaCertFinalInput' }[contexto];
+  }
+  function posCertHolderAtual(contexto){
+    return { curso: '__cursoCamposCertificado', encontro: '__encontroCamposCertificado', programaFinal: '__programaCamposCertificadoFinal' }[contexto];
+  }
+  function posCertTituloContexto(contexto){
+    return { curso: 'Certificado do curso', encontro: 'Certificado do encontro', programaFinal: 'Certificado final do programa' }[contexto];
+  }
+
+  window.abrirPosicionadorCertificado = function(contexto){
+    posCertContextoAtual = contexto;
+    const url = (document.getElementById(posCertInputImagemId(contexto)).value || '').trim();
+    document.getElementById('posCertTitulo').textContent = `Posicionar campos — ${posCertTituloContexto(contexto)}`;
+
+    const semImagem = document.getElementById('posCertSemImagem');
+    const conteudo = document.getElementById('posCertConteudo');
+    if (!url) {
+      semImagem.style.display = 'block';
+      conteudo.style.display = 'none';
+      document.getElementById('btnSalvarPosCert').style.display = 'none';
+      openModal('modalPosicionarCertificado');
+      return;
+    }
+    semImagem.style.display = 'none';
+    conteudo.style.display = 'block';
+    document.getElementById('btnSalvarPosCert').style.display = '';
+    document.getElementById('posCertImg').src = url;
+
+    const salvos = window[posCertHolderAtual(contexto)] || {};
+    posCertCampos = {};
+    CAMPOS_POR_CONTEXTO[contexto].forEach(campo => {
+      posCertCampos[campo] = { ...POS_CERT_PADRAO[campo], ...(salvos[campo] || {}) };
+    });
+    renderPosCertPillsEControles();
+    openModal('modalPosicionarCertificado');
+  };
+
+  function renderPosCertPillsEControles(){
+    const pillsWrap = document.getElementById('posCertPills');
+    const controlesWrap = document.getElementById('posCertControles');
+    const campos = CAMPOS_POR_CONTEXTO[posCertContextoAtual];
+
+    pillsWrap.innerHTML = campos.map(campo => {
+      const c = posCertCampos[campo];
+      return `<div class="pos-cert-pill" data-campo="${campo}" style="position:absolute; left:${(c.x*100).toFixed(2)}%; top:${(c.y*100).toFixed(2)}%; transform:translate(-50%,-50%); background:var(--laranja, #C1541F); color:#fff; font-size:11px; font-weight:700; padding:5px 12px; border-radius:20px; cursor:grab; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,.25);">${LABEL_CAMPO[campo]}</div>`;
+    }).join('');
+
+    controlesWrap.innerHTML = campos.map(campo => {
+      const c = posCertCampos[campo];
+      const espacamentoRow = (campo === 'lista') ? `
+        <label style="font-size:12px; display:flex; align-items:center; gap:6px;">Espaçamento entre linhas
+          <input type="range" min="1.5" max="5" step="0.1" value="${(c.espacamento*100).toFixed(1)}" oninput="ajustarPosCertCampo('${campo}','espacamento',this.value/100)" style="flex:1;">
+        </label>` : '';
+      return `<div style="border:1px solid var(--line); border-radius:10px; padding:10px 12px;">
+        <b style="font-size:13px;">${LABEL_CAMPO[campo]}</b>
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
+          <label style="font-size:12px; display:flex; align-items:center; gap:6px;">Tamanho do texto
+            <input type="range" min="1" max="8" step="0.1" value="${(c.tam*100).toFixed(1)}" oninput="ajustarPosCertCampo('${campo}','tam',this.value/100)" style="flex:1;">
+          </label>
+          ${espacamentoRow}
+          <label style="font-size:12px; display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" ${c.negrito ? 'checked' : ''} onchange="ajustarPosCertCampo('${campo}','negrito',this.checked)"> Negrito
+          </label>
+        </div>
+      </div>`;
+    }).join('');
+
+    ligarArrastoPills();
+  }
+
+  window.ajustarPosCertCampo = function(campo, prop, valor){
+    posCertCampos[campo][prop] = valor;
+  };
+
+  function ligarArrastoPills(){
+    const wrap = document.getElementById('posCertImgWrap');
+    wrap.querySelectorAll('.pos-cert-pill').forEach(pill => {
+      pill.onpointerdown = (ev) => {
+        ev.preventDefault();
+        posCertArrastando = pill.dataset.campo;
+        pill.style.cursor = 'grabbing';
+        pill.setPointerCapture(ev.pointerId);
+      };
+      pill.onpointermove = (ev) => {
+        if (posCertArrastando !== pill.dataset.campo) return;
+        const rect = wrap.getBoundingClientRect();
+        let x = (ev.clientX - rect.left) / rect.width;
+        let y = (ev.clientY - rect.top) / rect.height;
+        x = Math.min(1, Math.max(0, x));
+        y = Math.min(1, Math.max(0, y));
+        posCertCampos[posCertArrastando].x = x;
+        posCertCampos[posCertArrastando].y = y;
+        pill.style.left = (x * 100).toFixed(2) + '%';
+        pill.style.top = (y * 100).toFixed(2) + '%';
+      };
+      pill.onpointerup = (ev) => {
+        posCertArrastando = null;
+        pill.style.cursor = 'grab';
+        try { pill.releasePointerCapture(ev.pointerId); } catch (e) {}
+      };
+    });
+  }
+
+  window.salvarPosicionamentoCertificado = function(){
+    window[posCertHolderAtual(posCertContextoAtual)] = { ...posCertCampos };
+    closeModal('modalPosicionarCertificado');
+  };
+
   function statusPill(status){
     if (status === 'publicado') return '<span class="pill pub">Publicado</span>';
     if (status === 'arquivado') return '<span class="pill draft">Arquivado</span>';
@@ -3308,6 +3481,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     document.getElementById('visibTipoLocalChips').style.display = 'none';
     document.querySelectorAll('#visibTipoLocalChips .visib-chip').forEach(ch => ch.classList.remove('on'));
     document.querySelectorAll('#seloToggle button').forEach((b,i)=>b.classList.toggle('on', i===0));
+    window.__cursoCamposCertificado = null;
   }
 
   window.abrirNovoCurso = function(){
@@ -3403,6 +3577,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       c.Perguntas.forEach(p => adicionarPergunta(p));
     }
     if (c.CertificadoModeloURL) document.getElementById('cursoCertInput').value = c.CertificadoModeloURL;
+    window.__cursoCamposCertificado = c.CamposCertificado || null;
     if (c.ValidadeMeses) document.getElementById('cursoValidadeInput').value = String(c.ValidadeMeses);
     document.getElementById('cursoPontosInput').value = (typeof c.Pontos === 'number') ? String(c.Pontos) : '100';
     document.getElementById('btnSalvarRascunho').onclick = () => salvarCurso('rascunho');
@@ -3484,6 +3659,7 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
         Link: document.getElementById('linkFieldInput').value.trim(),
         CapaURL: document.getElementById('cursoCapaInput').value.trim(),
         CertificadoModeloURL: document.getElementById('cursoCertInput').value.trim(),
+        CamposCertificado: window.__cursoCamposCertificado || null,
         ValidadeMeses: document.getElementById('cursoValidadeInput').value ? Number(document.getElementById('cursoValidadeInput').value) : null,
         Pontos: document.getElementById('cursoPontosInput').value !== '' ? Math.max(0, Number(document.getElementById('cursoPontosInput').value)) : 100,
         Obrigatorio: document.getElementById('cursoObrigatorioToggle').dataset.valor === '1',
