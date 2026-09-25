@@ -986,6 +986,7 @@
 <!-- programas presenciais: card do programa -> lista de encontros ("episódios") -->
 <div id="modalProgramaDetalhe" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:92;">
   <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(560px,92vw); max-height:86vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div id="programaDetalheCapa" style="display:none; height:150px; background-size:cover; background-position:center; flex-shrink:0;"></div>
     <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
       <h3 id="programaDetalheTitulo" style="margin:0; font-family:var(--display); font-weight:400;">Programa</h3>
       <button onclick="closeModal('modalProgramaDetalhe')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
@@ -1004,6 +1005,7 @@
 <!-- programas presenciais: detalhe de um encontro (código de presença / material / certificado) -->
 <div id="modalEncontroDetalhe" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:93;">
   <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(480px,92vw); max-height:86vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div id="encontroDetalheCapa" style="display:none; height:140px; background-size:cover; background-position:center; flex-shrink:0;"></div>
     <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
       <h3 id="encontroDetalheTitulo" style="margin:0; font-family:var(--display); font-weight:400;">Encontro</h3>
       <button onclick="closeModal('modalEncontroDetalhe')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
@@ -2950,18 +2952,24 @@ function configurarGateConclusao(c){
       const concluidos = encontros.filter(e => confirmadosIds.has(e.Id)).length;
       const total = encontros.length;
       const pct = total ? Math.round((concluidos / total) * 100) : 0;
+      const capaHtml = p.Capa
+        ? `<div style="height:120px; background-image:url('${p.Capa}'); background-size:cover; background-position:center;"></div>`
+        : '';
       return `
-        <div style="background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg); padding:20px 24px; box-shadow:var(--shadow); cursor:pointer;" onclick="abrirProgramaDetalhe('${p.id}')">
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-            <b style="font-size:15px;">🎓 ${p.Nome || 'Programa'}</b>
-            <span style="font-size:12.5px; font-weight:700; color:var(--green-dark); white-space:nowrap;">${concluidos}/${total} encontros</span>
-          </div>
-          ${p.Descricao ? `<p style="font-size:13px; color:var(--ink-soft); margin:8px 0 0;">${p.Descricao}</p>` : ''}
-          <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
-            <div style="flex:1; height:8px; background:var(--line); border-radius:100px; overflow:hidden;">
-              <div style="height:100%; width:${pct}%; background:var(--green);"></div>
+        <div style="background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow); cursor:pointer;" onclick="abrirProgramaDetalhe('${p.id}')">
+          ${capaHtml}
+          <div style="padding:20px 24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+              <b style="font-size:15px;">🎓 ${p.Nome || 'Programa'}</b>
+              <span style="font-size:12.5px; font-weight:700; color:var(--green-dark); white-space:nowrap;">${concluidos}/${total} encontros</span>
             </div>
-            <b style="font-size:12px;">${pct}%</b>
+            ${p.Descricao ? `<p style="font-size:13px; color:var(--ink-soft); margin:8px 0 0;">${p.Descricao}</p>` : ''}
+            <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+              <div style="flex:1; height:8px; background:var(--line); border-radius:100px; overflow:hidden;">
+                <div style="height:100%; width:${pct}%; background:var(--green);"></div>
+              </div>
+              <b style="font-size:12px;">${pct}%</b>
+            </div>
           </div>
         </div>`;
     }).filter(Boolean);
@@ -2976,6 +2984,9 @@ function configurarGateConclusao(c){
     if (!p) return;
     window.__programaAbertoId = programaId;
     document.getElementById('programaDetalheTitulo').textContent = p.Nome || 'Programa';
+    const capaProgramaEl = document.getElementById('programaDetalheCapa');
+    if (p.Capa) { capaProgramaEl.style.backgroundImage = `url('${p.Capa}')`; capaProgramaEl.style.display = 'block'; }
+    else { capaProgramaEl.style.display = 'none'; }
     document.getElementById('programaDetalheDesc').textContent = p.Descricao || '';
 
     const encontros = Array.isArray(p.Encontros) ? p.Encontros : [];
@@ -2993,8 +3004,11 @@ function configurarGateConclusao(c){
       else if (chegou) { statusTxt = '👉 Confirmar presença'; statusCor = 'var(--fries)'; clicavel = true; }
       else { statusTxt = '🔒 Em breve'; statusCor = 'var(--ink-soft)'; clicavel = false; }
       const dataFmt = dataEncontro ? dataEncontro.toLocaleDateString('pt-BR') : '';
+      const capaEncontroHtml = e.Capa
+        ? `<div style="width:44px; height:44px; border-radius:10px; background-image:url('${e.Capa}'); background-size:cover; background-position:center; flex-shrink:0;"></div>`
+        : `<span style="font-weight:700; opacity:.5;">${i + 1}º</span>`;
       return `<div style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px; background:var(--cream); ${clicavel ? 'cursor:pointer;' : 'opacity:.7;'}" ${clicavel ? `onclick="abrirEncontroDetalhe('${programaId}','${e.Id}')"` : ''}>
-        <span style="font-weight:700; opacity:.5;">${i + 1}º</span>
+        ${capaEncontroHtml}
         <div style="flex:1;">
           <div style="font-size:13.5px; font-weight:600;">${e.Titulo || 'Encontro'}</div>
           <div style="font-size:12px; color:var(--ink-soft);">${dataFmt}${e.DuracaoHoras ? ' · ' + e.DuracaoHoras + 'h' : ''}</div>
@@ -3020,6 +3034,9 @@ function configurarGateConclusao(c){
     window.__encontroAtualId = encontroId;
 
     document.getElementById('encontroDetalheTitulo').textContent = e.Titulo || 'Encontro';
+    const capaEncontroEl = document.getElementById('encontroDetalheCapa');
+    if (e.Capa) { capaEncontroEl.style.backgroundImage = `url('${e.Capa}')`; capaEncontroEl.style.display = 'block'; }
+    else { capaEncontroEl.style.display = 'none'; }
     const dataEncontro = e.Data ? new Date(e.Data + 'T00:00:00') : null;
     document.getElementById('encontroDetalheData').textContent = dataEncontro ? `${dataEncontro.toLocaleDateString('pt-BR')} · ${e.DuracaoHoras || 4}h` : '';
     document.getElementById('encontroDetalheDesc').textContent = e.Descricao || '';
