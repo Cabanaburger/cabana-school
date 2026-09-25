@@ -790,8 +790,8 @@
 </div>
 
 <section class="block" id="bannersSection" style="display:none;">
-  <div style="position:relative; border-radius:20px; overflow:hidden; box-shadow:0 20px 40px -18px rgba(30,26,20,0.35);">
-    <div id="bannerSlides" style="display:flex; transition:transform .5s ease;"></div>
+  <div id="bannerWrapper" style="position:relative; border-radius:20px; overflow:hidden; box-shadow:0 20px 40px -18px rgba(30,26,20,0.35); background:#171310; height:200px; transition:height .35s ease;">
+    <div id="bannerSlides" style="display:flex; height:100%; transition:transform .5s ease;"></div>
     <div id="bannerDots" style="position:absolute; bottom:12px; left:0; right:0; display:flex; justify-content:center; gap:6px;"></div>
   </div>
 </section>
@@ -848,6 +848,16 @@
     </div>
   </div>
   <div id="minhaTrilhaLista" style="display:flex; flex-direction:column; gap:16px;"></div>
+</section>
+
+<section class="block" id="meusProgramasSection" style="display:none;">
+  <div class="block-head">
+    <div>
+      <h2>🎓 Seus programas presenciais</h2>
+      <p>Treinamentos em sala — confirme sua presença em cada encontro e emita seu certificado.</p>
+    </div>
+  </div>
+  <div id="meusProgramasLista" style="display:flex; flex-direction:column; gap:16px;"></div>
 </section>
 
 <section class="block" id="categorias">
@@ -972,6 +982,55 @@
   </div>
 </div>
 <canvas id="certCanvas" style="display:none;"></canvas>
+
+<!-- programas presenciais: card do programa -> lista de encontros ("episódios") -->
+<div id="modalProgramaDetalhe" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:92;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(560px,92vw); max-height:86vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
+      <h3 id="programaDetalheTitulo" style="margin:0; font-family:var(--display); font-weight:400;">Programa</h3>
+      <button onclick="closeModal('modalProgramaDetalhe')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
+    </div>
+    <div style="padding:16px 24px; overflow-y:auto;">
+      <p id="programaDetalheDesc" style="color:var(--ink-soft); font-size:13.5px; margin:0 0 14px;"></p>
+      <div id="programaEncontrosLista2" style="display:flex; flex-direction:column; gap:10px;"></div>
+      <div id="programaCertFinalBloco" style="display:none; margin-top:18px; padding:16px; background:var(--cream); border-radius:14px; text-align:center;">
+        <b style="font-size:14px;">🏆 Você concluiu todos os encontros!</b>
+        <div style="margin-top:8px;"><button class="mark-btn" style="background:var(--fries);" onclick="gerarCertificadoProgramaFinal()">Baixar certificado final do programa</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- programas presenciais: detalhe de um encontro (código de presença / material / certificado) -->
+<div id="modalEncontroDetalhe" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:93;">
+  <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(480px,92vw); max-height:86vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div style="padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;">
+      <h3 id="encontroDetalheTitulo" style="margin:0; font-family:var(--display); font-weight:400;">Encontro</h3>
+      <button onclick="closeModal('modalEncontroDetalhe')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);">✕</button>
+    </div>
+    <div style="padding:16px 24px; overflow-y:auto;">
+      <p id="encontroDetalheData" style="color:var(--ink-soft); font-size:13px; margin:0 0 6px;"></p>
+      <p id="encontroDetalheDesc" style="font-size:13.5px; margin:0 0 14px;"></p>
+      <div id="encontroDetalheMaterial" style="display:none; margin-bottom:14px;"></div>
+
+      <div id="encontroDetalheBloqueado" style="display:none; padding:14px; background:var(--cream); border-radius:12px; font-size:13.5px; color:var(--ink-soft); text-align:center;">
+        Esse encontro ainda não chegou. Volta aqui no dia pra confirmar sua presença.
+      </div>
+
+      <div id="encontroDetalheConfirmar" style="display:none;">
+        <label style="font-size:13px; font-weight:700;">Digite o código mostrado na sala</label>
+        <input type="text" id="encontroCodigoInput" placeholder="000000" maxlength="6" style="width:100%; font-size:22px; letter-spacing:6px; text-align:center; padding:10px; margin-top:6px; border-radius:10px; border:1px solid var(--line);">
+        <div id="encontroCodigoErro" style="display:none; color:#B4462B; font-size:12.5px; font-weight:600; margin-top:6px;"></div>
+        <button class="mark-btn" style="background:var(--fries); margin-top:12px; width:100%;" onclick="confirmarPresencaComCodigo()">Confirmar presença</button>
+      </div>
+
+      <div id="encontroDetalheConcluido" style="display:none; padding:14px; background:var(--cream); border-radius:12px; text-align:center;">
+        <b>✅ Presença confirmada</b>
+        <div id="encontroDetalheCertBtn" style="margin-top:10px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="modalEquipe" style="display:none; position:fixed; inset:0; background:rgba(30,26,20,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; z-index:92;">
   <div style="background:var(--paper); border-radius:22px; box-shadow:var(--shadow); width:min(720px,94vw); max-height:82vh; display:flex; flex-direction:column; overflow:hidden;">
@@ -2062,7 +2121,16 @@ function showScreen(name){
 }
 // ===== carrossel de banners no topo da Home =====
 // (dados vêm do bloco module via window.__bannersAtivos; aqui só cuida do DOM/animação)
+//
+// setembro/2026 — antes o vídeo/imagem entrava com object-fit:cover numa faixa fixa de 200px,
+// cortando (zoom + crop) qualquer arquivo que não fosse exatamente nessa proporção. Agora usa
+// object-fit:contain (nunca corta) e a altura do carrossel se ajusta sozinha à proporção real de
+// cada arquivo (dentro de um limite mínimo/máximo, pra não quebrar o layout da página com um
+// vídeo vertical gigante). Também: autoplay de vídeo com som é bloqueado por todo navegador —
+// por isso todo vídeo começa mudo, com um botãozinho 🔇/🔊 no canto pra pessoa ativar o som se
+// quiser, exatamente como a Nayuri pediu.
 let bannerAutoplayTimer = null;
+window.__bannerAspectRatios = [];
 window.renderBanners = function(){
   const section = document.getElementById('bannersSection');
   const slidesEl = document.getElementById('bannerSlides');
@@ -2075,12 +2143,14 @@ window.renderBanners = function(){
     return;
   }
   section.style.display = 'block';
-  slidesEl.innerHTML = banners.map(b => {
+  window.__bannerAspectRatios = banners.map(() => null);
+  slidesEl.innerHTML = banners.map((b, i) => {
     const midia = b.VideoURL
-      ? `<video src="${b.VideoURL}" autoplay muted loop playsinline style="width:100%; height:100%; object-fit:cover; display:block;"></video>`
-      : `<div style="width:100%; height:100%; background-image:url('${(b.ImagemURL || '').replace(/'/g, "\\'")}'); background-size:cover; background-position:center; background-color:#171310;"></div>`;
+      ? `<video src="${b.VideoURL}" data-banner-idx="${i}" autoplay muted loop playsinline style="width:100%; height:100%; object-fit:contain; display:block;" onloadedmetadata="ajustarProporcaoBanner(${i}, this.videoWidth, this.videoHeight)"></video>
+         <button type="button" onclick="event.stopPropagation(); alternarSomBanner(${i}, this)" data-mute-btn="${i}" style="position:absolute; right:12px; bottom:12px; width:34px; height:34px; border-radius:50%; border:none; background:rgba(20,16,12,0.55); color:#fff; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center;">🔇</button>`
+      : `<img src="${(b.ImagemURL || '').replace(/"/g, '&quot;')}" data-banner-idx="${i}" style="width:100%; height:100%; object-fit:contain; display:block;" onload="ajustarProporcaoBanner(${i}, this.naturalWidth, this.naturalHeight)">`;
     const abre = b.LinkDestino ? ` onclick="window.open('${b.LinkDestino.replace(/'/g, "\\'")}', '_blank')" style="cursor:pointer;"` : '';
-    return `<div${abre} style="flex:0 0 100%; height:200px;">${midia}</div>`;
+    return `<div${abre} style="position:relative; flex:0 0 100%; height:100%;">${midia}</div>`;
   }).join('');
   dotsEl.innerHTML = banners.length > 1
     ? banners.map((_, i) => `<span data-dot="${i}" style="width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.45); display:inline-block;"></span>`).join('')
@@ -2094,6 +2164,28 @@ window.renderBanners = function(){
     }, 6000);
   }
 };
+window.alternarSomBanner = function(i, btn){
+  const video = document.querySelector(`video[data-banner-idx="${i}"]`);
+  if (!video) return;
+  video.muted = !video.muted;
+  btn.textContent = video.muted ? '🔇' : '🔊';
+};
+// calcula a proporção real do arquivo (largura/altura) assim que ele carrega, e — se for o banner
+// visível agora — já ajusta a altura do carrossel pra essa proporção
+window.ajustarProporcaoBanner = function(i, largura, altura){
+  if (!largura || !altura) return;
+  window.__bannerAspectRatios[i] = largura / altura;
+  if ((window.__bannerIndiceAtual || 0) === i) aplicarAlturaBanner(i);
+};
+function aplicarAlturaBanner(i){
+  const wrapper = document.getElementById('bannerWrapper');
+  if (!wrapper) return;
+  const proporcao = window.__bannerAspectRatios[i];
+  if (!proporcao) return; // ainda carregando o arquivo — mantém a altura atual até saber a proporção de verdade
+  const largura = wrapper.clientWidth || 800;
+  const alturaIdeal = largura / proporcao;
+  wrapper.style.height = `${Math.max(140, Math.min(420, alturaIdeal))}px`;
+}
 function irParaBanner(i){
   window.__bannerIndiceAtual = i;
   const slidesEl = document.getElementById('bannerSlides');
@@ -2101,7 +2193,9 @@ function irParaBanner(i){
   document.querySelectorAll('#bannerDots span').forEach((d, idx) => {
     d.style.background = idx === i ? '#fff' : 'rgba(255,255,255,0.45)';
   });
+  aplicarAlturaBanner(i);
 }
+window.addEventListener('resize', () => aplicarAlturaBanner(window.__bannerIndiceAtual || 0));
 
 // pros cursos com prova embutida no próprio arquivo (tipo 'link' + temProva): o botão do painel
 // "Seu progresso" não abre nenhuma tela de prova por aqui, só reabre o conteúdo — quem grava o
@@ -2261,6 +2355,11 @@ function configurarGateConclusao(c){
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, increment, serverTimestamp, collection, getDocs, onSnapshot, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  // firebase-functions.js é importado sob demanda (só quando alguém realmente confirma presença
+  // de um encontro — ver confirmarPresencaComCodigo), não aqui no topo do arquivo. Se importasse
+  // aqui, um soluço na CDN desse arquivo específico derrubaria a Home inteira (login, cursos,
+  // trilhas, tudo) — import estático que falha quebra o módulo inteiro. Do jeito de baixo, só a
+  // confirmação de presença fica indisponível se isso acontecer.
 
   // firebaseConfig real do projeto Cabana School (mesmo do index.html)
   const firebaseConfig = {
@@ -2639,6 +2738,7 @@ function configurarGateConclusao(c){
           if (window.renderCards) window.renderCards();
           if (window.renderJornada) window.renderJornada();
           verificarTrilhas(cpf, cargoColaboradorAtual, localColaboradorAtual, macrocargoColaboradorAtual);
+          verificarProgramas(cpf);
         });
       },
       (err) => {
@@ -2801,6 +2901,267 @@ function configurarGateConclusao(c){
     if (tituloEl) tituloEl.textContent = t('trilha_concluida');
     if (msgEl) msgEl.textContent = `${t('trilha_concluida_msg1')}${nomeTrilha}${t('trilha_concluida_msg2')}`;
     if (window.openModal) window.openModal('modalSelo');
+  };
+
+  // ===== programas presenciais: treinamento em sala, com encontros/código de presença/certificado
+  // (setembro/2026) — o conteúdo em si não fica na plataforma, só o registro de presença e o
+  // certificado. A confirmação de presença por código sempre passa pela Cloud Function
+  // confirmarPresencaEncontro (nunca é escrita direto no Firestore por aqui), então o código nunca
+  // é revelado pro navegador de quem está confirmando.
+  function programaAplicavelAColaborador(programa){
+    const passaCargo = !(programa.CargosEspecificos === true && Array.isArray(programa.Cargos) && programa.Cargos.length)
+      || programa.Cargos.includes(cargoColaboradorAtual) || (macrocargoColaboradorAtual && programa.Cargos.includes(macrocargoColaboradorAtual));
+    const temRestricaoLocal = programa.LocalEspecifico === true && ((Array.isArray(programa.LojasPermitidas) && programa.LojasPermitidas.length) || (Array.isArray(programa.RegionaisPermitidas) && programa.RegionaisPermitidas.length));
+    const passaLocal = !temRestricaoLocal
+      || (Array.isArray(programa.LojasPermitidas) && programa.LojasPermitidas.includes(lojaColaboradorAtual))
+      || (Array.isArray(programa.RegionaisPermitidas) && programa.RegionaisPermitidas.includes(regionalColaboradorAtual));
+    const temRestricaoTipoLocal = programa.TipoLocalEspecifico === true && Array.isArray(programa.TiposLocal) && programa.TiposLocal.length > 0;
+    const passaTipoLocal = !temRestricaoTipoLocal || programa.TiposLocal.includes(localColaboradorAtual || 'Loja');
+    return passaCargo && passaLocal && passaTipoLocal;
+  }
+
+  async function verificarProgramas(cpf){
+    if (!cpf) return;
+    try {
+      const snap = await getDocs(query(collection(db, 'programas'), where('Status', '==', 'publicado')));
+      const todos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      window.MEUS_PROGRAMAS = todos.filter(p => programaAplicavelAColaborador(p));
+
+      const presencasSnap = await getDocs(query(collection(db, 'presencasPrograma'), where('Cpf', '==', cpf)));
+      window.MINHAS_PRESENCAS_PROGRAMA = presencasSnap.docs.map(d => d.data());
+
+      if (window.renderMeusProgramas) window.renderMeusProgramas();
+    } catch (err) {
+      console.error('Erro ao verificar programas presenciais:', err);
+    }
+  }
+
+  window.renderMeusProgramas = function(){
+    const section = document.getElementById('meusProgramasSection');
+    const lista = document.getElementById('meusProgramasLista');
+    if (!section || !lista) return;
+    const programas = window.MEUS_PROGRAMAS || [];
+    const presencas = window.MINHAS_PRESENCAS_PROGRAMA || [];
+
+    const blocos = programas.map(p => {
+      const encontros = Array.isArray(p.Encontros) ? p.Encontros : [];
+      if (!encontros.length) return '';
+      const confirmadosIds = new Set(presencas.filter(pr => pr.ProgramaId === p.id).map(pr => pr.EncontroId));
+      const concluidos = encontros.filter(e => confirmadosIds.has(e.Id)).length;
+      const total = encontros.length;
+      const pct = total ? Math.round((concluidos / total) * 100) : 0;
+      return `
+        <div style="background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg); padding:20px 24px; box-shadow:var(--shadow); cursor:pointer;" onclick="abrirProgramaDetalhe('${p.id}')">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <b style="font-size:15px;">🎓 ${p.Nome || 'Programa'}</b>
+            <span style="font-size:12.5px; font-weight:700; color:var(--green-dark); white-space:nowrap;">${concluidos}/${total} encontros</span>
+          </div>
+          ${p.Descricao ? `<p style="font-size:13px; color:var(--ink-soft); margin:8px 0 0;">${p.Descricao}</p>` : ''}
+          <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+            <div style="flex:1; height:8px; background:var(--line); border-radius:100px; overflow:hidden;">
+              <div style="height:100%; width:${pct}%; background:var(--green);"></div>
+            </div>
+            <b style="font-size:12px;">${pct}%</b>
+          </div>
+        </div>`;
+    }).filter(Boolean);
+
+    if (!blocos.length) { section.style.display = 'none'; return; }
+    lista.innerHTML = blocos.join('');
+    section.style.display = 'block';
+  };
+
+  window.abrirProgramaDetalhe = function(programaId){
+    const p = (window.MEUS_PROGRAMAS || []).find(x => x.id === programaId);
+    if (!p) return;
+    window.__programaAbertoId = programaId;
+    document.getElementById('programaDetalheTitulo').textContent = p.Nome || 'Programa';
+    document.getElementById('programaDetalheDesc').textContent = p.Descricao || '';
+
+    const encontros = Array.isArray(p.Encontros) ? p.Encontros : [];
+    const presencas = window.MINHAS_PRESENCAS_PROGRAMA || [];
+    const confirmadosIds = new Set(presencas.filter(pr => pr.ProgramaId === programaId).map(pr => pr.EncontroId));
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+
+    const lista = document.getElementById('programaEncontrosLista2');
+    lista.innerHTML = encontros.map((e, i) => {
+      const dataEncontro = e.Data ? new Date(e.Data + 'T00:00:00') : null;
+      const confirmado = confirmadosIds.has(e.Id);
+      const chegou = !!dataEncontro && dataEncontro <= hoje;
+      let statusTxt, statusCor, clicavel;
+      if (confirmado) { statusTxt = '✅ Concluído'; statusCor = 'var(--green-dark)'; clicavel = true; }
+      else if (chegou) { statusTxt = '👉 Confirmar presença'; statusCor = 'var(--fries)'; clicavel = true; }
+      else { statusTxt = '🔒 Em breve'; statusCor = 'var(--ink-soft)'; clicavel = false; }
+      const dataFmt = dataEncontro ? dataEncontro.toLocaleDateString('pt-BR') : '';
+      return `<div style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px; background:var(--cream); ${clicavel ? 'cursor:pointer;' : 'opacity:.7;'}" ${clicavel ? `onclick="abrirEncontroDetalhe('${programaId}','${e.Id}')"` : ''}>
+        <span style="font-weight:700; opacity:.5;">${i + 1}º</span>
+        <div style="flex:1;">
+          <div style="font-size:13.5px; font-weight:600;">${e.Titulo || 'Encontro'}</div>
+          <div style="font-size:12px; color:var(--ink-soft);">${dataFmt}${e.DuracaoHoras ? ' · ' + e.DuracaoHoras + 'h' : ''}</div>
+        </div>
+        <span style="font-size:12.5px; font-weight:700; color:${statusCor}; white-space:nowrap;">${statusTxt}</span>
+      </div>`;
+    }).join('');
+
+    const totalEncontros = encontros.length;
+    const totalConfirmados = encontros.filter(e => confirmadosIds.has(e.Id)).length;
+    document.getElementById('programaCertFinalBloco').style.display =
+      (totalEncontros > 0 && totalConfirmados === totalEncontros && p.CertificadoFinalModeloURL) ? 'block' : 'none';
+
+    if (window.openModal) window.openModal('modalProgramaDetalhe');
+  };
+
+  window.abrirEncontroDetalhe = function(programaId, encontroId){
+    const p = (window.MEUS_PROGRAMAS || []).find(x => x.id === programaId);
+    if (!p) return;
+    const e = (p.Encontros || []).find(x => x.Id === encontroId);
+    if (!e) return;
+    window.__programaAtualId = programaId;
+    window.__encontroAtualId = encontroId;
+
+    document.getElementById('encontroDetalheTitulo').textContent = e.Titulo || 'Encontro';
+    const dataEncontro = e.Data ? new Date(e.Data + 'T00:00:00') : null;
+    document.getElementById('encontroDetalheData').textContent = dataEncontro ? `${dataEncontro.toLocaleDateString('pt-BR')} · ${e.DuracaoHoras || 4}h` : '';
+    document.getElementById('encontroDetalheDesc').textContent = e.Descricao || '';
+
+    const materialBloco = document.getElementById('encontroDetalheMaterial');
+    if (e.Material) {
+      materialBloco.style.display = 'block';
+      materialBloco.innerHTML = `<a href="${e.Material}" target="_blank" rel="noopener" style="color:var(--green-dark); font-weight:700; font-size:13px; text-decoration:none;">📎 Material do encontro</a>`;
+    } else {
+      materialBloco.style.display = 'none';
+    }
+
+    const confirmado = (window.MINHAS_PRESENCAS_PROGRAMA || []).some(pr => pr.ProgramaId === programaId && pr.EncontroId === encontroId);
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const chegou = !!dataEncontro && dataEncontro <= hoje;
+
+    document.getElementById('encontroDetalheBloqueado').style.display = (!confirmado && !chegou) ? 'block' : 'none';
+    document.getElementById('encontroDetalheConfirmar').style.display = (!confirmado && chegou) ? 'block' : 'none';
+    document.getElementById('encontroCodigoInput').value = '';
+    document.getElementById('encontroCodigoErro').style.display = 'none';
+    document.getElementById('encontroDetalheConcluido').style.display = confirmado ? 'block' : 'none';
+    if (confirmado) {
+      document.getElementById('encontroDetalheCertBtn').innerHTML = e.CertificadoModeloURL
+        ? `<button class="mark-btn" style="background:var(--fries);" onclick="gerarCertificadoEncontro('${programaId}','${encontroId}')">Baixar certificado do encontro</button>`
+        : '';
+    }
+
+    if (window.openModal) window.openModal('modalEncontroDetalhe');
+  };
+
+  window.confirmarPresencaComCodigo = async function(){
+    const codigo = document.getElementById('encontroCodigoInput').value.trim();
+    const erroEl = document.getElementById('encontroCodigoErro');
+    erroEl.style.display = 'none';
+    if (!codigo) { erroEl.textContent = 'Digita o código mostrado na sala.'; erroEl.style.display = 'block'; return; }
+    try {
+      const { getFunctions, httpsCallable } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js");
+      const functions = getFunctions(app);
+      const chamar = httpsCallable(functions, 'confirmarPresencaEncontro');
+      await chamar({ programaId: window.__programaAtualId, encontroId: window.__encontroAtualId, codigo });
+      (window.MINHAS_PRESENCAS_PROGRAMA = window.MINHAS_PRESENCAS_PROGRAMA || []).push({ ProgramaId: window.__programaAtualId, EncontroId: window.__encontroAtualId, Cpf: currentCpf });
+      abrirEncontroDetalhe(window.__programaAtualId, window.__encontroAtualId);
+      if (window.renderMeusProgramas) window.renderMeusProgramas();
+    } catch (err) {
+      console.error('Erro ao confirmar presença:', err);
+      erroEl.textContent = (err && err.message) ? err.message : 'Não foi possível confirmar agora. Confere o código e tenta de novo.';
+      erroEl.style.display = 'block';
+    }
+  };
+
+  function desenharCertificadoAjustado(ctx, img, texto, xFrac, yFrac, tamanhoBase, larguraMaxima, negrito){
+    let tamanho = tamanhoBase;
+    ctx.font = `${negrito ? '700' : '600'} ${tamanho}px Georgia, 'Times New Roman', serif`;
+    while (ctx.measureText(texto).width > larguraMaxima && tamanho > 14) {
+      tamanho -= 2;
+      ctx.font = `${negrito ? '700' : '600'} ${tamanho}px Georgia, 'Times New Roman', serif`;
+    }
+    ctx.fillText(texto, img.width * xFrac, img.height * yFrac);
+  }
+
+  window.gerarCertificadoEncontro = async function(programaId, encontroId){
+    try {
+      const p = (window.MEUS_PROGRAMAS || []).find(x => x.id === programaId);
+      const e = p && (p.Encontros || []).find(x => x.Id === encontroId);
+      if (!e || !e.CertificadoModeloURL) { alert('Esse encontro não tem um modelo de certificado cadastrado.'); return; }
+
+      const colabSnap = await getDoc(doc(db, 'colaboradores', currentCpf));
+      const nomeColaborador = (colabSnap.exists() && colabSnap.data().Nome) || 'Colaborador(a)';
+      const dataEncontro = e.Data ? new Date(e.Data + 'T00:00:00') : new Date();
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function(){
+        const canvas = document.getElementById('certCanvas');
+        canvas.width = img.width; canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#1E1A14';
+        // posições calibradas pro mesmo layout usado no certificado de curso — ajusta se o
+        // modelo de imagem do encontro tiver um layout diferente
+        desenharCertificadoAjustado(ctx, img, nomeColaborador, 0.5073, 0.5486, Math.round(img.width * 0.038), img.width * 0.42, true);
+        desenharCertificadoAjustado(ctx, img, `${p.Nome || ''} — ${e.Titulo || ''}`, 0.5036, 0.6855, Math.round(img.width * 0.026), img.width * 0.5, false);
+        ctx.font = `700 ${Math.round(img.width * 0.022)}px Georgia, 'Times New Roman', serif`;
+        const diaMes = `${String(dataEncontro.getDate()).padStart(2, '0')}/${String(dataEncontro.getMonth() + 1).padStart(2, '0')}`;
+        ctx.fillText(diaMes, img.width * 0.3110, img.height * 0.7995);
+        ctx.fillText(String(dataEncontro.getFullYear()), img.width * 0.6884, img.height * 0.7995);
+        const link = document.createElement('a');
+        link.download = `certificado-${(e.Titulo || 'encontro').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+      img.onerror = function(){ alert('Não foi possível carregar a imagem do modelo de certificado.'); };
+      img.src = e.CertificadoModeloURL;
+    } catch (err) {
+      console.error('Erro ao gerar certificado do encontro:', err);
+      alert('Não foi possível gerar o certificado agora.');
+    }
+  };
+
+  window.gerarCertificadoProgramaFinal = async function(){
+    try {
+      const programaId = window.__programaAbertoId;
+      const p = (window.MEUS_PROGRAMAS || []).find(x => x.id === programaId);
+      if (!p || !p.CertificadoFinalModeloURL) { alert('Esse programa não tem um modelo de certificado final cadastrado.'); return; }
+      const encontros = Array.isArray(p.Encontros) ? p.Encontros : [];
+      const totalHoras = encontros.reduce((soma, e) => soma + (Number(e.DuracaoHoras) || 4), 0);
+
+      const colabSnap = await getDoc(doc(db, 'colaboradores', currentCpf));
+      const nomeColaborador = (colabSnap.exists() && colabSnap.data().Nome) || 'Colaborador(a)';
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function(){
+        const canvas = document.getElementById('certCanvas');
+        canvas.width = img.width; canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#1E1A14';
+        desenharCertificadoAjustado(ctx, img, nomeColaborador, 0.5073, 0.5486, Math.round(img.width * 0.038), img.width * 0.42, true);
+        desenharCertificadoAjustado(ctx, img, `${p.Nome || ''} — carga horária total: ${totalHoras}h`, 0.5036, 0.6855, Math.round(img.width * 0.024), img.width * 0.6, false);
+
+        // lista de presença: um encontro por linha, funciona como o "serve de lista de presença" pedido
+        ctx.font = `600 ${Math.round(img.width * 0.016)}px Georgia, 'Times New Roman', serif`;
+        encontros.forEach((e, i) => {
+          const dataEncontro = e.Data ? new Date(e.Data + 'T00:00:00') : null;
+          const dataFmt = dataEncontro ? dataEncontro.toLocaleDateString('pt-BR') : '';
+          ctx.fillText(`${e.Titulo || 'Encontro'} — ${dataFmt}`, img.width * 0.5, img.height * (0.74 + i * 0.028));
+        });
+
+        const link = document.createElement('a');
+        link.download = `certificado-final-${(p.Nome || 'programa').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+      img.onerror = function(){ alert('Não foi possível carregar a imagem do modelo de certificado.'); };
+      img.src = p.CertificadoFinalModeloURL;
+    } catch (err) {
+      console.error('Erro ao gerar certificado final do programa:', err);
+      alert('Não foi possível gerar o certificado agora.');
+    }
   };
 
   // ===== painel do gestor: só leitura do progresso de quem tem esse cpf como CpfGestor =====
