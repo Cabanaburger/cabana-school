@@ -1763,6 +1763,22 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     return m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 60);
   }
 
+  // Garante <meta charset="UTF-8"> no HTML antes de subir. Sem isso (e sem o Content-Type
+  // do arquivo declarando o charset — ver uploadBytes abaixo), o navegador não tem nenhum
+  // sinal de qual codificação usar ao abrir o curso direto pelo link do Storage, e em vários
+  // casos chuta Windows-1252 — é isso que faz "ção"/"õ"/emoji aparecerem quebrados
+  // ("Ã§Ã£o", "Ã´es", "ðŸ¤...") mesmo o arquivo original estando certinho em UTF-8.
+  function garantirMetaCharset(html){
+    if (/<meta[^>]+charset\s*=/i.test(html)) return html;
+    if (/<head[^>]*>/i.test(html)) {
+      return html.replace(/<head[^>]*>/i, (m) => `${m}\n<meta charset="UTF-8">`);
+    }
+    if (/<html[^>]*>/i.test(html)) {
+      return html.replace(/<html[^>]*>/i, (m) => `${m}\n<head><meta charset="UTF-8"></head>`);
+    }
+    return `<meta charset="UTF-8">\n${html}`;
+  }
+
   // Detecta blocos de script (posição inicial/final no texto) — usado pra reconhecer
   // curso "app dinâmico" (conteúdo montado por JavaScript, não HTML estático de verdade) abaixo.
   // (nota: evitar escrever a tag de fechamento de script por extenso neste comentário — é
@@ -1867,7 +1883,6 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     statusEl.style.color = 'var(--ink-soft)';
     statusEl.textContent = `Enviando ${arquivo.name}…`;
     try {
-      let arquivoParaEnviar = arquivo;
       let avisoTrava = '';
       // sempre tenta aplicar a trava de rolagem — sem checkbox, sem pergunta. A função só muda
       // alguma coisa quando faz sentido (curso com seções e sem prova própria já embutida); nos
@@ -1876,7 +1891,6 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       const resultado = aplicarTravaRolagemAutomatica(textoOriginal);
       if (resultado.status === 'injetado' || resultado.status === 'ja-integrado') {
         if (resultado.status === 'injetado') {
-          arquivoParaEnviar = new File([resultado.html], arquivo.name, { type: 'text/html' });
           avisoTrava = resultado.reaproveitouMarcadores
             ? ` Reaproveitei os ${resultado.secoesUsadas.length} marcador(es) de seção que o arquivo já tinha.`
             : ` Trava de rolagem aplicada sozinha em ${resultado.secoesUsadas.length} seção(ões) encontradas no arquivo.`;
@@ -1902,12 +1916,17 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
       } else if (resultado.status === 'estrutura-dinamica') {
         avisoTrava = ' Esse arquivo parece um app de página única (o conteúdo é montado por JavaScript, não é uma página comprida comum) — a trava automática não é confiável nesse formato, então enviei sem mexer em nada. Se quiser trava nesse curso, me chame numa conversa que eu faço a integração manual (dá pra fazer, só não sozinho pelo upload).';
       }
+      // garante <meta charset="UTF-8"> no arquivo antes de subir (em todos os status, não só
+      // quando a trava é injetada) — e o Content-Type do upload, logo abaixo, também leva o
+      // charset, reforçando pro navegador que é UTF-8 desde a resposta HTTP.
+      const htmlFinal = garantirMetaCharset(resultado.html);
+      const arquivoParaEnviar = new File([htmlFinal], arquivo.name, { type: 'text/html;charset=utf-8' });
       const nomeSeguro = arquivo.name
         .normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '')
         .replace(/[^a-zA-Z0-9.\-]/g, '-');
       const caminho = `cursos-html/${Date.now()}-${nomeSeguro}`;
       const ref = storageRef(storage, caminho);
-      await uploadBytes(ref, arquivoParaEnviar, { contentType: 'text/html' });
+      await uploadBytes(ref, arquivoParaEnviar, { contentType: 'text/html;charset=utf-8' });
       const url = await getDownloadURL(ref);
       document.getElementById('linkFieldInput').value = url;
       statusEl.style.color = 'var(--green-dark)';
