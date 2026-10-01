@@ -857,7 +857,7 @@
       <p>Treinamentos em sala — confirme sua presença em cada encontro e emita seu certificado.</p>
     </div>
   </div>
-  <div id="meusProgramasLista" class="grid"></div>
+  <div id="meusProgramasLista" style="display:flex; flex-direction:column; gap:16px;"></div>
 </section>
 
 <section class="block" id="categorias">
@@ -2616,15 +2616,23 @@ function configurarGateConclusao(c){
       const config = configSnap.data();
       const dias = Math.floor((new Date() - dados.Admissao.toDate()) / (1000 * 60 * 60 * 24));
 
+      // outubro/2026: cada marco só é relevante dentro de uma janela depois da data — sem isso,
+      // alguém que só ganhou acesso à plataforma muito depois de ser contratado (ex.: admissão faz
+      // 400 dias, conta criada agora) cai em "dias >= 90" pra sempre e vê o popup de "você está há
+      // 90 dias!" (mensagem errada pra quem já tem muito mais tempo de casa) — e pior, ao fechar
+      // esse e abrir de novo depois, ainda pega o de 45 (nunca fechado), parecendo que o popup não
+      // para de aparecer. diasMax limita cada marco à janela em que a mensagem faz sentido; fora
+      // dela, nenhum dos dois aparece, mesmo que nunca tenha sido fechado.
       const marcos = [
-        { dias: 90, campo: 'Pesquisa90Fechada', link: config.Link90, emoji: '🎉', titulo: 'Você está há 90 dias no Cabana!',
+        { dias: 90, diasMax: 134, campo: 'Pesquisa90Fechada', link: config.Link90, emoji: '🎉', titulo: 'Você está há 90 dias no Cabana!',
           texto: 'Já faz três meses! Queremos ouvir como você está se sentindo nessa fase. A pesquisa é confidencial e leva poucos minutos — sua opinião ajuda a construir um Cabana cada vez melhor.' },
-        { dias: 45, campo: 'Pesquisa45Fechada', link: config.Link45, emoji: '🎉', titulo: 'Você está há 45 dias no Cabana!',
+        { dias: 45, diasMax: 89, campo: 'Pesquisa45Fechada', link: config.Link45, emoji: '🎉', titulo: 'Você está há 45 dias no Cabana!',
           texto: 'Queremos saber como está sendo essa experiência até aqui. Responda nossa pesquisa — é rápida, confidencial, e ajuda a gente a melhorar cada vez mais o dia a dia de quem trabalha com a gente.' },
       ];
 
-      // mostra o marco mais recente que a pessoa já atingiu e ainda não dispensou (90 tem prioridade sobre 45)
-      const marco = marcos.find(m => dias >= m.dias && m.link && !dados[m.campo]);
+      // mostra o marco mais recente que a pessoa já atingiu, ainda dentro da janela, e ainda não dispensou
+      // (90 tem prioridade sobre 45)
+      const marco = marcos.find(m => dias >= m.dias && dias <= m.diasMax && m.link && !dados[m.campo]);
       if (!marco) return;
 
       marcoPesquisaAtual = marco;
@@ -2952,27 +2960,24 @@ function configurarGateConclusao(c){
       const concluidos = encontros.filter(e => confirmadosIds.has(e.Id)).length;
       const total = encontros.length;
       const pct = total ? Math.round((concluidos / total) * 100) : 0;
-      // mesmo visual dos cards de curso/trilha (.card/.thumb) — imagem de capa com
-      // background-size:cover num thumb de 150px (o mesmo tamanho/proporção usado em "Em destaque"),
-      // em vez de uma faixa esticada na largura toda, que cortava a imagem de um jeito estranho.
-      const thumbStyle = p.Capa
-        ? `background-image:url('${p.Capa}'); background-size:cover; background-position:center;`
-        : `background:var(--green);`;
+      const capaHtml = p.Capa
+        ? `<div style="height:120px; background-image:url('${p.Capa}'); background-size:cover; background-position:center;"></div>`
+        : '';
       return `
-        <div class="card" style="cursor:pointer;" onclick="abrirProgramaDetalhe('${p.id}')">
-          <div class="thumb" style="${thumbStyle}">
-            ${p.Capa ? '<div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%);"></div>' : ''}
-            ${p.Capa ? '' : '<span>🎓</span>'}
-            <span class="cat-tag">${concluidos}/${total} encontros</span>
-          </div>
-          <div class="card-body">
-            <h4>🎓 ${p.Nome || 'Programa'}</h4>
-            ${p.Descricao ? `<p>${p.Descricao}</p>` : ''}
-            <div class="card-progress">
-              <div class="mini-bar"><div style="width:${pct}%; background:var(--green);"></div></div>
-              <small>${pct}%</small>
+        <div style="background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow); cursor:pointer;" onclick="abrirProgramaDetalhe('${p.id}')">
+          ${capaHtml}
+          <div style="padding:20px 24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+              <b style="font-size:15px;">🎓 ${p.Nome || 'Programa'}</b>
+              <span style="font-size:12.5px; font-weight:700; color:var(--green-dark); white-space:nowrap;">${concluidos}/${total} encontros</span>
             </div>
-            <a class="card-cta" href="#" onclick="abrirProgramaDetalhe('${p.id}'); return false;">Ver encontros →</a>
+            ${p.Descricao ? `<p style="font-size:13px; color:var(--ink-soft); margin:8px 0 0;">${p.Descricao}</p>` : ''}
+            <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+              <div style="flex:1; height:8px; background:var(--line); border-radius:100px; overflow:hidden;">
+                <div style="height:100%; width:${pct}%; background:var(--green);"></div>
+              </div>
+              <b style="font-size:12px;">${pct}%</b>
+            </div>
           </div>
         </div>`;
     }).filter(Boolean);
@@ -3641,11 +3646,14 @@ function configurarGateConclusao(c){
       const linhas = [];
       candidatos.forEach(c => {
         const dias = Math.floor((agora - c.Admissao.toDate()) / (1000 * 60 * 60 * 24));
+        // mesma janela por marco usada no popup do colaborador (ver verificarPesquisasMarco) — sem
+        // isso, alguém com admissão muito antiga que só ganhou acesso agora aparecia pra sempre
+        // como "pendência" aqui pro gestor, mesmo fora da janela em que a pesquisa faz sentido
         const marcos = [
-          { dias: 90, campo: 'Pesquisa90Fechada', link: config.Link90, label: '90 dias' },
-          { dias: 45, campo: 'Pesquisa45Fechada', link: config.Link45, label: '45 dias' },
+          { dias: 90, diasMax: 134, campo: 'Pesquisa90Fechada', link: config.Link90, label: '90 dias' },
+          { dias: 45, diasMax: 89, campo: 'Pesquisa45Fechada', link: config.Link45, label: '45 dias' },
         ];
-        const marco = marcos.find(m => dias >= m.dias && m.link && !c[m.campo]);
+        const marco = marcos.find(m => dias >= m.dias && dias <= m.diasMax && m.link && !c[m.campo]);
         if (marco) linhas.push({ nome: c.Nome || '—', loja: c.Loja || '—', label: marco.label, link: marco.link });
       });
       window.__pendPesquisasIndex = linhas;
