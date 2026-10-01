@@ -395,6 +395,7 @@
             </select>
             <button type="button" class="ghost-btn" onclick="salvarPublicoAtualTexto('pdfCargosInput')">💾 Salvar este público</button>
           </div>
+          <small class="hint"><a href="#" onclick="abrirModalPublicos(); return false;" style="color:var(--green-dark); font-weight:700; text-decoration:none;">⚙️ Gerenciar públicos salvos</a></small>
         </div>
         <small class="hint">Quem não tiver um dos cargos listados nem vê que o material existe.</small>
       </div>
@@ -436,63 +437,74 @@
         </div>
       </div>
 
-      <div class="upload-block">
-        <div class="txt">
-          <b>Sincronizar base de colaboradores</b>
-          <span>Envie a planilha atualizada (modelo padrão) pra ativar quem entrou e desativar quem saiu. O histórico de progresso de quem sai é preservado.</span>
-        </div>
-        <div class="actions">
-          <button class="ghost-btn" onclick="document.getElementById('excelFileInput').click()">📎 <span id="excelFileNome">Escolher arquivo</span></button>
-          <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="onExcelEscolhido(this)">
-          <button class="new-btn" id="btnSincronizar" onclick="sincronizarPlanilha()" disabled>Sincronizar</button>
-        </div>
-      </div>
-      <div id="sincronizarResultado" style="display:none; margin:-6px 0 18px; font-size:13px; font-weight:600;"></div>
+      <!-- outubro/2026: os 4 blocos de importar/sincronizar + pesquisas de marco viraram uma seção
+           recolhida por padrão — a Nayuri achou que isso tomava espaço demais no topo da aba,
+           empurrando a lista de colaboradores (o que ela mais usa no dia a dia) pra baixo -->
+      <div class="panel-card" id="colabImportarAccordion" style="padding:0; margin-bottom:20px; overflow:hidden;">
+        <button type="button" onclick="alternarImportarColaboradores()" style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:16px 20px; background:none; border:none; cursor:pointer; font:inherit; text-align:left;">
+          <span style="font-weight:700; font-size:14px;">⚙️ Importar / sincronizar dados <span style="font-weight:400; color:var(--ink-soft); font-size:12.5px;">(planilhas e pesquisas de marco)</span></span>
+          <span id="colabImportarSeta" style="font-size:12.5px; font-weight:700; color:var(--green-dark); white-space:nowrap;">Mostrar ▾</span>
+        </button>
+        <div id="colabImportarConteudo" style="display:none; padding:0 20px 20px;">
+          <div class="upload-block">
+            <div class="txt">
+              <b>Sincronizar base de colaboradores</b>
+              <span>Envie a planilha atualizada (modelo padrão) pra ativar quem entrou e desativar quem saiu. O histórico de progresso de quem sai é preservado.</span>
+            </div>
+            <div class="actions">
+              <button class="ghost-btn" onclick="document.getElementById('excelFileInput').click()">📎 <span id="excelFileNome">Escolher arquivo</span></button>
+              <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="onExcelEscolhido(this)">
+              <button class="new-btn" id="btnSincronizar" onclick="sincronizarPlanilha()" disabled>Sincronizar</button>
+            </div>
+          </div>
+          <div id="sincronizarResultado" style="display:none; margin:-6px 0 18px; font-size:13px; font-weight:600;"></div>
 
-      <div class="upload-block">
-        <div class="txt">
-          <b>Importar lojas e regionais</b>
-          <span>Planilha com duas colunas: "SETOR REGIONAL" e "LOJAS". Cria as lojas que ainda não existem — não duplica quem já está cadastrado.</span>
-        </div>
-        <div class="actions">
-          <button class="ghost-btn" onclick="document.getElementById('lojasFileInput').click()">📎 <span id="lojasFileNome">Escolher arquivo</span></button>
-          <input type="file" id="lojasFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="onLojasExcelEscolhido(this)">
-          <button class="new-btn" id="btnImportarLojas" onclick="importarLojasPlanilha()" disabled>Importar lojas</button>
-        </div>
-      </div>
-      <div id="importarLojasResultado" style="display:none; margin:-6px 0 18px; font-size:13px; font-weight:600;"></div>
+          <div class="upload-block">
+            <div class="txt">
+              <b>Importar lojas e regionais</b>
+              <span>Planilha com duas colunas: "SETOR REGIONAL" e "LOJAS". Cria as lojas que ainda não existem — não duplica quem já está cadastrado.</span>
+            </div>
+            <div class="actions">
+              <button class="ghost-btn" onclick="document.getElementById('lojasFileInput').click()">📎 <span id="lojasFileNome">Escolher arquivo</span></button>
+              <input type="file" id="lojasFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="onLojasExcelEscolhido(this)">
+              <button class="new-btn" id="btnImportarLojas" onclick="importarLojasPlanilha()" disabled>Importar lojas</button>
+            </div>
+          </div>
+          <div id="importarLojasResultado" style="display:none; margin:-6px 0 18px; font-size:13px; font-weight:600;"></div>
 
-      <div class="upload-block">
-        <div class="txt">
-          <b>Importar cargos</b>
-          <span>Planilha com uma coluna "Cargo" (ou "Nome") — um cargo por linha. Se quiser já vir agrupado, adiciona uma coluna "Macrocargo" (opcional). Cria os que ainda não existem em Configurações → Cargos; não duplica quem já está cadastrado.</span>
-        </div>
-        <div class="actions">
-          <button class="ghost-btn" onclick="document.getElementById('cargosFileInput').click()">📎 <span id="cargosFileNome">Escolher arquivo</span></button>
-          <input type="file" id="cargosFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="onCargosExcelEscolhido(this)">
-          <button class="new-btn" id="btnImportarCargos" onclick="importarCargosPlanilha()" disabled>Importar cargos</button>
-        </div>
-      </div>
-      <div id="importarCargosResultado" style="display:none; margin:-6px 0 18px; font-size:13px; font-weight:600;"></div>
+          <div class="upload-block">
+            <div class="txt">
+              <b>Importar cargos</b>
+              <span>Planilha com uma coluna "Cargo" (ou "Nome") — um cargo por linha. Se quiser já vir agrupado, adiciona uma coluna "Macrocargo" (opcional). Cria os que ainda não existem em Configurações → Cargos; não duplica quem já está cadastrado.</span>
+            </div>
+            <div class="actions">
+              <button class="ghost-btn" onclick="document.getElementById('cargosFileInput').click()">📎 <span id="cargosFileNome">Escolher arquivo</span></button>
+              <input type="file" id="cargosFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="onCargosExcelEscolhido(this)">
+              <button class="new-btn" id="btnImportarCargos" onclick="importarCargosPlanilha()" disabled>Importar cargos</button>
+            </div>
+          </div>
+          <div id="importarCargosResultado" style="display:none; margin:-6px 0 18px; font-size:13px; font-weight:600;"></div>
 
-      <div class="upload-block">
-        <div class="txt">
-          <b>Pesquisas de 45 e 90 dias</b>
-          <span>Link do formulário que aparece pro colaborador (com QR code) quando ele bate 45 e 90 dias de casa. Ele só vê o aviso uma vez — depois de fechar, não aparece de novo.</span>
+          <div class="upload-block">
+            <div class="txt">
+              <b>Pesquisas de 45 e 90 dias</b>
+              <span>Link do formulário que aparece pro colaborador (com QR code) quando ele bate 45 e 90 dias de casa, dentro da janela certa. Ele só vê o aviso uma vez — depois de fechar, não aparece de novo.</span>
+            </div>
+          </div>
+          <div class="field-row" style="margin-bottom:14px;">
+            <div class="field">
+              <label>Link da pesquisa de 45 dias</label>
+              <input type="text" id="pesquisaLink45Input" placeholder="Cole o link do Google Forms">
+            </div>
+            <div class="field">
+              <label>Link da pesquisa de 90 dias</label>
+              <input type="text" id="pesquisaLink90Input" placeholder="Cole o link do Google Forms">
+            </div>
+          </div>
+          <button class="new-btn" onclick="salvarLinksPesquisa()">Salvar links das pesquisas</button>
+          <div id="pesquisaLinksResultado" style="display:none; margin:10px 0 18px; font-size:13px; font-weight:600;"></div>
         </div>
       </div>
-      <div class="field-row" style="margin-bottom:14px;">
-        <div class="field">
-          <label>Link da pesquisa de 45 dias</label>
-          <input type="text" id="pesquisaLink45Input" placeholder="Cole o link do Google Forms">
-        </div>
-        <div class="field">
-          <label>Link da pesquisa de 90 dias</label>
-          <input type="text" id="pesquisaLink90Input" placeholder="Cole o link do Google Forms">
-        </div>
-      </div>
-      <button class="new-btn" onclick="salvarLinksPesquisa()">Salvar links das pesquisas</button>
-      <div id="pesquisaLinksResultado" style="display:none; margin:10px 0 18px; font-size:13px; font-weight:600;"></div>
 
       <div class="stat-row">
         <div class="stat"><span>Colaboradores ativos</span><b id="statAtivos">—</b><small>sem dados ainda</small></div>
@@ -947,7 +959,7 @@
           </select>
           <button type="button" class="ghost-btn" onclick="salvarPublicoAtual('visibChips')">💾 Salvar este público</button>
         </div>
-        <small class="hint">Toque nos cargos que devem ver esse curso. Quem não tiver um desses cargos cadastrados nem vê que o curso existe.</small>
+        <small class="hint">Toque nos cargos que devem ver esse curso. Quem não tiver um desses cargos cadastrados nem vê que o curso existe. <a href="#" onclick="abrirModalPublicos(); return false;" style="color:var(--green-dark); font-weight:700; text-decoration:none;">⚙️ Gerenciar públicos salvos</a></small>
       </div>
       <div class="field">
         <label>Restringir também por loja ou regional</label>
@@ -1027,7 +1039,7 @@
           </select>
           <button type="button" class="ghost-btn" onclick="salvarPublicoAtual('trilhaVisibChips')">💾 Salvar este público</button>
         </div>
-        <small class="hint">Toque nos cargos que devem seguir essa trilha (dá pra carregar um grupo de cargos salvo, tipo "Liderança de loja").</small>
+        <small class="hint">Toque nos cargos que devem seguir essa trilha (dá pra carregar um grupo de cargos salvo, tipo "Liderança de loja"). <a href="#" onclick="abrirModalPublicos(); return false;" style="color:var(--green-dark); font-weight:700; text-decoration:none;">⚙️ Gerenciar públicos salvos</a></small>
       </div>
 
       <div class="field">
@@ -1371,6 +1383,30 @@
     <div class="modal-foot">
       <button class="btn-secondary" onclick="closeModal('modalCargo')">Cancelar</button>
       <button class="btn-primary" onclick="salvarCargo()">Criar cargo →</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modalPublicos" style="display:none;">
+  <div class="modal" style="width:480px;">
+    <div class="modal-head"><h3>Públicos-alvo salvos</h3><button onclick="closeModal('modalPublicos')">✕</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Públicos já salvos</label>
+        <div id="publicosListaExistentes" style="display:flex; flex-direction:column; gap:12px; max-height:320px; overflow-y:auto; padding-right:4px;"><small class="hint" style="color:var(--ink-soft);">Carregando…</small></div>
+        <small class="hint">Toca num cargo (ou macrocargo) pra adicionar/tirar dele — salva sozinho, sem precisar de botão de salvar. O nome também salva sozinho ao sair do campo.</small>
+      </div>
+      <div style="border-top:1px solid var(--line); margin:14px 0 10px;"></div>
+      <div class="field"><label>Nome do novo público</label><input type="text" id="publicoNovoNomeInput" placeholder="Ex: Liderança de loja"></div>
+      <div class="field">
+        <label>Cargos desse público</label>
+        <div class="visib-chips" id="publicoNovoChips"></div>
+      </div>
+      <small class="hint">Depois de criado, esse público já aparece em "Carregar um público salvo…" em curso, trilha e biblioteca — sem precisar remontar a lista de cargos toda vez.</small>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalPublicos')">Fechar</button>
+      <button class="btn-primary" onclick="criarPublicoNovo()">Criar público →</button>
     </div>
   </div>
 </div>
@@ -2449,8 +2485,117 @@ document.querySelectorAll('.visib-chip').forEach(chip=>{
     onSnapshot(collection(db, 'publicos'), (snapshot) => {
       publicosCache = snapshot.docs.map(d => ({ id: d.id, nome: d.data().Nome, cargos: d.data().Cargos || [] }));
       renderPublicoSelects();
+      renderListaPublicosExistentes();
     }, (err) => console.error('Erro ao carregar públicos-alvo:', err));
   }
+
+  // outubro/2026: a Nayuri pediu pra dar pra definir os públicos-alvo de antemão (sem precisar
+  // montar os chips dentro de um curso específico primeiro) e também editar um público já salvo
+  // (tirar/por cargo) depois — antes só dava pra criar um público a partir da seleção já feita
+  // num curso/trilha/material, e não tinha como editar ou apagar um já salvo.
+  // abre/fecha a seção recolhida de importar/sincronizar da aba Colaboradores (ver comentário
+  // acima, no HTML) — começa fechada pra lista de colaboradores aparecer logo no topo
+  window.alternarImportarColaboradores = function(){
+    const conteudo = document.getElementById('colabImportarConteudo');
+    const seta = document.getElementById('colabImportarSeta');
+    if (!conteudo || !seta) return;
+    const aberto = conteudo.style.display !== 'none';
+    conteudo.style.display = aberto ? 'none' : 'block';
+    seta.textContent = aberto ? 'Mostrar ▾' : 'Esconder ▴';
+  };
+
+  window.abrirModalPublicos = function(){
+    document.getElementById('publicoNovoNomeInput').value = '';
+    renderPublicoNovoChips();
+    renderListaPublicosExistentes();
+    openModal('modalPublicos');
+  };
+
+  function renderPublicoNovoChips(){
+    const el = document.getElementById('publicoNovoChips');
+    if (!el) return;
+    el.innerHTML = montarChipsCargoEMacrocargo(cargosParaExibir(), macrocargosParaExibir(), []);
+    el.querySelectorAll('.visib-chip').forEach(chip => chip.addEventListener('click', () => chip.classList.toggle('on')));
+  }
+
+  window.criarPublicoNovo = async function(){
+    const nome = document.getElementById('publicoNovoNomeInput').value.trim();
+    if (!nome) { alert('Dá um nome pra esse público antes de criar.'); return; }
+    const cargos = [...document.querySelectorAll('#publicoNovoChips .visib-chip.on')].map(ch => ch.textContent.trim());
+    if (!cargos.length) { alert('Toca em pelo menos um cargo (ou macrocargo) antes de criar.'); return; }
+    try {
+      await addDoc(collection(db, 'publicos'), { Nome: nome, Cargos: cargos, CriadoEm: serverTimestamp() });
+      document.getElementById('publicoNovoNomeInput').value = '';
+      renderPublicoNovoChips();
+    } catch (err) {
+      console.error('Erro ao criar público:', err);
+      alert('Não foi possível criar agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  function renderListaPublicosExistentes(){
+    const el = document.getElementById('publicosListaExistentes');
+    if (!el) return;
+    if (!publicosCache.length) {
+      el.innerHTML = '<small class="hint" style="color:var(--ink-soft);">Nenhum público salvo ainda. Cria um logo abaixo.</small>';
+      return;
+    }
+    const cargos = cargosParaExibir();
+    const macrocargos = macrocargosParaExibir();
+    el.innerHTML = [...publicosCache].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(p => `
+      <div class="linha-publico" style="display:flex; flex-direction:column; gap:8px; padding:10px 12px; background:var(--cream); border-radius:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input type="text" value="${p.nome.replace(/"/g, '&quot;')}" onchange="renomearPublico('${p.id}', this.value)" style="flex:1; min-width:0; padding:6px 8px; font-size:13px; font-weight:700; border-radius:6px; border:1px solid var(--line);">
+          <button type="button" onclick="removerPublico('${p.id}', '${p.nome.replace(/'/g, "\\'")}')"
+            style="background:none; color:#B4462B; font-weight:700; font-size:12px; padding:2px 6px; flex:none; white-space:nowrap;">Remover</button>
+        </div>
+        <div class="visib-chips publico-chips" data-publico-id="${p.id}">${montarChipsCargoEMacrocargo(cargos, macrocargos, p.cargos)}</div>
+      </div>`
+    ).join('');
+    el.querySelectorAll('.publico-chips').forEach(container => {
+      container.querySelectorAll('.visib-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          chip.classList.toggle('on');
+          salvarCargosDoPublico(container.dataset.publicoId, container);
+        });
+      });
+    });
+  }
+
+  window.renomearPublico = async function(id, novoNome){
+    const nome = (novoNome || '').trim();
+    if (!nome) {
+      alert('O nome não pode ficar vazio.');
+      renderListaPublicosExistentes();
+      return;
+    }
+    try {
+      await updateDoc(doc(db, 'publicos', id), { Nome: nome });
+    } catch (err) {
+      console.error('Erro ao renomear público:', err);
+      alert('Não foi possível salvar o nome agora. Tenta de novo em alguns segundos.');
+    }
+  };
+
+  async function salvarCargosDoPublico(id, container){
+    const cargos = [...container.querySelectorAll('.visib-chip.on')].map(ch => ch.textContent.trim());
+    try {
+      await updateDoc(doc(db, 'publicos', id), { Cargos: cargos });
+    } catch (err) {
+      console.error('Erro ao atualizar cargos do público:', err);
+      alert('Não foi possível salvar essa alteração agora. Tenta de novo em alguns segundos.');
+    }
+  }
+
+  window.removerPublico = async function(id, nome){
+    if (!confirm(`Remover o público "${nome}"? Cursos/trilhas/materiais que já usaram ele continuam como estão — isso só tira ele da lista de "Carregar um público salvo".`)) return;
+    try {
+      await deleteDoc(doc(db, 'publicos', id));
+    } catch (err) {
+      console.error('Erro ao remover público:', err);
+      alert('Não foi possível remover agora. Tenta de novo em alguns segundos.');
+    }
+  };
 
   function renderPublicoSelects(){
     const opcoes = '<option value="">Carregar um público salvo…</option>' +
